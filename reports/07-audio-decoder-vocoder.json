@@ -1,0 +1,101 @@
+{
+  "spec": "07-audio-decoder-vocoder",
+  "status": "PARTIAL",
+  "date": "2026-10-31",
+  "environment": {"chip": "Apple M3 Max", "macos": "27.0.1", "mlx": "0.32.4", "torch": "2.15.0", "diffusers": "0.42.1"},
+  "deliverables": [
+    "src/kandinsky6_mlx/models/audio_vae/decoder.py",
+    "src/kandinsky6_mlx/models/vocoder/bigvgan.py",
+    "tests/parity/audio_cases.py",
+    "tests/parity/test_audio_decoder.py",
+    "tests/parity/test_vocoder.py",
+    "tests/parity/test_audio_real.py",
+    "reference/record_audio_real.py",
+    "fixtures/configs/lite-distill-audio_vae.json, fixtures/configs/lite-distill-vocoder.json (revision 4c487e8b)",
+    "reports/07-audio-decoder-vocoder.json"
+  ],
+  "tests": {"command": "uv run --group reference pytest -q", "passed": 440, "failed": 0},
+  "validation": [
+    {
+      "name": "stage A: every recorded call of the tiny audio VAE decoder (12) and vocoder (232) replayed through MLX, float32, weights moved to the MLX layout by the converter's rules",
+      "metrics": {
+        "worst_rel_max": {
+          "MMAudioMPConv1d": 1.4e-07,
+          "MMAudioResnetBlock1D": 2.0e-07,
+          "MMAudioAttnBlock1D": 1.1e-07,
+          "MMAudioUpsample1D": 2.9e-07,
+          "MMAudioDecoder1D": 3.8e-07,
+          "ConvTranspose1d": 1.3e-07,
+          "MMAudioUpSample1d": 2.0e-07,
+          "MMAudioSnakeBeta": 3.0e-07,
+          "MMAudioDownSample1d": 0.0,
+          "MMAudioActivation1d": 3.0e-07,
+          "MMAudioAMPBlock": 3.3e-07
+        },
+        "decode": 4.0e-07,
+        "vocoder_forward": 6.6e-07
+      },
+      "criterion": "rel_max <= 1e-4",
+      "pass": true
+    },
+    {
+      "name": "released structure at small width: audio VAE (40 latent channels, levels (1,2,4), 3 blocks per level) and vocoder (rates 8,4,2,2,2,2, kernels 16,8,4,4,4,4, AMP kernels 3/7/11) vs live torch",
+      "metrics": {
+        "smoke_latent_45": {"mel_frames": 90, "waveform_samples": 46080},
+        "baseline_latent_218": {"mel_frames": 436, "waveform_samples": 223232}
+      },
+      "criterion": "output shapes equal the reference; rel_max <= 1e-4",
+      "pass": true
+    },
+    {
+      "name": "released configs build the reference parameter names and shapes (vocoder in full, audio VAE decoder plus data_mean/data_std), conv shapes in the converted layout",
+      "metrics": {},
+      "criterion": "identical",
+      "pass": true
+    },
+    {
+      "name": "Kaiser-sinc filter initial values and q/k/v normalize layout",
+      "metrics": {},
+      "criterion": "rel_max <= 1e-6",
+      "pass": true
+    },
+    {
+      "name": "stage B harness on tiny weights saved and converted like the real ones: record_audio_real.py then MLX decode + vocoder",
+      "metrics": {},
+      "criterion": "waveform length 45*2*16; mel rel_max and waveform rel_l2 <= 1e-4",
+      "pass": true
+    }
+  ],
+  "skipped": [
+    {
+      "what": "stage B on the real Lite-distill audio VAE and vocoder (waveform rel_l2 <= 1e-3, SNR, outputs/07/*.wav)",
+      "reason": "the converted audio_vae and vocoder (1.71 GB) are not on this Mac; downloading them from VVladTech/Kandinsky-6.0-Lite-distill-5s-MLX waits for the owner's approval (8.1 GiB free disk)"
+    }
+  ],
+  "deviations": [
+    {
+      "what": "stage B reference loads the converted weights with the convolutions permuted back to the PyTorch layout, instead of the original diffusers files",
+      "why": "the converter only permutes axes and drops the duplicate vocoder (values bit-exact, spec 02), so this is the reference on the released tensors without a second 1.7 GB download; the torch run is local CPU float32"
+    },
+    {
+      "what": "stage B latents are NumPy normal latents of the Smoke length (45) until a Smoke run provides real ones (record_audio_real.py --latents)",
+      "why": "no recorded Smoke audio latents exist yet; spec 09 produces them. Parity of the decode does not depend on the latents being denoised, but the WAV files are noise-like until then."
+    },
+    {
+      "what": "the released audio_vae/config.json predates the diffusers arguments (mode '44k', downsample_factor, vocoder_config); like the reference, from_config ignores unknown keys and uses the defaults (128 mel bins, 40 latent channels, width 512, hop 512)",
+      "why": "matches diffusers 0.42.1, which builds the same model from that file"
+    },
+    {
+      "what": "the spec's goal states latents [B, 20, N]; the released audio VAE has 40 latent channels",
+      "why": "taken from the checkpoint (latent_channels default 40, DiT in_audio_dim 40)"
+    },
+    {
+      "what": "activations are channels-last inside both modules; decode and the vocoder take and return the reference (B, C, L) layout",
+      "why": "MLX convolutions are channels-last"
+    }
+  ],
+  "follow_ups": [
+    "After approval: download audio_vae/ and vocoder/ at e4d652b7 to weights/lite-distill, run reference/record_audio_real.py, then `uv run python -m tests.parity.test_audio_real` and `pytest tests/parity/test_audio_real.py -m real_weights`, and update this report.",
+    "Spec 09: record real Smoke audio latents and rerun stage B with --latents."
+  ]
+}
