@@ -1,0 +1,17 @@
+{
+  "id": "applehawk/k6-lite-distill-dit-reference",
+  "title": "K6 Lite Distill DiT Reference",
+  "code_file": "record_dit_k6.py",
+  "language": "python",
+  "kernel_type": "script",
+  "is_private": true,
+  "enable_gpu": false,
+  "enable_internet": true,
+  "dataset_sources": [],
+  "competition_sources": [],
+  "kernel_sources": [
+    "applehawk/k6-lite-diffusers-weights-media",
+    "applehawk/k6-lite-diffusers-weights-text"
+  ],
+  "model_sources": []
+}
