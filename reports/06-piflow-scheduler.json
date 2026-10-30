@@ -1,0 +1,81 @@
+{
+  "spec": "06-piflow-scheduler",
+  "status": "PASS",
+  "date": "2026-10-31",
+  "environment": {"chip": "Apple M3 Max", "macos": "27.0.1", "mlx": "0.32.4", "torch": "2.15.0", "diffusers": "0.42.1"},
+  "deliverables": [
+    "src/kandinsky6_mlx/schedulers/piflow.py",
+    "tests/parity/test_piflow.py",
+    "fixtures/configs/lite-distill-scheduler.json (released scheduler_config.json, revision 4c487e8b)",
+    "reports/06-piflow-scheduler.json"
+  ],
+  "tests": {"command": "uv run --group reference pytest -q", "passed": 181, "failed": 0},
+  "validation": [
+    {
+      "name": "set_timesteps(10) with the released config vs the reference",
+      "metrics": {
+        "timesteps": [1000.0, 977.012, 949.367, 915.493, 873.016, 818.182, 744.681, 641.026, 483.871, 217.391],
+        "timesteps_and_sigmas": "bit-identical (also for 1 and 4 steps)"
+      },
+      "criterion": "rel_max <= 1e-6",
+      "pass": true
+    },
+    {
+      "name": "substeps per step from the reference formula round(delta_raw * 128).clamp(min=1), on the reference's own raw schedule",
+      "metrics": {"10_steps": [13, 13, 13, 13, 13, 13, 13, 13, 13, 7], "policy_evaluations": 124},
+      "criterion": "equal for 1, 4 and 10 steps",
+      "pass": true
+    },
+    {
+      "name": "ten steps on the spec 01 fixture (video [1,3,2,3,16], audio [1,6,40], recorded model outputs)",
+      "metrics": {"rel_max_per_step": {"video": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "audio": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}},
+      "criterion": "rel_max <= 1e-5 per step",
+      "pass": true
+    },
+    {
+      "name": "ten steps at Smoke shapes (video latents [1,7,32,54,16], audio [1,45,40]; NumPy model outputs) vs live torch",
+      "metrics": {
+        "rel_max_per_step": {"video": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "audio": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]},
+        "mlx_seconds_10_steps": {"video": 0.023, "audio": 0.006}
+      },
+      "criterion": "rel_max <= 1e-5 per step; 1 and 4 steps also tested",
+      "pass": true
+    },
+    {
+      "name": "bf16 sample and model output",
+      "metrics": {},
+      "criterion": "output dtype bf16 every step; within one bf16 rounding of the reference (rel_max <= 1e-2)",
+      "pass": true
+    },
+    {
+      "name": "sensitivity: num_policy_substeps 64 instead of 128",
+      "metrics": {},
+      "criterion": "final sample differs from the reference by rel_max > 1e-5 (detected)",
+      "pass": true
+    },
+    {
+      "name": "determinism and independence",
+      "metrics": {},
+      "criterion": "two scheduler instances stepped in alternation give bit-identical results",
+      "pass": true
+    }
+  ],
+  "skipped": [],
+  "deviations": [
+    {
+      "what": "the per-substep scalars (raw time, sigma, interpolation index and weights, substep counts) are computed on the host in NumPy float32; only the tensor updates run in MLX",
+      "why": "They depend only on the schedule and are the same for every batch element (the step takes one timestep). NumPy float32 performs the same correctly rounded IEEE operations as the reference's float32 torch scalars, including round-half-to-even for the substep count, and avoids device division differences. Results are bit-identical to the reference."
+    },
+    {
+      "what": "the spec's determinism case 'stochastic_sampling=false' has no counterpart: PiflowScheduler in diffusers 0.42.1 has no stochastic branch",
+      "why": "The released scheduler_config.json carries stochastic_sampling, use_dynamic_shifting and other FlowMatch keys; the reference ignores them (with a warning), and from_config ignores them the same way. Determinism is tested directly instead."
+    },
+    {
+      "what": "step returns the sample, not a PiflowSchedulerOutput; set_timesteps takes only num_inference_steps",
+      "why": "the reference rejects custom sigmas, mu and timesteps anyway; the pipeline (spec 09) is the only caller"
+    }
+  ],
+  "follow_ups": [
+    "Spec 09 runs the real 10-step loop and compares latents with the diffusers pipeline from the same noise."
+  ]
+}
