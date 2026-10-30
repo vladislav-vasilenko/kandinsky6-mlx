@@ -36,6 +36,7 @@ packages = ["src/kandinsky6_mlx"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]
 markers = [
     "real_weights: needs downloaded checkpoint weights",
     "slow: takes more than a minute",

@@ -1,0 +1,453 @@
+{
+  "calls": {
+    "decode": [
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.decode.post_quant_conv@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Conv3d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "post_quant_conv",
+        "output": {
+          "tensor": "outputs.decode.post_quant_conv@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.decode.decoder.conv_in@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "HunyuanVideoCausalConv3d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "decoder.conv_in",
+        "output": {
+          "tensor": "outputs.decode.decoder.conv_in@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.decode.decoder.mid_block.resnets.0@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "HunyuanVideoResnetBlockCausal3D",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "decoder.mid_block.resnets.0",
+        "output": {
+          "tensor": "outputs.decode.decoder.mid_block.resnets.0@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.decode.decoder.mid_block.attentions.0@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Attention",
+        "kwargs": {
+          "dict": {
+            "attention_mask": {
+              "tensor": "inputs.decode.decoder.mid_block.attentions.0@0.kwargs.attention_mask"
+            }
+          }
+        },
+        "module": "decoder.mid_block.attentions.0",
+        "output": {
+          "tensor": "outputs.decode.decoder.mid_block.attentions.0@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.decode.decoder.mid_block.resnets.1@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "HunyuanVideoResnetBlockCausal3D",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "decoder.mid_block.resnets.1",
+        "output": {
+          "tensor": "outputs.decode.decoder.mid_block.resnets.1@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.decode.decoder.mid_block@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "HunyuanVideoMidBlock3D",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "decoder.mid_block",
+        "output": {
+          "tensor": "outputs.decode.decoder.mid_block@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.decode.decoder.up_blocks.0.resnets.0@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "HunyuanVideoResnetBlockCausal3D",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "decoder.up_blocks.0.resnets.0",
+        "output": {
+          "tensor": "outputs.decode.decoder.up_blocks.0.resnets.0@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.decode.decoder.up_blocks.0.resnets.1@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "HunyuanVideoResnetBlockCausal3D",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "decoder.up_blocks.0.resnets.1",
+        "output": {
+          "tensor": "outputs.decode.decoder.up_blocks.0.resnets.1@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.decode.decoder.up_blocks.0.upsamplers.0@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "HunyuanVideoUpsampleCausal3D",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "decoder.up_blocks.0.upsamplers.0",
+        "output": {
+          "tensor": "outputs.decode.decoder.up_blocks.0.upsamplers.0@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.decode.decoder.up_blocks.0@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "HunyuanVideoUpBlock3D",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "decoder.up_blocks.0",
+        "output": {
+          "tensor": "outputs.decode.decoder.up_blocks.0@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.decode.decoder.up_blocks.1.resnets.0@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "HunyuanVideoResnetBlockCausal3D",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "decoder.up_blocks.1.resnets.0",
+        "output": {
+          "tensor": "outputs.decode.decoder.up_blocks.1.resnets.0@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.decode.decoder.up_blocks.1.resnets.1@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "HunyuanVideoResnetBlockCausal3D",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "decoder.up_blocks.1.resnets.1",
+        "output": {
+          "tensor": "outputs.decode.decoder.up_blocks.1.resnets.1@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.decode.decoder.up_blocks.1.upsamplers.0@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "HunyuanVideoUpsampleCausal3D",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "decoder.up_blocks.1.upsamplers.0",
+        "output": {
+          "tensor": "outputs.decode.decoder.up_blocks.1.upsamplers.0@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.decode.decoder.up_blocks.1@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "HunyuanVideoUpBlock3D",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "decoder.up_blocks.1",
+        "output": {
+          "tensor": "outputs.decode.decoder.up_blocks.1@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.decode.decoder.up_blocks.2.resnets.0@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "HunyuanVideoResnetBlockCausal3D",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "decoder.up_blocks.2.resnets.0",
+        "output": {
+          "tensor": "outputs.decode.decoder.up_blocks.2.resnets.0@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.decode.decoder.up_blocks.2.resnets.1@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "HunyuanVideoResnetBlockCausal3D",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "decoder.up_blocks.2.resnets.1",
+        "output": {
+          "tensor": "outputs.decode.decoder.up_blocks.2.resnets.1@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.decode.decoder.up_blocks.2.upsamplers.0@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "HunyuanVideoUpsampleCausal3D",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "decoder.up_blocks.2.upsamplers.0",
+        "output": {
+          "tensor": "outputs.decode.decoder.up_blocks.2.upsamplers.0@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.decode.decoder.up_blocks.2@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "HunyuanVideoUpBlock3D",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "decoder.up_blocks.2",
+        "output": {
+          "tensor": "outputs.decode.decoder.up_blocks.2@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.decode.decoder.up_blocks.3.resnets.0@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "HunyuanVideoResnetBlockCausal3D",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "decoder.up_blocks.3.resnets.0",
+        "output": {
+          "tensor": "outputs.decode.decoder.up_blocks.3.resnets.0@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.decode.decoder.up_blocks.3.resnets.1@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "HunyuanVideoResnetBlockCausal3D",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "decoder.up_blocks.3.resnets.1",
+        "output": {
+          "tensor": "outputs.decode.decoder.up_blocks.3.resnets.1@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.decode.decoder.up_blocks.3@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "HunyuanVideoUpBlock3D",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "decoder.up_blocks.3",
+        "output": {
+          "tensor": "outputs.decode.decoder.up_blocks.3@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.decode.decoder.conv_out@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "HunyuanVideoCausalConv3d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "decoder.conv_out",
+        "output": {
+          "tensor": "outputs.decode.decoder.conv_out@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.decode.decoder@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "HunyuanVideoDecoder3D",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "decoder",
+        "output": {
+          "tensor": "outputs.decode.decoder@0.out"
+        }
+      }
+    ]
+  },
+  "config": {
+    "block_out_channels": [
+      8,
+      8,
+      8,
+      8
+    ],
+    "in_channels": 3,
+    "latent_channels": 16,
+    "layers_per_block": 1,
+    "mid_block_add_attention": true,
+    "norm_num_groups": 4,
+    "out_channels": 3,
+    "spatial_compression_ratio": 8,
+    "temporal_compression_ratio": 4
+  },
+  "fixture": "video_vae_decoder",
+  "reference": "diffusers.AutoencoderKLHunyuanVideo.decode",
+  "seeds": {
+    "numpy": 0,
+    "param_noise_generator": 1,
+    "torch_manual_seed": 0
+  },
+  "versions": {
+    "diffusers": "0.42.1",
+    "numpy": "2.5.4",
+    "torch": "2.15.0",
+    "transformers": "5.22.1"
+  }
+}

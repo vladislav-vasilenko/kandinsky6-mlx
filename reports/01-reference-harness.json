@@ -1,0 +1,45 @@
+{
+  "spec": "01-reference-harness",
+  "status": "PASS",
+  "date": "2026-10-31",
+  "environment": {"chip": "Apple M3 Max", "macos": "27.0.1", "mlx": "0.32.4", "torch": "2.15.0", "diffusers": "0.42.1"},
+  "deliverables": [
+    "src/kandinsky6_mlx/utils/compare.py",
+    "src/kandinsky6_mlx/utils/fixtures.py",
+    "reference/tiny_configs.py",
+    "reference/recorder.py",
+    "reference/make_tiny_fixtures.py",
+    "reference/record_real_activations.py",
+    "fixtures/tiny/{dit,dit_variants,video_vae_decoder,audio_vae_decoder,vocoder,piflow}.{safetensors,json}",
+    "tests/unit/test_compare.py",
+    "tests/unit/test_fixtures.py",
+    "tests/unit/test_recorder.py",
+    "reports/01-reference-harness.json"
+  ],
+  "tests": {"command": "uv run pytest -q", "passed": 26, "failed": 0},
+  "validation": [
+    {"name": "fixture determinism", "metrics": {"files": 6, "byte_identical": 6}, "criterion": "two runs give byte-identical safetensors", "pass": true},
+    {"name": "fixtures/tiny size", "metrics": {"total_mib": 9.8}, "criterion": "< 20 MB", "pass": true},
+    {"name": "recorded calls replay", "metrics": {"calls": 340, "max_rel_max": "<= 1e-6"}, "criterion": "each recorded module reproduces its recorded output from its recorded inputs, rel_max <= 1e-6", "pass": true},
+    {"name": "recorder CLI on a saved tiny DiT", "metrics": {"block_calls": 4}, "criterion": "outputs equal a direct forward, rel_max <= 1e-6", "pass": true},
+    {"name": "uv run ruff check", "metrics": {}, "criterion": "no findings", "pass": true}
+  ],
+  "fixtures": {
+    "dit": "scenarios av (video+audio, padded text mask, token types; 51 calls of every primitive and block), video_only (blocks), rope_pos (repeated temporal position 0; blocks)",
+    "dit_variants": "7 fused-block flag combinations (cross_gates, fix_modulation, ca_rope) other than the released all-true one; fused blocks recorded",
+    "video_vae_decoder": "latents [1,16,2,4,4] -> frames [1,3,5,32,32]; 23 decoder submodule calls",
+    "audio_vae_decoder": "latents [1,8,6] -> mel [1,16,12]; 12 decoder submodule calls",
+    "vocoder": "mel [1,16,12] -> waveform [1,1,192]; 232 calls (Snake, filters, AMP blocks, transposed convs)",
+    "piflow": "released Lite-distill config, 10 steps for a video-like [1,3,2,3,16] and an audio-like [1,6,40] sample with widened random model outputs"
+  },
+  "skipped": [{"what": "running the recorder on real checkpoints", "reason": "out of scope for spec 01; done in later specs"}],
+  "deviations": [
+    {"what": "bfloat16 tensors are stored once in their own dtype, not also as float32", "why": "bfloat16 -> float32 is exact; load_fixture(backend='numpy') returns the float32 copy"},
+    {"what": "parameters left constant by default init (norm scales/biases, learnable gains, Snake alpha/beta) get deterministic noise; audio VAE data_mean/data_std buffers too", "why": "otherwise these parameters would not affect outputs and parity tests could not catch wrong handling of them"},
+    {"what": "CI installs the reference group", "why": "fixture and recorder tests need PyTorch and diffusers"}
+  ],
+  "follow_ups": [
+    "Real-weight recordings (spec 05+) need a machine with the checkpoint, e.g. Kaggle.",
+    "A video VAE encoder fixture is added in spec 12."
+  ]
+}

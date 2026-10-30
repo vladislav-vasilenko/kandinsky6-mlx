@@ -1,0 +1,250 @@
+{
+  "calls": {
+    "decode": [
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.decode.vae.decoder.conv_in@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioMPConv1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "vae.decoder.conv_in",
+        "output": {
+          "tensor": "outputs.decode.vae.decoder.conv_in@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.decode.vae.decoder.mid.block_1@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioResnetBlock1D",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "vae.decoder.mid.block_1",
+        "output": {
+          "tensor": "outputs.decode.vae.decoder.mid.block_1@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.decode.vae.decoder.mid.attn_1@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioAttnBlock1D",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "vae.decoder.mid.attn_1",
+        "output": {
+          "tensor": "outputs.decode.vae.decoder.mid.attn_1@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.decode.vae.decoder.mid.block_2@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioResnetBlock1D",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "vae.decoder.mid.block_2",
+        "output": {
+          "tensor": "outputs.decode.vae.decoder.mid.block_2@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.decode.vae.decoder.up.2.block.0@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioResnetBlock1D",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "vae.decoder.up.2.block.0",
+        "output": {
+          "tensor": "outputs.decode.vae.decoder.up.2.block.0@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.decode.vae.decoder.up.2.block.1@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioResnetBlock1D",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "vae.decoder.up.2.block.1",
+        "output": {
+          "tensor": "outputs.decode.vae.decoder.up.2.block.1@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.decode.vae.decoder.up.1.block.0@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioResnetBlock1D",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "vae.decoder.up.1.block.0",
+        "output": {
+          "tensor": "outputs.decode.vae.decoder.up.1.block.0@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.decode.vae.decoder.up.1.block.1@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioResnetBlock1D",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "vae.decoder.up.1.block.1",
+        "output": {
+          "tensor": "outputs.decode.vae.decoder.up.1.block.1@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.decode.vae.decoder.up.1.upsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioUpsample1D",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "vae.decoder.up.1.upsample",
+        "output": {
+          "tensor": "outputs.decode.vae.decoder.up.1.upsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.decode.vae.decoder.up.0.block.0@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioResnetBlock1D",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "vae.decoder.up.0.block.0",
+        "output": {
+          "tensor": "outputs.decode.vae.decoder.up.0.block.0@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.decode.vae.decoder.up.0.block.1@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioResnetBlock1D",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "vae.decoder.up.0.block.1",
+        "output": {
+          "tensor": "outputs.decode.vae.decoder.up.0.block.1@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.decode.vae.decoder@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioDecoder1D",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "vae.decoder",
+        "output": {
+          "tensor": "outputs.decode.vae.decoder@0.out"
+        }
+      }
+    ]
+  },
+  "config": {
+    "channel_multipliers": [
+      1,
+      2,
+      4
+    ],
+    "hidden_channels": 8,
+    "hop_length": 16,
+    "latent_channels": 8,
+    "layers_per_block": 1,
+    "mel_bins": 16,
+    "n_fft": 64,
+    "sample_rate": 44100,
+    "scaling_factor": 0.417
+  },
+  "fixture": "audio_vae_decoder",
+  "reference": "diffusers.MMAudioVAE.decode",
+  "seeds": {
+    "numpy": 0,
+    "param_noise_generator": 1,
+    "torch_manual_seed": 0
+  },
+  "versions": {
+    "diffusers": "0.42.1",
+    "numpy": "2.5.4",
+    "torch": "2.15.0",
+    "transformers": "5.22.1"
+  }
+}

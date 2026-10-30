@@ -1,0 +1,1528 @@
+{
+  "calls": {
+    "av": [
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.av.video_text_rope_embeddings@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6RoPE1D",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "video_text_rope_embeddings",
+        "output": {
+          "tensor": "outputs.av.video_text_rope_embeddings@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.av.audio_text_rope_embeddings@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6RoPE1D",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "audio_text_rope_embeddings",
+        "output": {
+          "tensor": "outputs.av.audio_text_rope_embeddings@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.av.video_text_embeddings@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6TextEmbeddings",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "video_text_embeddings",
+        "output": {
+          "tensor": "outputs.av.video_text_embeddings@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.av.video_time_embeddings@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6TimeEmbeddings",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "video_time_embeddings",
+        "output": {
+          "tensor": "outputs.av.video_time_embeddings@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.av.video_pooled_text_embeddings@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6TextEmbeddings",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "video_pooled_text_embeddings",
+        "output": {
+          "tensor": "outputs.av.video_pooled_text_embeddings@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.av.video_text_transformer_blocks.0.text_modulation@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6Modulation",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "video_text_transformer_blocks.0.text_modulation",
+        "output": {
+          "tensor": "outputs.av.video_text_transformer_blocks.0.text_modulation@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.av.video_text_transformer_blocks.0.attn@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6Attention",
+        "kwargs": {
+          "dict": {
+            "attn_mask": {
+              "tensor": "inputs.av.video_text_transformer_blocks.0.attn@0.kwargs.attn_mask"
+            },
+            "rotary_emb": {
+              "tensor": "inputs.av.video_text_transformer_blocks.0.attn@0.kwargs.rotary_emb"
+            }
+          }
+        },
+        "module": "video_text_transformer_blocks.0.attn",
+        "output": {
+          "tensor": "outputs.av.video_text_transformer_blocks.0.attn@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.av.video_text_transformer_blocks.0.feed_forward@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "FeedForward",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "video_text_transformer_blocks.0.feed_forward",
+        "output": {
+          "tensor": "outputs.av.video_text_transformer_blocks.0.feed_forward@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.av.video_text_transformer_blocks.0@0.args.0"
+            },
+            {
+              "tensor": "inputs.av.video_text_transformer_blocks.0@0.args.1"
+            },
+            {
+              "tensor": "inputs.av.video_text_transformer_blocks.0@0.args.2"
+            },
+            {
+              "tensor": "inputs.av.video_text_transformer_blocks.0@0.args.3"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6TransformerEncoderBlock",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "video_text_transformer_blocks.0",
+        "output": {
+          "tensor": "outputs.av.video_text_transformer_blocks.0@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.av.audio_text_embeddings@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6TextEmbeddings",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "audio_text_embeddings",
+        "output": {
+          "tensor": "outputs.av.audio_text_embeddings@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.av.audio_time_embeddings@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6TimeEmbeddings",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "audio_time_embeddings",
+        "output": {
+          "tensor": "outputs.av.audio_time_embeddings@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.av.audio_pooled_text_embeddings@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6TextEmbeddings",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "audio_pooled_text_embeddings",
+        "output": {
+          "tensor": "outputs.av.audio_pooled_text_embeddings@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.av.audio_text_transformer_blocks.0.text_modulation@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6Modulation",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "audio_text_transformer_blocks.0.text_modulation",
+        "output": {
+          "tensor": "outputs.av.audio_text_transformer_blocks.0.text_modulation@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.av.audio_text_transformer_blocks.0.attn@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6Attention",
+        "kwargs": {
+          "dict": {
+            "attn_mask": {
+              "tensor": "inputs.av.audio_text_transformer_blocks.0.attn@0.kwargs.attn_mask"
+            },
+            "rotary_emb": {
+              "tensor": "inputs.av.audio_text_transformer_blocks.0.attn@0.kwargs.rotary_emb"
+            }
+          }
+        },
+        "module": "audio_text_transformer_blocks.0.attn",
+        "output": {
+          "tensor": "outputs.av.audio_text_transformer_blocks.0.attn@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.av.audio_text_transformer_blocks.0.feed_forward@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "FeedForward",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "audio_text_transformer_blocks.0.feed_forward",
+        "output": {
+          "tensor": "outputs.av.audio_text_transformer_blocks.0.feed_forward@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.av.audio_text_transformer_blocks.0@0.args.0"
+            },
+            {
+              "tensor": "inputs.av.audio_text_transformer_blocks.0@0.args.1"
+            },
+            {
+              "tensor": "inputs.av.audio_text_transformer_blocks.0@0.args.2"
+            },
+            {
+              "tensor": "inputs.av.audio_text_transformer_blocks.0@0.args.3"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6TransformerEncoderBlock",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "audio_text_transformer_blocks.0",
+        "output": {
+          "tensor": "outputs.av.audio_text_transformer_blocks.0@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.av.visual_embeddings@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6VisualEmbeddings",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "visual_embeddings",
+        "output": {
+          "tensor": "outputs.av.visual_embeddings@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.av.visual_token_type_embeddings@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Embedding",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "visual_token_type_embeddings",
+        "output": {
+          "tensor": "outputs.av.visual_token_type_embeddings@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tuple": [
+                {
+                  "tensor": "inputs.av.visual_rope_embeddings@0.args.0.0"
+                },
+                {
+                  "tensor": "inputs.av.visual_rope_embeddings@0.args.0.1"
+                },
+                {
+                  "tensor": "inputs.av.visual_rope_embeddings@0.args.0.2"
+                }
+              ]
+            },
+            {
+              "tuple": [
+                {
+                  "value": 1.0
+                },
+                {
+                  "value": 2.0
+                },
+                {
+                  "value": 2.0
+                }
+              ]
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6RoPE3D",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "visual_rope_embeddings",
+        "output": {
+          "tensor": "outputs.av.visual_rope_embeddings@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.av.audio_embeddings@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6TextEmbeddings",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "audio_embeddings",
+        "output": {
+          "tensor": "outputs.av.audio_embeddings@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.av.audio_rope_embeddings@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6RoPE1D",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "audio_rope_embeddings",
+        "output": {
+          "tensor": "outputs.av.audio_rope_embeddings@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.av.visual_transformer_blocks.0.video_dec_block.visual_modulation@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6Modulation",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "visual_transformer_blocks.0.video_dec_block.visual_modulation",
+        "output": {
+          "tensor": "outputs.av.visual_transformer_blocks.0.video_dec_block.visual_modulation@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.av.visual_transformer_blocks.0.video_dec_block.self_attention@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6Attention",
+        "kwargs": {
+          "dict": {
+            "rotary_emb": {
+              "tensor": "inputs.av.visual_transformer_blocks.0.video_dec_block.self_attention@0.kwargs.rotary_emb"
+            }
+          }
+        },
+        "module": "visual_transformer_blocks.0.video_dec_block.self_attention",
+        "output": {
+          "tensor": "outputs.av.visual_transformer_blocks.0.video_dec_block.self_attention@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.av.visual_transformer_blocks.0.video_dec_block.cross_attention@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6Attention",
+        "kwargs": {
+          "dict": {
+            "attn_mask": {
+              "tensor": "inputs.av.visual_transformer_blocks.0.video_dec_block.cross_attention@0.kwargs.attn_mask"
+            },
+            "encoder_hidden_states": {
+              "tensor": "inputs.av.visual_transformer_blocks.0.video_dec_block.cross_attention@0.kwargs.encoder_hidden_states"
+            }
+          }
+        },
+        "module": "visual_transformer_blocks.0.video_dec_block.cross_attention",
+        "output": {
+          "tensor": "outputs.av.visual_transformer_blocks.0.video_dec_block.cross_attention@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.av.visual_transformer_blocks.0.audio_dec_block.visual_modulation@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6Modulation",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "visual_transformer_blocks.0.audio_dec_block.visual_modulation",
+        "output": {
+          "tensor": "outputs.av.visual_transformer_blocks.0.audio_dec_block.visual_modulation@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.av.visual_transformer_blocks.0.audio_dec_block.self_attention@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6Attention",
+        "kwargs": {
+          "dict": {
+            "rotary_emb": {
+              "tensor": "inputs.av.visual_transformer_blocks.0.audio_dec_block.self_attention@0.kwargs.rotary_emb"
+            }
+          }
+        },
+        "module": "visual_transformer_blocks.0.audio_dec_block.self_attention",
+        "output": {
+          "tensor": "outputs.av.visual_transformer_blocks.0.audio_dec_block.self_attention@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.av.visual_transformer_blocks.0.audio_dec_block.cross_attention@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6Attention",
+        "kwargs": {
+          "dict": {
+            "attn_mask": {
+              "tensor": "inputs.av.visual_transformer_blocks.0.audio_dec_block.cross_attention@0.kwargs.attn_mask"
+            },
+            "encoder_hidden_states": {
+              "tensor": "inputs.av.visual_transformer_blocks.0.audio_dec_block.cross_attention@0.kwargs.encoder_hidden_states"
+            }
+          }
+        },
+        "module": "visual_transformer_blocks.0.audio_dec_block.cross_attention",
+        "output": {
+          "tensor": "outputs.av.visual_transformer_blocks.0.audio_dec_block.cross_attention@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.av.visual_transformer_blocks.0.va_modulation@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6Modulation",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "visual_transformer_blocks.0.va_modulation",
+        "output": {
+          "tensor": "outputs.av.visual_transformer_blocks.0.va_modulation@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.av.visual_transformer_blocks.0.av_modulation@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6Modulation",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "visual_transformer_blocks.0.av_modulation",
+        "output": {
+          "tensor": "outputs.av.visual_transformer_blocks.0.av_modulation@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.av.visual_transformer_blocks.0.va_cross_attention@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6Attention",
+        "kwargs": {
+          "dict": {
+            "encoder_hidden_states": {
+              "tensor": "inputs.av.visual_transformer_blocks.0.va_cross_attention@0.kwargs.encoder_hidden_states"
+            },
+            "rope_kv": {
+              "tensor": "inputs.av.visual_transformer_blocks.0.va_cross_attention@0.kwargs.rope_kv"
+            },
+            "rope_q": {
+              "tensor": "inputs.av.visual_transformer_blocks.0.va_cross_attention@0.kwargs.rope_q"
+            }
+          }
+        },
+        "module": "visual_transformer_blocks.0.va_cross_attention",
+        "output": {
+          "tensor": "outputs.av.visual_transformer_blocks.0.va_cross_attention@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.av.visual_transformer_blocks.0.av_cross_attention@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6Attention",
+        "kwargs": {
+          "dict": {
+            "encoder_hidden_states": {
+              "tensor": "inputs.av.visual_transformer_blocks.0.av_cross_attention@0.kwargs.encoder_hidden_states"
+            },
+            "rope_kv": {
+              "tensor": "inputs.av.visual_transformer_blocks.0.av_cross_attention@0.kwargs.rope_kv"
+            },
+            "rope_q": {
+              "tensor": "inputs.av.visual_transformer_blocks.0.av_cross_attention@0.kwargs.rope_q"
+            }
+          }
+        },
+        "module": "visual_transformer_blocks.0.av_cross_attention",
+        "output": {
+          "tensor": "outputs.av.visual_transformer_blocks.0.av_cross_attention@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.av.visual_transformer_blocks.0.video_dec_block.feed_forward@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "FeedForward",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "visual_transformer_blocks.0.video_dec_block.feed_forward",
+        "output": {
+          "tensor": "outputs.av.visual_transformer_blocks.0.video_dec_block.feed_forward@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.av.visual_transformer_blocks.0.audio_dec_block.feed_forward@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "FeedForward",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "visual_transformer_blocks.0.audio_dec_block.feed_forward",
+        "output": {
+          "tensor": "outputs.av.visual_transformer_blocks.0.audio_dec_block.feed_forward@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.av.visual_transformer_blocks.0@0.args.0"
+            },
+            {
+              "tensor": "inputs.av.visual_transformer_blocks.0@0.args.1"
+            },
+            {
+              "tensor": "inputs.av.visual_transformer_blocks.0@0.args.2"
+            },
+            {
+              "tensor": "inputs.av.visual_transformer_blocks.0@0.args.3"
+            },
+            {
+              "tuple": [
+                {
+                  "tensor": "inputs.av.visual_transformer_blocks.0@0.args.4.0"
+                },
+                {
+                  "tensor": "inputs.av.visual_transformer_blocks.0@0.args.4.1"
+                }
+              ]
+            },
+            {
+              "tensor": "inputs.av.visual_transformer_blocks.0@0.args.5"
+            },
+            {
+              "tensor": "inputs.av.visual_transformer_blocks.0@0.args.6"
+            },
+            {
+              "tensor": "inputs.av.visual_transformer_blocks.0@0.args.7"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6FusedTransformerDecoderBlock",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "visual_transformer_blocks.0",
+        "output": {
+          "tuple": [
+            {
+              "tensor": "outputs.av.visual_transformer_blocks.0@0.out.0"
+            },
+            {
+              "tensor": "outputs.av.visual_transformer_blocks.0@0.out.1"
+            }
+          ]
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.av.visual_transformer_blocks.1.video_dec_block.visual_modulation@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6Modulation",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "visual_transformer_blocks.1.video_dec_block.visual_modulation",
+        "output": {
+          "tensor": "outputs.av.visual_transformer_blocks.1.video_dec_block.visual_modulation@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.av.visual_transformer_blocks.1.video_dec_block.self_attention@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6Attention",
+        "kwargs": {
+          "dict": {
+            "rotary_emb": {
+              "tensor": "inputs.av.visual_transformer_blocks.1.video_dec_block.self_attention@0.kwargs.rotary_emb"
+            }
+          }
+        },
+        "module": "visual_transformer_blocks.1.video_dec_block.self_attention",
+        "output": {
+          "tensor": "outputs.av.visual_transformer_blocks.1.video_dec_block.self_attention@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.av.visual_transformer_blocks.1.video_dec_block.cross_attention@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6Attention",
+        "kwargs": {
+          "dict": {
+            "attn_mask": {
+              "tensor": "inputs.av.visual_transformer_blocks.1.video_dec_block.cross_attention@0.kwargs.attn_mask"
+            },
+            "encoder_hidden_states": {
+              "tensor": "inputs.av.visual_transformer_blocks.1.video_dec_block.cross_attention@0.kwargs.encoder_hidden_states"
+            }
+          }
+        },
+        "module": "visual_transformer_blocks.1.video_dec_block.cross_attention",
+        "output": {
+          "tensor": "outputs.av.visual_transformer_blocks.1.video_dec_block.cross_attention@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.av.visual_transformer_blocks.1.audio_dec_block.visual_modulation@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6Modulation",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "visual_transformer_blocks.1.audio_dec_block.visual_modulation",
+        "output": {
+          "tensor": "outputs.av.visual_transformer_blocks.1.audio_dec_block.visual_modulation@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.av.visual_transformer_blocks.1.audio_dec_block.self_attention@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6Attention",
+        "kwargs": {
+          "dict": {
+            "rotary_emb": {
+              "tensor": "inputs.av.visual_transformer_blocks.1.audio_dec_block.self_attention@0.kwargs.rotary_emb"
+            }
+          }
+        },
+        "module": "visual_transformer_blocks.1.audio_dec_block.self_attention",
+        "output": {
+          "tensor": "outputs.av.visual_transformer_blocks.1.audio_dec_block.self_attention@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.av.visual_transformer_blocks.1.audio_dec_block.cross_attention@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6Attention",
+        "kwargs": {
+          "dict": {
+            "attn_mask": {
+              "tensor": "inputs.av.visual_transformer_blocks.1.audio_dec_block.cross_attention@0.kwargs.attn_mask"
+            },
+            "encoder_hidden_states": {
+              "tensor": "inputs.av.visual_transformer_blocks.1.audio_dec_block.cross_attention@0.kwargs.encoder_hidden_states"
+            }
+          }
+        },
+        "module": "visual_transformer_blocks.1.audio_dec_block.cross_attention",
+        "output": {
+          "tensor": "outputs.av.visual_transformer_blocks.1.audio_dec_block.cross_attention@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.av.visual_transformer_blocks.1.va_modulation@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6Modulation",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "visual_transformer_blocks.1.va_modulation",
+        "output": {
+          "tensor": "outputs.av.visual_transformer_blocks.1.va_modulation@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.av.visual_transformer_blocks.1.av_modulation@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6Modulation",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "visual_transformer_blocks.1.av_modulation",
+        "output": {
+          "tensor": "outputs.av.visual_transformer_blocks.1.av_modulation@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.av.visual_transformer_blocks.1.va_cross_attention@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6Attention",
+        "kwargs": {
+          "dict": {
+            "encoder_hidden_states": {
+              "tensor": "inputs.av.visual_transformer_blocks.1.va_cross_attention@0.kwargs.encoder_hidden_states"
+            },
+            "rope_kv": {
+              "tensor": "inputs.av.visual_transformer_blocks.1.va_cross_attention@0.kwargs.rope_kv"
+            },
+            "rope_q": {
+              "tensor": "inputs.av.visual_transformer_blocks.1.va_cross_attention@0.kwargs.rope_q"
+            }
+          }
+        },
+        "module": "visual_transformer_blocks.1.va_cross_attention",
+        "output": {
+          "tensor": "outputs.av.visual_transformer_blocks.1.va_cross_attention@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.av.visual_transformer_blocks.1.av_cross_attention@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6Attention",
+        "kwargs": {
+          "dict": {
+            "encoder_hidden_states": {
+              "tensor": "inputs.av.visual_transformer_blocks.1.av_cross_attention@0.kwargs.encoder_hidden_states"
+            },
+            "rope_kv": {
+              "tensor": "inputs.av.visual_transformer_blocks.1.av_cross_attention@0.kwargs.rope_kv"
+            },
+            "rope_q": {
+              "tensor": "inputs.av.visual_transformer_blocks.1.av_cross_attention@0.kwargs.rope_q"
+            }
+          }
+        },
+        "module": "visual_transformer_blocks.1.av_cross_attention",
+        "output": {
+          "tensor": "outputs.av.visual_transformer_blocks.1.av_cross_attention@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.av.visual_transformer_blocks.1.video_dec_block.feed_forward@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "FeedForward",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "visual_transformer_blocks.1.video_dec_block.feed_forward",
+        "output": {
+          "tensor": "outputs.av.visual_transformer_blocks.1.video_dec_block.feed_forward@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.av.visual_transformer_blocks.1.audio_dec_block.feed_forward@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "FeedForward",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "visual_transformer_blocks.1.audio_dec_block.feed_forward",
+        "output": {
+          "tensor": "outputs.av.visual_transformer_blocks.1.audio_dec_block.feed_forward@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.av.visual_transformer_blocks.1@0.args.0"
+            },
+            {
+              "tensor": "inputs.av.visual_transformer_blocks.1@0.args.1"
+            },
+            {
+              "tensor": "inputs.av.visual_transformer_blocks.1@0.args.2"
+            },
+            {
+              "tensor": "inputs.av.visual_transformer_blocks.1@0.args.3"
+            },
+            {
+              "tuple": [
+                {
+                  "tensor": "inputs.av.visual_transformer_blocks.1@0.args.4.0"
+                },
+                {
+                  "tensor": "inputs.av.visual_transformer_blocks.1@0.args.4.1"
+                }
+              ]
+            },
+            {
+              "tensor": "inputs.av.visual_transformer_blocks.1@0.args.5"
+            },
+            {
+              "tensor": "inputs.av.visual_transformer_blocks.1@0.args.6"
+            },
+            {
+              "tensor": "inputs.av.visual_transformer_blocks.1@0.args.7"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6FusedTransformerDecoderBlock",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "visual_transformer_blocks.1",
+        "output": {
+          "tuple": [
+            {
+              "tensor": "outputs.av.visual_transformer_blocks.1@0.out.0"
+            },
+            {
+              "tensor": "outputs.av.visual_transformer_blocks.1@0.out.1"
+            }
+          ]
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.av.out_layer.modulation@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6Modulation",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "out_layer.modulation",
+        "output": {
+          "tensor": "outputs.av.out_layer.modulation@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.av.out_layer@0.args.0"
+            },
+            {
+              "tensor": "inputs.av.out_layer@0.args.1"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6OutLayer",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "out_layer",
+        "output": {
+          "tensor": "outputs.av.out_layer@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.av.audio_out_layer.modulation@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6Modulation",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "audio_out_layer.modulation",
+        "output": {
+          "tensor": "outputs.av.audio_out_layer.modulation@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.av.audio_out_layer@0.args.0"
+            },
+            {
+              "tensor": "inputs.av.audio_out_layer@0.args.1"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6OutLayerAudio",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "audio_out_layer",
+        "output": {
+          "tensor": "outputs.av.audio_out_layer@0.out"
+        }
+      }
+    ],
+    "rope_pos": [
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.rope_pos.video_text_transformer_blocks.0@0.args.0"
+            },
+            {
+              "tensor": "inputs.rope_pos.video_text_transformer_blocks.0@0.args.1"
+            },
+            {
+              "tensor": "inputs.rope_pos.video_text_transformer_blocks.0@0.args.2"
+            },
+            {
+              "none": true
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6TransformerEncoderBlock",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "video_text_transformer_blocks.0",
+        "output": {
+          "tensor": "outputs.rope_pos.video_text_transformer_blocks.0@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.rope_pos.audio_text_transformer_blocks.0@0.args.0"
+            },
+            {
+              "tensor": "inputs.rope_pos.audio_text_transformer_blocks.0@0.args.1"
+            },
+            {
+              "tensor": "inputs.rope_pos.audio_text_transformer_blocks.0@0.args.2"
+            },
+            {
+              "none": true
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6TransformerEncoderBlock",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "audio_text_transformer_blocks.0",
+        "output": {
+          "tensor": "outputs.rope_pos.audio_text_transformer_blocks.0@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.rope_pos.visual_transformer_blocks.0@0.args.0"
+            },
+            {
+              "tensor": "inputs.rope_pos.visual_transformer_blocks.0@0.args.1"
+            },
+            {
+              "tensor": "inputs.rope_pos.visual_transformer_blocks.0@0.args.2"
+            },
+            {
+              "tensor": "inputs.rope_pos.visual_transformer_blocks.0@0.args.3"
+            },
+            {
+              "tuple": [
+                {
+                  "tensor": "inputs.rope_pos.visual_transformer_blocks.0@0.args.4.0"
+                },
+                {
+                  "tensor": "inputs.rope_pos.visual_transformer_blocks.0@0.args.4.1"
+                }
+              ]
+            },
+            {
+              "tensor": "inputs.rope_pos.visual_transformer_blocks.0@0.args.5"
+            },
+            {
+              "tensor": "inputs.rope_pos.visual_transformer_blocks.0@0.args.6"
+            },
+            {
+              "none": true
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6FusedTransformerDecoderBlock",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "visual_transformer_blocks.0",
+        "output": {
+          "tuple": [
+            {
+              "tensor": "outputs.rope_pos.visual_transformer_blocks.0@0.out.0"
+            },
+            {
+              "tensor": "outputs.rope_pos.visual_transformer_blocks.0@0.out.1"
+            }
+          ]
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.rope_pos.visual_transformer_blocks.1@0.args.0"
+            },
+            {
+              "tensor": "inputs.rope_pos.visual_transformer_blocks.1@0.args.1"
+            },
+            {
+              "tensor": "inputs.rope_pos.visual_transformer_blocks.1@0.args.2"
+            },
+            {
+              "tensor": "inputs.rope_pos.visual_transformer_blocks.1@0.args.3"
+            },
+            {
+              "tuple": [
+                {
+                  "tensor": "inputs.rope_pos.visual_transformer_blocks.1@0.args.4.0"
+                },
+                {
+                  "tensor": "inputs.rope_pos.visual_transformer_blocks.1@0.args.4.1"
+                }
+              ]
+            },
+            {
+              "tensor": "inputs.rope_pos.visual_transformer_blocks.1@0.args.5"
+            },
+            {
+              "tensor": "inputs.rope_pos.visual_transformer_blocks.1@0.args.6"
+            },
+            {
+              "none": true
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6FusedTransformerDecoderBlock",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "visual_transformer_blocks.1",
+        "output": {
+          "tuple": [
+            {
+              "tensor": "outputs.rope_pos.visual_transformer_blocks.1@0.out.0"
+            },
+            {
+              "tensor": "outputs.rope_pos.visual_transformer_blocks.1@0.out.1"
+            }
+          ]
+        }
+      }
+    ],
+    "video_only": [
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.video_only.video_text_transformer_blocks.0@0.args.0"
+            },
+            {
+              "tensor": "inputs.video_only.video_text_transformer_blocks.0@0.args.1"
+            },
+            {
+              "tensor": "inputs.video_only.video_text_transformer_blocks.0@0.args.2"
+            },
+            {
+              "none": true
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6TransformerEncoderBlock",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "video_text_transformer_blocks.0",
+        "output": {
+          "tensor": "outputs.video_only.video_text_transformer_blocks.0@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.video_only.audio_text_transformer_blocks.0@0.args.0"
+            },
+            {
+              "tensor": "inputs.video_only.audio_text_transformer_blocks.0@0.args.1"
+            },
+            {
+              "tensor": "inputs.video_only.audio_text_transformer_blocks.0@0.args.2"
+            },
+            {
+              "none": true
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6TransformerEncoderBlock",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "audio_text_transformer_blocks.0",
+        "output": {
+          "tensor": "outputs.video_only.audio_text_transformer_blocks.0@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.video_only.visual_transformer_blocks.0@0.args.0"
+            },
+            {
+              "none": true
+            },
+            {
+              "tensor": "inputs.video_only.visual_transformer_blocks.0@0.args.2"
+            },
+            {
+              "tensor": "inputs.video_only.visual_transformer_blocks.0@0.args.3"
+            },
+            {
+              "tuple": [
+                {
+                  "tensor": "inputs.video_only.visual_transformer_blocks.0@0.args.4.0"
+                },
+                {
+                  "tensor": "inputs.video_only.visual_transformer_blocks.0@0.args.4.1"
+                }
+              ]
+            },
+            {
+              "tensor": "inputs.video_only.visual_transformer_blocks.0@0.args.5"
+            },
+            {
+              "none": true
+            },
+            {
+              "none": true
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6FusedTransformerDecoderBlock",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "visual_transformer_blocks.0",
+        "output": {
+          "tuple": [
+            {
+              "tensor": "outputs.video_only.visual_transformer_blocks.0@0.out.0"
+            },
+            {
+              "none": true
+            }
+          ]
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.video_only.visual_transformer_blocks.1@0.args.0"
+            },
+            {
+              "none": true
+            },
+            {
+              "tensor": "inputs.video_only.visual_transformer_blocks.1@0.args.2"
+            },
+            {
+              "tensor": "inputs.video_only.visual_transformer_blocks.1@0.args.3"
+            },
+            {
+              "tuple": [
+                {
+                  "tensor": "inputs.video_only.visual_transformer_blocks.1@0.args.4.0"
+                },
+                {
+                  "tensor": "inputs.video_only.visual_transformer_blocks.1@0.args.4.1"
+                }
+              ]
+            },
+            {
+              "tensor": "inputs.video_only.visual_transformer_blocks.1@0.args.5"
+            },
+            {
+              "none": true
+            },
+            {
+              "none": true
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6FusedTransformerDecoderBlock",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "visual_transformer_blocks.1",
+        "output": {
+          "tuple": [
+            {
+              "tensor": "outputs.video_only.visual_transformer_blocks.1@0.out.0"
+            },
+            {
+              "none": true
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "config": {
+    "audio_freqs_scaling": 0.144,
+    "axes_dims": [
+      2,
+      2,
+      4
+    ],
+    "axes_dims_a": [
+      2,
+      2,
+      4
+    ],
+    "ca_rope": true,
+    "cross_gates": true,
+    "ff_dim": 64,
+    "ff_dim_a": 32,
+    "fix_modulation": true,
+    "in_audio_dim": 40,
+    "in_text_dim": 8,
+    "in_text_dim2": 4,
+    "in_visual_dim": 16,
+    "model_dim": 32,
+    "model_dim_a": 16,
+    "num_text_blocks": 1,
+    "num_visual_blocks": 2,
+    "out_audio_dim": 400,
+    "out_visual_dim": 160,
+    "patch_size": [
+      1,
+      2,
+      2
+    ],
+    "scale_factor": [
+      1.0,
+      2.0,
+      2.0
+    ],
+    "text_token_padding": true,
+    "time_dim": 16,
+    "time_dim_a": 16,
+    "visual_cond": true,
+    "visual_token_type_num_embeddings": 2
+  },
+  "fixture": "dit",
+  "reference": "diffusers.Kandinsky6Transformer3DModel.forward",
+  "scenarios": {
+    "av": "video+audio, padded text mask, token types; every primitive and block recorded",
+    "rope_pos": "custom visual_rope_pos with repeated temporal 0; blocks recorded",
+    "video_only": "no audio; blocks recorded"
+  },
+  "seeds": {
+    "numpy": {
+      "av": 0,
+      "rope_pos": 2,
+      "video_only": 1
+    },
+    "param_noise_generator": 1,
+    "torch_manual_seed": 0
+  },
+  "versions": {
+    "diffusers": "0.42.1",
+    "numpy": "2.5.4",
+    "torch": "2.15.0",
+    "transformers": "5.22.1"
+  }
+}

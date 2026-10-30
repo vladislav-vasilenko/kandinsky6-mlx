@@ -1,0 +1,4231 @@
+{
+  "calls": {
+    "forward": [
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.ups.0.0@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "ConvTranspose1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "ups.0.0",
+        "output": {
+          "tensor": "outputs.forward.ups.0.0@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.0.activations.0.upsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioUpSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.0.activations.0.upsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.0.activations.0.upsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.0.activations.0.act@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioSnakeBeta",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.0.activations.0.act",
+        "output": {
+          "tensor": "outputs.forward.resblocks.0.activations.0.act@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.0.activations.0.downsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioDownSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.0.activations.0.downsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.0.activations.0.downsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.0.activations.0@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioActivation1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.0.activations.0",
+        "output": {
+          "tensor": "outputs.forward.resblocks.0.activations.0@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.0.activations.1.upsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioUpSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.0.activations.1.upsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.0.activations.1.upsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.0.activations.1.act@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioSnakeBeta",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.0.activations.1.act",
+        "output": {
+          "tensor": "outputs.forward.resblocks.0.activations.1.act@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.0.activations.1.downsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioDownSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.0.activations.1.downsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.0.activations.1.downsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.0.activations.1@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioActivation1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.0.activations.1",
+        "output": {
+          "tensor": "outputs.forward.resblocks.0.activations.1@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.0.activations.2.upsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioUpSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.0.activations.2.upsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.0.activations.2.upsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.0.activations.2.act@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioSnakeBeta",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.0.activations.2.act",
+        "output": {
+          "tensor": "outputs.forward.resblocks.0.activations.2.act@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.0.activations.2.downsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioDownSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.0.activations.2.downsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.0.activations.2.downsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.0.activations.2@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioActivation1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.0.activations.2",
+        "output": {
+          "tensor": "outputs.forward.resblocks.0.activations.2@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.0.activations.3.upsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioUpSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.0.activations.3.upsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.0.activations.3.upsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.0.activations.3.act@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioSnakeBeta",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.0.activations.3.act",
+        "output": {
+          "tensor": "outputs.forward.resblocks.0.activations.3.act@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.0.activations.3.downsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioDownSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.0.activations.3.downsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.0.activations.3.downsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.0.activations.3@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioActivation1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.0.activations.3",
+        "output": {
+          "tensor": "outputs.forward.resblocks.0.activations.3@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.0.activations.4.upsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioUpSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.0.activations.4.upsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.0.activations.4.upsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.0.activations.4.act@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioSnakeBeta",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.0.activations.4.act",
+        "output": {
+          "tensor": "outputs.forward.resblocks.0.activations.4.act@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.0.activations.4.downsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioDownSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.0.activations.4.downsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.0.activations.4.downsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.0.activations.4@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioActivation1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.0.activations.4",
+        "output": {
+          "tensor": "outputs.forward.resblocks.0.activations.4@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.0.activations.5.upsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioUpSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.0.activations.5.upsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.0.activations.5.upsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.0.activations.5.act@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioSnakeBeta",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.0.activations.5.act",
+        "output": {
+          "tensor": "outputs.forward.resblocks.0.activations.5.act@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.0.activations.5.downsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioDownSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.0.activations.5.downsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.0.activations.5.downsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.0.activations.5@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioActivation1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.0.activations.5",
+        "output": {
+          "tensor": "outputs.forward.resblocks.0.activations.5@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.0@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioAMPBlock",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.0",
+        "output": {
+          "tensor": "outputs.forward.resblocks.0@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.1.activations.0.upsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioUpSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.1.activations.0.upsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.1.activations.0.upsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.1.activations.0.act@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioSnakeBeta",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.1.activations.0.act",
+        "output": {
+          "tensor": "outputs.forward.resblocks.1.activations.0.act@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.1.activations.0.downsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioDownSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.1.activations.0.downsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.1.activations.0.downsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.1.activations.0@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioActivation1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.1.activations.0",
+        "output": {
+          "tensor": "outputs.forward.resblocks.1.activations.0@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.1.activations.1.upsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioUpSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.1.activations.1.upsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.1.activations.1.upsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.1.activations.1.act@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioSnakeBeta",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.1.activations.1.act",
+        "output": {
+          "tensor": "outputs.forward.resblocks.1.activations.1.act@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.1.activations.1.downsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioDownSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.1.activations.1.downsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.1.activations.1.downsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.1.activations.1@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioActivation1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.1.activations.1",
+        "output": {
+          "tensor": "outputs.forward.resblocks.1.activations.1@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.1.activations.2.upsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioUpSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.1.activations.2.upsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.1.activations.2.upsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.1.activations.2.act@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioSnakeBeta",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.1.activations.2.act",
+        "output": {
+          "tensor": "outputs.forward.resblocks.1.activations.2.act@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.1.activations.2.downsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioDownSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.1.activations.2.downsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.1.activations.2.downsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.1.activations.2@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioActivation1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.1.activations.2",
+        "output": {
+          "tensor": "outputs.forward.resblocks.1.activations.2@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.1.activations.3.upsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioUpSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.1.activations.3.upsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.1.activations.3.upsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.1.activations.3.act@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioSnakeBeta",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.1.activations.3.act",
+        "output": {
+          "tensor": "outputs.forward.resblocks.1.activations.3.act@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.1.activations.3.downsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioDownSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.1.activations.3.downsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.1.activations.3.downsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.1.activations.3@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioActivation1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.1.activations.3",
+        "output": {
+          "tensor": "outputs.forward.resblocks.1.activations.3@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.1.activations.4.upsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioUpSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.1.activations.4.upsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.1.activations.4.upsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.1.activations.4.act@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioSnakeBeta",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.1.activations.4.act",
+        "output": {
+          "tensor": "outputs.forward.resblocks.1.activations.4.act@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.1.activations.4.downsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioDownSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.1.activations.4.downsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.1.activations.4.downsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.1.activations.4@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioActivation1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.1.activations.4",
+        "output": {
+          "tensor": "outputs.forward.resblocks.1.activations.4@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.1.activations.5.upsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioUpSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.1.activations.5.upsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.1.activations.5.upsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.1.activations.5.act@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioSnakeBeta",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.1.activations.5.act",
+        "output": {
+          "tensor": "outputs.forward.resblocks.1.activations.5.act@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.1.activations.5.downsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioDownSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.1.activations.5.downsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.1.activations.5.downsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.1.activations.5@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioActivation1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.1.activations.5",
+        "output": {
+          "tensor": "outputs.forward.resblocks.1.activations.5@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.1@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioAMPBlock",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.1",
+        "output": {
+          "tensor": "outputs.forward.resblocks.1@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.2.activations.0.upsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioUpSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.2.activations.0.upsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.2.activations.0.upsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.2.activations.0.act@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioSnakeBeta",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.2.activations.0.act",
+        "output": {
+          "tensor": "outputs.forward.resblocks.2.activations.0.act@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.2.activations.0.downsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioDownSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.2.activations.0.downsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.2.activations.0.downsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.2.activations.0@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioActivation1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.2.activations.0",
+        "output": {
+          "tensor": "outputs.forward.resblocks.2.activations.0@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.2.activations.1.upsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioUpSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.2.activations.1.upsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.2.activations.1.upsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.2.activations.1.act@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioSnakeBeta",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.2.activations.1.act",
+        "output": {
+          "tensor": "outputs.forward.resblocks.2.activations.1.act@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.2.activations.1.downsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioDownSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.2.activations.1.downsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.2.activations.1.downsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.2.activations.1@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioActivation1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.2.activations.1",
+        "output": {
+          "tensor": "outputs.forward.resblocks.2.activations.1@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.2.activations.2.upsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioUpSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.2.activations.2.upsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.2.activations.2.upsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.2.activations.2.act@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioSnakeBeta",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.2.activations.2.act",
+        "output": {
+          "tensor": "outputs.forward.resblocks.2.activations.2.act@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.2.activations.2.downsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioDownSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.2.activations.2.downsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.2.activations.2.downsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.2.activations.2@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioActivation1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.2.activations.2",
+        "output": {
+          "tensor": "outputs.forward.resblocks.2.activations.2@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.2.activations.3.upsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioUpSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.2.activations.3.upsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.2.activations.3.upsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.2.activations.3.act@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioSnakeBeta",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.2.activations.3.act",
+        "output": {
+          "tensor": "outputs.forward.resblocks.2.activations.3.act@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.2.activations.3.downsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioDownSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.2.activations.3.downsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.2.activations.3.downsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.2.activations.3@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioActivation1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.2.activations.3",
+        "output": {
+          "tensor": "outputs.forward.resblocks.2.activations.3@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.2.activations.4.upsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioUpSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.2.activations.4.upsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.2.activations.4.upsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.2.activations.4.act@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioSnakeBeta",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.2.activations.4.act",
+        "output": {
+          "tensor": "outputs.forward.resblocks.2.activations.4.act@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.2.activations.4.downsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioDownSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.2.activations.4.downsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.2.activations.4.downsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.2.activations.4@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioActivation1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.2.activations.4",
+        "output": {
+          "tensor": "outputs.forward.resblocks.2.activations.4@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.2.activations.5.upsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioUpSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.2.activations.5.upsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.2.activations.5.upsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.2.activations.5.act@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioSnakeBeta",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.2.activations.5.act",
+        "output": {
+          "tensor": "outputs.forward.resblocks.2.activations.5.act@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.2.activations.5.downsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioDownSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.2.activations.5.downsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.2.activations.5.downsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.2.activations.5@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioActivation1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.2.activations.5",
+        "output": {
+          "tensor": "outputs.forward.resblocks.2.activations.5@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.2@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioAMPBlock",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.2",
+        "output": {
+          "tensor": "outputs.forward.resblocks.2@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.ups.1.0@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "ConvTranspose1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "ups.1.0",
+        "output": {
+          "tensor": "outputs.forward.ups.1.0@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.3.activations.0.upsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioUpSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.3.activations.0.upsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.3.activations.0.upsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.3.activations.0.act@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioSnakeBeta",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.3.activations.0.act",
+        "output": {
+          "tensor": "outputs.forward.resblocks.3.activations.0.act@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.3.activations.0.downsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioDownSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.3.activations.0.downsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.3.activations.0.downsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.3.activations.0@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioActivation1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.3.activations.0",
+        "output": {
+          "tensor": "outputs.forward.resblocks.3.activations.0@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.3.activations.1.upsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioUpSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.3.activations.1.upsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.3.activations.1.upsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.3.activations.1.act@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioSnakeBeta",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.3.activations.1.act",
+        "output": {
+          "tensor": "outputs.forward.resblocks.3.activations.1.act@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.3.activations.1.downsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioDownSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.3.activations.1.downsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.3.activations.1.downsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.3.activations.1@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioActivation1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.3.activations.1",
+        "output": {
+          "tensor": "outputs.forward.resblocks.3.activations.1@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.3.activations.2.upsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioUpSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.3.activations.2.upsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.3.activations.2.upsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.3.activations.2.act@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioSnakeBeta",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.3.activations.2.act",
+        "output": {
+          "tensor": "outputs.forward.resblocks.3.activations.2.act@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.3.activations.2.downsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioDownSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.3.activations.2.downsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.3.activations.2.downsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.3.activations.2@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioActivation1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.3.activations.2",
+        "output": {
+          "tensor": "outputs.forward.resblocks.3.activations.2@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.3.activations.3.upsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioUpSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.3.activations.3.upsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.3.activations.3.upsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.3.activations.3.act@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioSnakeBeta",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.3.activations.3.act",
+        "output": {
+          "tensor": "outputs.forward.resblocks.3.activations.3.act@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.3.activations.3.downsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioDownSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.3.activations.3.downsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.3.activations.3.downsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.3.activations.3@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioActivation1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.3.activations.3",
+        "output": {
+          "tensor": "outputs.forward.resblocks.3.activations.3@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.3.activations.4.upsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioUpSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.3.activations.4.upsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.3.activations.4.upsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.3.activations.4.act@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioSnakeBeta",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.3.activations.4.act",
+        "output": {
+          "tensor": "outputs.forward.resblocks.3.activations.4.act@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.3.activations.4.downsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioDownSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.3.activations.4.downsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.3.activations.4.downsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.3.activations.4@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioActivation1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.3.activations.4",
+        "output": {
+          "tensor": "outputs.forward.resblocks.3.activations.4@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.3.activations.5.upsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioUpSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.3.activations.5.upsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.3.activations.5.upsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.3.activations.5.act@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioSnakeBeta",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.3.activations.5.act",
+        "output": {
+          "tensor": "outputs.forward.resblocks.3.activations.5.act@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.3.activations.5.downsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioDownSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.3.activations.5.downsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.3.activations.5.downsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.3.activations.5@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioActivation1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.3.activations.5",
+        "output": {
+          "tensor": "outputs.forward.resblocks.3.activations.5@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.3@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioAMPBlock",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.3",
+        "output": {
+          "tensor": "outputs.forward.resblocks.3@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.4.activations.0.upsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioUpSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.4.activations.0.upsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.4.activations.0.upsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.4.activations.0.act@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioSnakeBeta",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.4.activations.0.act",
+        "output": {
+          "tensor": "outputs.forward.resblocks.4.activations.0.act@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.4.activations.0.downsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioDownSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.4.activations.0.downsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.4.activations.0.downsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.4.activations.0@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioActivation1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.4.activations.0",
+        "output": {
+          "tensor": "outputs.forward.resblocks.4.activations.0@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.4.activations.1.upsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioUpSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.4.activations.1.upsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.4.activations.1.upsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.4.activations.1.act@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioSnakeBeta",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.4.activations.1.act",
+        "output": {
+          "tensor": "outputs.forward.resblocks.4.activations.1.act@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.4.activations.1.downsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioDownSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.4.activations.1.downsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.4.activations.1.downsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.4.activations.1@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioActivation1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.4.activations.1",
+        "output": {
+          "tensor": "outputs.forward.resblocks.4.activations.1@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.4.activations.2.upsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioUpSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.4.activations.2.upsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.4.activations.2.upsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.4.activations.2.act@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioSnakeBeta",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.4.activations.2.act",
+        "output": {
+          "tensor": "outputs.forward.resblocks.4.activations.2.act@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.4.activations.2.downsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioDownSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.4.activations.2.downsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.4.activations.2.downsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.4.activations.2@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioActivation1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.4.activations.2",
+        "output": {
+          "tensor": "outputs.forward.resblocks.4.activations.2@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.4.activations.3.upsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioUpSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.4.activations.3.upsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.4.activations.3.upsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.4.activations.3.act@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioSnakeBeta",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.4.activations.3.act",
+        "output": {
+          "tensor": "outputs.forward.resblocks.4.activations.3.act@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.4.activations.3.downsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioDownSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.4.activations.3.downsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.4.activations.3.downsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.4.activations.3@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioActivation1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.4.activations.3",
+        "output": {
+          "tensor": "outputs.forward.resblocks.4.activations.3@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.4.activations.4.upsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioUpSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.4.activations.4.upsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.4.activations.4.upsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.4.activations.4.act@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioSnakeBeta",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.4.activations.4.act",
+        "output": {
+          "tensor": "outputs.forward.resblocks.4.activations.4.act@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.4.activations.4.downsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioDownSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.4.activations.4.downsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.4.activations.4.downsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.4.activations.4@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioActivation1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.4.activations.4",
+        "output": {
+          "tensor": "outputs.forward.resblocks.4.activations.4@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.4.activations.5.upsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioUpSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.4.activations.5.upsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.4.activations.5.upsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.4.activations.5.act@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioSnakeBeta",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.4.activations.5.act",
+        "output": {
+          "tensor": "outputs.forward.resblocks.4.activations.5.act@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.4.activations.5.downsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioDownSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.4.activations.5.downsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.4.activations.5.downsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.4.activations.5@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioActivation1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.4.activations.5",
+        "output": {
+          "tensor": "outputs.forward.resblocks.4.activations.5@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.4@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioAMPBlock",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.4",
+        "output": {
+          "tensor": "outputs.forward.resblocks.4@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.5.activations.0.upsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioUpSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.5.activations.0.upsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.5.activations.0.upsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.5.activations.0.act@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioSnakeBeta",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.5.activations.0.act",
+        "output": {
+          "tensor": "outputs.forward.resblocks.5.activations.0.act@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.5.activations.0.downsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioDownSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.5.activations.0.downsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.5.activations.0.downsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.5.activations.0@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioActivation1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.5.activations.0",
+        "output": {
+          "tensor": "outputs.forward.resblocks.5.activations.0@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.5.activations.1.upsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioUpSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.5.activations.1.upsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.5.activations.1.upsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.5.activations.1.act@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioSnakeBeta",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.5.activations.1.act",
+        "output": {
+          "tensor": "outputs.forward.resblocks.5.activations.1.act@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.5.activations.1.downsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioDownSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.5.activations.1.downsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.5.activations.1.downsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.5.activations.1@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioActivation1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.5.activations.1",
+        "output": {
+          "tensor": "outputs.forward.resblocks.5.activations.1@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.5.activations.2.upsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioUpSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.5.activations.2.upsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.5.activations.2.upsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.5.activations.2.act@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioSnakeBeta",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.5.activations.2.act",
+        "output": {
+          "tensor": "outputs.forward.resblocks.5.activations.2.act@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.5.activations.2.downsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioDownSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.5.activations.2.downsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.5.activations.2.downsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.5.activations.2@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioActivation1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.5.activations.2",
+        "output": {
+          "tensor": "outputs.forward.resblocks.5.activations.2@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.5.activations.3.upsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioUpSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.5.activations.3.upsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.5.activations.3.upsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.5.activations.3.act@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioSnakeBeta",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.5.activations.3.act",
+        "output": {
+          "tensor": "outputs.forward.resblocks.5.activations.3.act@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.5.activations.3.downsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioDownSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.5.activations.3.downsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.5.activations.3.downsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.5.activations.3@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioActivation1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.5.activations.3",
+        "output": {
+          "tensor": "outputs.forward.resblocks.5.activations.3@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.5.activations.4.upsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioUpSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.5.activations.4.upsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.5.activations.4.upsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.5.activations.4.act@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioSnakeBeta",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.5.activations.4.act",
+        "output": {
+          "tensor": "outputs.forward.resblocks.5.activations.4.act@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.5.activations.4.downsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioDownSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.5.activations.4.downsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.5.activations.4.downsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.5.activations.4@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioActivation1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.5.activations.4",
+        "output": {
+          "tensor": "outputs.forward.resblocks.5.activations.4@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.5.activations.5.upsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioUpSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.5.activations.5.upsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.5.activations.5.upsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.5.activations.5.act@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioSnakeBeta",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.5.activations.5.act",
+        "output": {
+          "tensor": "outputs.forward.resblocks.5.activations.5.act@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.5.activations.5.downsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioDownSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.5.activations.5.downsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.5.activations.5.downsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.5.activations.5@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioActivation1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.5.activations.5",
+        "output": {
+          "tensor": "outputs.forward.resblocks.5.activations.5@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.5@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioAMPBlock",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.5",
+        "output": {
+          "tensor": "outputs.forward.resblocks.5@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.ups.2.0@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "ConvTranspose1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "ups.2.0",
+        "output": {
+          "tensor": "outputs.forward.ups.2.0@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.6.activations.0.upsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioUpSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.6.activations.0.upsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.6.activations.0.upsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.6.activations.0.act@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioSnakeBeta",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.6.activations.0.act",
+        "output": {
+          "tensor": "outputs.forward.resblocks.6.activations.0.act@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.6.activations.0.downsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioDownSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.6.activations.0.downsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.6.activations.0.downsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.6.activations.0@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioActivation1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.6.activations.0",
+        "output": {
+          "tensor": "outputs.forward.resblocks.6.activations.0@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.6.activations.1.upsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioUpSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.6.activations.1.upsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.6.activations.1.upsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.6.activations.1.act@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioSnakeBeta",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.6.activations.1.act",
+        "output": {
+          "tensor": "outputs.forward.resblocks.6.activations.1.act@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.6.activations.1.downsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioDownSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.6.activations.1.downsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.6.activations.1.downsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.6.activations.1@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioActivation1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.6.activations.1",
+        "output": {
+          "tensor": "outputs.forward.resblocks.6.activations.1@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.6.activations.2.upsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioUpSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.6.activations.2.upsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.6.activations.2.upsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.6.activations.2.act@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioSnakeBeta",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.6.activations.2.act",
+        "output": {
+          "tensor": "outputs.forward.resblocks.6.activations.2.act@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.6.activations.2.downsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioDownSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.6.activations.2.downsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.6.activations.2.downsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.6.activations.2@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioActivation1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.6.activations.2",
+        "output": {
+          "tensor": "outputs.forward.resblocks.6.activations.2@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.6.activations.3.upsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioUpSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.6.activations.3.upsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.6.activations.3.upsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.6.activations.3.act@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioSnakeBeta",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.6.activations.3.act",
+        "output": {
+          "tensor": "outputs.forward.resblocks.6.activations.3.act@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.6.activations.3.downsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioDownSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.6.activations.3.downsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.6.activations.3.downsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.6.activations.3@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioActivation1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.6.activations.3",
+        "output": {
+          "tensor": "outputs.forward.resblocks.6.activations.3@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.6.activations.4.upsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioUpSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.6.activations.4.upsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.6.activations.4.upsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.6.activations.4.act@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioSnakeBeta",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.6.activations.4.act",
+        "output": {
+          "tensor": "outputs.forward.resblocks.6.activations.4.act@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.6.activations.4.downsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioDownSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.6.activations.4.downsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.6.activations.4.downsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.6.activations.4@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioActivation1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.6.activations.4",
+        "output": {
+          "tensor": "outputs.forward.resblocks.6.activations.4@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.6.activations.5.upsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioUpSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.6.activations.5.upsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.6.activations.5.upsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.6.activations.5.act@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioSnakeBeta",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.6.activations.5.act",
+        "output": {
+          "tensor": "outputs.forward.resblocks.6.activations.5.act@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.6.activations.5.downsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioDownSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.6.activations.5.downsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.6.activations.5.downsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.6.activations.5@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioActivation1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.6.activations.5",
+        "output": {
+          "tensor": "outputs.forward.resblocks.6.activations.5@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.6@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioAMPBlock",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.6",
+        "output": {
+          "tensor": "outputs.forward.resblocks.6@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.7.activations.0.upsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioUpSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.7.activations.0.upsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.7.activations.0.upsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.7.activations.0.act@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioSnakeBeta",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.7.activations.0.act",
+        "output": {
+          "tensor": "outputs.forward.resblocks.7.activations.0.act@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.7.activations.0.downsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioDownSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.7.activations.0.downsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.7.activations.0.downsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.7.activations.0@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioActivation1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.7.activations.0",
+        "output": {
+          "tensor": "outputs.forward.resblocks.7.activations.0@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.7.activations.1.upsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioUpSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.7.activations.1.upsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.7.activations.1.upsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.7.activations.1.act@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioSnakeBeta",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.7.activations.1.act",
+        "output": {
+          "tensor": "outputs.forward.resblocks.7.activations.1.act@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.7.activations.1.downsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioDownSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.7.activations.1.downsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.7.activations.1.downsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.7.activations.1@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioActivation1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.7.activations.1",
+        "output": {
+          "tensor": "outputs.forward.resblocks.7.activations.1@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.7.activations.2.upsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioUpSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.7.activations.2.upsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.7.activations.2.upsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.7.activations.2.act@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioSnakeBeta",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.7.activations.2.act",
+        "output": {
+          "tensor": "outputs.forward.resblocks.7.activations.2.act@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.7.activations.2.downsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioDownSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.7.activations.2.downsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.7.activations.2.downsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.7.activations.2@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioActivation1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.7.activations.2",
+        "output": {
+          "tensor": "outputs.forward.resblocks.7.activations.2@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.7.activations.3.upsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioUpSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.7.activations.3.upsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.7.activations.3.upsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.7.activations.3.act@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioSnakeBeta",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.7.activations.3.act",
+        "output": {
+          "tensor": "outputs.forward.resblocks.7.activations.3.act@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.7.activations.3.downsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioDownSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.7.activations.3.downsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.7.activations.3.downsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.7.activations.3@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioActivation1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.7.activations.3",
+        "output": {
+          "tensor": "outputs.forward.resblocks.7.activations.3@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.7.activations.4.upsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioUpSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.7.activations.4.upsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.7.activations.4.upsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.7.activations.4.act@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioSnakeBeta",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.7.activations.4.act",
+        "output": {
+          "tensor": "outputs.forward.resblocks.7.activations.4.act@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.7.activations.4.downsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioDownSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.7.activations.4.downsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.7.activations.4.downsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.7.activations.4@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioActivation1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.7.activations.4",
+        "output": {
+          "tensor": "outputs.forward.resblocks.7.activations.4@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.7.activations.5.upsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioUpSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.7.activations.5.upsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.7.activations.5.upsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.7.activations.5.act@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioSnakeBeta",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.7.activations.5.act",
+        "output": {
+          "tensor": "outputs.forward.resblocks.7.activations.5.act@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.7.activations.5.downsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioDownSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.7.activations.5.downsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.7.activations.5.downsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.7.activations.5@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioActivation1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.7.activations.5",
+        "output": {
+          "tensor": "outputs.forward.resblocks.7.activations.5@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.7@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioAMPBlock",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.7",
+        "output": {
+          "tensor": "outputs.forward.resblocks.7@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.8.activations.0.upsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioUpSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.8.activations.0.upsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.8.activations.0.upsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.8.activations.0.act@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioSnakeBeta",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.8.activations.0.act",
+        "output": {
+          "tensor": "outputs.forward.resblocks.8.activations.0.act@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.8.activations.0.downsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioDownSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.8.activations.0.downsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.8.activations.0.downsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.8.activations.0@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioActivation1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.8.activations.0",
+        "output": {
+          "tensor": "outputs.forward.resblocks.8.activations.0@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.8.activations.1.upsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioUpSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.8.activations.1.upsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.8.activations.1.upsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.8.activations.1.act@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioSnakeBeta",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.8.activations.1.act",
+        "output": {
+          "tensor": "outputs.forward.resblocks.8.activations.1.act@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.8.activations.1.downsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioDownSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.8.activations.1.downsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.8.activations.1.downsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.8.activations.1@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioActivation1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.8.activations.1",
+        "output": {
+          "tensor": "outputs.forward.resblocks.8.activations.1@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.8.activations.2.upsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioUpSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.8.activations.2.upsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.8.activations.2.upsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.8.activations.2.act@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioSnakeBeta",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.8.activations.2.act",
+        "output": {
+          "tensor": "outputs.forward.resblocks.8.activations.2.act@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.8.activations.2.downsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioDownSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.8.activations.2.downsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.8.activations.2.downsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.8.activations.2@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioActivation1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.8.activations.2",
+        "output": {
+          "tensor": "outputs.forward.resblocks.8.activations.2@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.8.activations.3.upsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioUpSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.8.activations.3.upsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.8.activations.3.upsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.8.activations.3.act@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioSnakeBeta",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.8.activations.3.act",
+        "output": {
+          "tensor": "outputs.forward.resblocks.8.activations.3.act@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.8.activations.3.downsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioDownSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.8.activations.3.downsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.8.activations.3.downsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.8.activations.3@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioActivation1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.8.activations.3",
+        "output": {
+          "tensor": "outputs.forward.resblocks.8.activations.3@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.8.activations.4.upsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioUpSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.8.activations.4.upsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.8.activations.4.upsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.8.activations.4.act@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioSnakeBeta",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.8.activations.4.act",
+        "output": {
+          "tensor": "outputs.forward.resblocks.8.activations.4.act@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.8.activations.4.downsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioDownSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.8.activations.4.downsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.8.activations.4.downsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.8.activations.4@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioActivation1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.8.activations.4",
+        "output": {
+          "tensor": "outputs.forward.resblocks.8.activations.4@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.8.activations.5.upsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioUpSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.8.activations.5.upsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.8.activations.5.upsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.8.activations.5.act@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioSnakeBeta",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.8.activations.5.act",
+        "output": {
+          "tensor": "outputs.forward.resblocks.8.activations.5.act@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.8.activations.5.downsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioDownSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.8.activations.5.downsample",
+        "output": {
+          "tensor": "outputs.forward.resblocks.8.activations.5.downsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.8.activations.5@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioActivation1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.8.activations.5",
+        "output": {
+          "tensor": "outputs.forward.resblocks.8.activations.5@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.resblocks.8@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioAMPBlock",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "resblocks.8",
+        "output": {
+          "tensor": "outputs.forward.resblocks.8@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.activation_post.upsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioUpSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "activation_post.upsample",
+        "output": {
+          "tensor": "outputs.forward.activation_post.upsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.activation_post.act@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioSnakeBeta",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "activation_post.act",
+        "output": {
+          "tensor": "outputs.forward.activation_post.act@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.activation_post.downsample@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioDownSample1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "activation_post.downsample",
+        "output": {
+          "tensor": "outputs.forward.activation_post.downsample@0.out"
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.forward.activation_post@0.args.0"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "MMAudioActivation1d",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "activation_post",
+        "output": {
+          "tensor": "outputs.forward.activation_post@0.out"
+        }
+      }
+    ]
+  },
+  "config": {
+    "num_mels": 16,
+    "resblock_dilation_sizes": [
+      [
+        1,
+        3,
+        5
+      ],
+      [
+        1,
+        3,
+        5
+      ],
+      [
+        1,
+        3,
+        5
+      ]
+    ],
+    "resblock_kernel_sizes": [
+      3,
+      7,
+      11
+    ],
+    "upsample_initial_channel": 32,
+    "upsample_kernel_sizes": [
+      8,
+      4,
+      4
+    ],
+    "upsample_rates": [
+      4,
+      2,
+      2
+    ]
+  },
+  "fixture": "vocoder",
+  "reference": "diffusers.MMAudioVocoder.forward",
+  "seeds": {
+    "numpy": 0,
+    "param_noise_generator": 1,
+    "torch_manual_seed": 0
+  },
+  "versions": {
+    "diffusers": "0.42.1",
+    "numpy": "2.5.4",
+    "torch": "2.15.0",
+    "transformers": "5.22.1"
+  }
+}

@@ -1,0 +1,853 @@
+{
+  "calls": {
+    "cg0_fm0_ca0": [
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.cg0_fm0_ca0.visual_transformer_blocks.0@0.args.0"
+            },
+            {
+              "tensor": "inputs.cg0_fm0_ca0.visual_transformer_blocks.0@0.args.1"
+            },
+            {
+              "tensor": "inputs.cg0_fm0_ca0.visual_transformer_blocks.0@0.args.2"
+            },
+            {
+              "tensor": "inputs.cg0_fm0_ca0.visual_transformer_blocks.0@0.args.3"
+            },
+            {
+              "tuple": [
+                {
+                  "tensor": "inputs.cg0_fm0_ca0.visual_transformer_blocks.0@0.args.4.0"
+                },
+                {
+                  "tensor": "inputs.cg0_fm0_ca0.visual_transformer_blocks.0@0.args.4.1"
+                }
+              ]
+            },
+            {
+              "tensor": "inputs.cg0_fm0_ca0.visual_transformer_blocks.0@0.args.5"
+            },
+            {
+              "tensor": "inputs.cg0_fm0_ca0.visual_transformer_blocks.0@0.args.6"
+            },
+            {
+              "tensor": "inputs.cg0_fm0_ca0.visual_transformer_blocks.0@0.args.7"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6FusedTransformerDecoderBlock",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "visual_transformer_blocks.0",
+        "output": {
+          "tuple": [
+            {
+              "tensor": "outputs.cg0_fm0_ca0.visual_transformer_blocks.0@0.out.0"
+            },
+            {
+              "tensor": "outputs.cg0_fm0_ca0.visual_transformer_blocks.0@0.out.1"
+            }
+          ]
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.cg0_fm0_ca0.visual_transformer_blocks.1@0.args.0"
+            },
+            {
+              "tensor": "inputs.cg0_fm0_ca0.visual_transformer_blocks.1@0.args.1"
+            },
+            {
+              "tensor": "inputs.cg0_fm0_ca0.visual_transformer_blocks.1@0.args.2"
+            },
+            {
+              "tensor": "inputs.cg0_fm0_ca0.visual_transformer_blocks.1@0.args.3"
+            },
+            {
+              "tuple": [
+                {
+                  "tensor": "inputs.cg0_fm0_ca0.visual_transformer_blocks.1@0.args.4.0"
+                },
+                {
+                  "tensor": "inputs.cg0_fm0_ca0.visual_transformer_blocks.1@0.args.4.1"
+                }
+              ]
+            },
+            {
+              "tensor": "inputs.cg0_fm0_ca0.visual_transformer_blocks.1@0.args.5"
+            },
+            {
+              "tensor": "inputs.cg0_fm0_ca0.visual_transformer_blocks.1@0.args.6"
+            },
+            {
+              "tensor": "inputs.cg0_fm0_ca0.visual_transformer_blocks.1@0.args.7"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6FusedTransformerDecoderBlock",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "visual_transformer_blocks.1",
+        "output": {
+          "tuple": [
+            {
+              "tensor": "outputs.cg0_fm0_ca0.visual_transformer_blocks.1@0.out.0"
+            },
+            {
+              "tensor": "outputs.cg0_fm0_ca0.visual_transformer_blocks.1@0.out.1"
+            }
+          ]
+        }
+      }
+    ],
+    "cg0_fm0_ca1": [
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.cg0_fm0_ca1.visual_transformer_blocks.0@0.args.0"
+            },
+            {
+              "tensor": "inputs.cg0_fm0_ca1.visual_transformer_blocks.0@0.args.1"
+            },
+            {
+              "tensor": "inputs.cg0_fm0_ca1.visual_transformer_blocks.0@0.args.2"
+            },
+            {
+              "tensor": "inputs.cg0_fm0_ca1.visual_transformer_blocks.0@0.args.3"
+            },
+            {
+              "tuple": [
+                {
+                  "tensor": "inputs.cg0_fm0_ca1.visual_transformer_blocks.0@0.args.4.0"
+                },
+                {
+                  "tensor": "inputs.cg0_fm0_ca1.visual_transformer_blocks.0@0.args.4.1"
+                }
+              ]
+            },
+            {
+              "tensor": "inputs.cg0_fm0_ca1.visual_transformer_blocks.0@0.args.5"
+            },
+            {
+              "tensor": "inputs.cg0_fm0_ca1.visual_transformer_blocks.0@0.args.6"
+            },
+            {
+              "tensor": "inputs.cg0_fm0_ca1.visual_transformer_blocks.0@0.args.7"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6FusedTransformerDecoderBlock",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "visual_transformer_blocks.0",
+        "output": {
+          "tuple": [
+            {
+              "tensor": "outputs.cg0_fm0_ca1.visual_transformer_blocks.0@0.out.0"
+            },
+            {
+              "tensor": "outputs.cg0_fm0_ca1.visual_transformer_blocks.0@0.out.1"
+            }
+          ]
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.cg0_fm0_ca1.visual_transformer_blocks.1@0.args.0"
+            },
+            {
+              "tensor": "inputs.cg0_fm0_ca1.visual_transformer_blocks.1@0.args.1"
+            },
+            {
+              "tensor": "inputs.cg0_fm0_ca1.visual_transformer_blocks.1@0.args.2"
+            },
+            {
+              "tensor": "inputs.cg0_fm0_ca1.visual_transformer_blocks.1@0.args.3"
+            },
+            {
+              "tuple": [
+                {
+                  "tensor": "inputs.cg0_fm0_ca1.visual_transformer_blocks.1@0.args.4.0"
+                },
+                {
+                  "tensor": "inputs.cg0_fm0_ca1.visual_transformer_blocks.1@0.args.4.1"
+                }
+              ]
+            },
+            {
+              "tensor": "inputs.cg0_fm0_ca1.visual_transformer_blocks.1@0.args.5"
+            },
+            {
+              "tensor": "inputs.cg0_fm0_ca1.visual_transformer_blocks.1@0.args.6"
+            },
+            {
+              "tensor": "inputs.cg0_fm0_ca1.visual_transformer_blocks.1@0.args.7"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6FusedTransformerDecoderBlock",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "visual_transformer_blocks.1",
+        "output": {
+          "tuple": [
+            {
+              "tensor": "outputs.cg0_fm0_ca1.visual_transformer_blocks.1@0.out.0"
+            },
+            {
+              "tensor": "outputs.cg0_fm0_ca1.visual_transformer_blocks.1@0.out.1"
+            }
+          ]
+        }
+      }
+    ],
+    "cg0_fm1_ca0": [
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.cg0_fm1_ca0.visual_transformer_blocks.0@0.args.0"
+            },
+            {
+              "tensor": "inputs.cg0_fm1_ca0.visual_transformer_blocks.0@0.args.1"
+            },
+            {
+              "tensor": "inputs.cg0_fm1_ca0.visual_transformer_blocks.0@0.args.2"
+            },
+            {
+              "tensor": "inputs.cg0_fm1_ca0.visual_transformer_blocks.0@0.args.3"
+            },
+            {
+              "tuple": [
+                {
+                  "tensor": "inputs.cg0_fm1_ca0.visual_transformer_blocks.0@0.args.4.0"
+                },
+                {
+                  "tensor": "inputs.cg0_fm1_ca0.visual_transformer_blocks.0@0.args.4.1"
+                }
+              ]
+            },
+            {
+              "tensor": "inputs.cg0_fm1_ca0.visual_transformer_blocks.0@0.args.5"
+            },
+            {
+              "tensor": "inputs.cg0_fm1_ca0.visual_transformer_blocks.0@0.args.6"
+            },
+            {
+              "tensor": "inputs.cg0_fm1_ca0.visual_transformer_blocks.0@0.args.7"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6FusedTransformerDecoderBlock",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "visual_transformer_blocks.0",
+        "output": {
+          "tuple": [
+            {
+              "tensor": "outputs.cg0_fm1_ca0.visual_transformer_blocks.0@0.out.0"
+            },
+            {
+              "tensor": "outputs.cg0_fm1_ca0.visual_transformer_blocks.0@0.out.1"
+            }
+          ]
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.cg0_fm1_ca0.visual_transformer_blocks.1@0.args.0"
+            },
+            {
+              "tensor": "inputs.cg0_fm1_ca0.visual_transformer_blocks.1@0.args.1"
+            },
+            {
+              "tensor": "inputs.cg0_fm1_ca0.visual_transformer_blocks.1@0.args.2"
+            },
+            {
+              "tensor": "inputs.cg0_fm1_ca0.visual_transformer_blocks.1@0.args.3"
+            },
+            {
+              "tuple": [
+                {
+                  "tensor": "inputs.cg0_fm1_ca0.visual_transformer_blocks.1@0.args.4.0"
+                },
+                {
+                  "tensor": "inputs.cg0_fm1_ca0.visual_transformer_blocks.1@0.args.4.1"
+                }
+              ]
+            },
+            {
+              "tensor": "inputs.cg0_fm1_ca0.visual_transformer_blocks.1@0.args.5"
+            },
+            {
+              "tensor": "inputs.cg0_fm1_ca0.visual_transformer_blocks.1@0.args.6"
+            },
+            {
+              "tensor": "inputs.cg0_fm1_ca0.visual_transformer_blocks.1@0.args.7"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6FusedTransformerDecoderBlock",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "visual_transformer_blocks.1",
+        "output": {
+          "tuple": [
+            {
+              "tensor": "outputs.cg0_fm1_ca0.visual_transformer_blocks.1@0.out.0"
+            },
+            {
+              "tensor": "outputs.cg0_fm1_ca0.visual_transformer_blocks.1@0.out.1"
+            }
+          ]
+        }
+      }
+    ],
+    "cg0_fm1_ca1": [
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.cg0_fm1_ca1.visual_transformer_blocks.0@0.args.0"
+            },
+            {
+              "tensor": "inputs.cg0_fm1_ca1.visual_transformer_blocks.0@0.args.1"
+            },
+            {
+              "tensor": "inputs.cg0_fm1_ca1.visual_transformer_blocks.0@0.args.2"
+            },
+            {
+              "tensor": "inputs.cg0_fm1_ca1.visual_transformer_blocks.0@0.args.3"
+            },
+            {
+              "tuple": [
+                {
+                  "tensor": "inputs.cg0_fm1_ca1.visual_transformer_blocks.0@0.args.4.0"
+                },
+                {
+                  "tensor": "inputs.cg0_fm1_ca1.visual_transformer_blocks.0@0.args.4.1"
+                }
+              ]
+            },
+            {
+              "tensor": "inputs.cg0_fm1_ca1.visual_transformer_blocks.0@0.args.5"
+            },
+            {
+              "tensor": "inputs.cg0_fm1_ca1.visual_transformer_blocks.0@0.args.6"
+            },
+            {
+              "tensor": "inputs.cg0_fm1_ca1.visual_transformer_blocks.0@0.args.7"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6FusedTransformerDecoderBlock",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "visual_transformer_blocks.0",
+        "output": {
+          "tuple": [
+            {
+              "tensor": "outputs.cg0_fm1_ca1.visual_transformer_blocks.0@0.out.0"
+            },
+            {
+              "tensor": "outputs.cg0_fm1_ca1.visual_transformer_blocks.0@0.out.1"
+            }
+          ]
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.cg0_fm1_ca1.visual_transformer_blocks.1@0.args.0"
+            },
+            {
+              "tensor": "inputs.cg0_fm1_ca1.visual_transformer_blocks.1@0.args.1"
+            },
+            {
+              "tensor": "inputs.cg0_fm1_ca1.visual_transformer_blocks.1@0.args.2"
+            },
+            {
+              "tensor": "inputs.cg0_fm1_ca1.visual_transformer_blocks.1@0.args.3"
+            },
+            {
+              "tuple": [
+                {
+                  "tensor": "inputs.cg0_fm1_ca1.visual_transformer_blocks.1@0.args.4.0"
+                },
+                {
+                  "tensor": "inputs.cg0_fm1_ca1.visual_transformer_blocks.1@0.args.4.1"
+                }
+              ]
+            },
+            {
+              "tensor": "inputs.cg0_fm1_ca1.visual_transformer_blocks.1@0.args.5"
+            },
+            {
+              "tensor": "inputs.cg0_fm1_ca1.visual_transformer_blocks.1@0.args.6"
+            },
+            {
+              "tensor": "inputs.cg0_fm1_ca1.visual_transformer_blocks.1@0.args.7"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6FusedTransformerDecoderBlock",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "visual_transformer_blocks.1",
+        "output": {
+          "tuple": [
+            {
+              "tensor": "outputs.cg0_fm1_ca1.visual_transformer_blocks.1@0.out.0"
+            },
+            {
+              "tensor": "outputs.cg0_fm1_ca1.visual_transformer_blocks.1@0.out.1"
+            }
+          ]
+        }
+      }
+    ],
+    "cg1_fm0_ca0": [
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.cg1_fm0_ca0.visual_transformer_blocks.0@0.args.0"
+            },
+            {
+              "tensor": "inputs.cg1_fm0_ca0.visual_transformer_blocks.0@0.args.1"
+            },
+            {
+              "tensor": "inputs.cg1_fm0_ca0.visual_transformer_blocks.0@0.args.2"
+            },
+            {
+              "tensor": "inputs.cg1_fm0_ca0.visual_transformer_blocks.0@0.args.3"
+            },
+            {
+              "tuple": [
+                {
+                  "tensor": "inputs.cg1_fm0_ca0.visual_transformer_blocks.0@0.args.4.0"
+                },
+                {
+                  "tensor": "inputs.cg1_fm0_ca0.visual_transformer_blocks.0@0.args.4.1"
+                }
+              ]
+            },
+            {
+              "tensor": "inputs.cg1_fm0_ca0.visual_transformer_blocks.0@0.args.5"
+            },
+            {
+              "tensor": "inputs.cg1_fm0_ca0.visual_transformer_blocks.0@0.args.6"
+            },
+            {
+              "tensor": "inputs.cg1_fm0_ca0.visual_transformer_blocks.0@0.args.7"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6FusedTransformerDecoderBlock",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "visual_transformer_blocks.0",
+        "output": {
+          "tuple": [
+            {
+              "tensor": "outputs.cg1_fm0_ca0.visual_transformer_blocks.0@0.out.0"
+            },
+            {
+              "tensor": "outputs.cg1_fm0_ca0.visual_transformer_blocks.0@0.out.1"
+            }
+          ]
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.cg1_fm0_ca0.visual_transformer_blocks.1@0.args.0"
+            },
+            {
+              "tensor": "inputs.cg1_fm0_ca0.visual_transformer_blocks.1@0.args.1"
+            },
+            {
+              "tensor": "inputs.cg1_fm0_ca0.visual_transformer_blocks.1@0.args.2"
+            },
+            {
+              "tensor": "inputs.cg1_fm0_ca0.visual_transformer_blocks.1@0.args.3"
+            },
+            {
+              "tuple": [
+                {
+                  "tensor": "inputs.cg1_fm0_ca0.visual_transformer_blocks.1@0.args.4.0"
+                },
+                {
+                  "tensor": "inputs.cg1_fm0_ca0.visual_transformer_blocks.1@0.args.4.1"
+                }
+              ]
+            },
+            {
+              "tensor": "inputs.cg1_fm0_ca0.visual_transformer_blocks.1@0.args.5"
+            },
+            {
+              "tensor": "inputs.cg1_fm0_ca0.visual_transformer_blocks.1@0.args.6"
+            },
+            {
+              "tensor": "inputs.cg1_fm0_ca0.visual_transformer_blocks.1@0.args.7"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6FusedTransformerDecoderBlock",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "visual_transformer_blocks.1",
+        "output": {
+          "tuple": [
+            {
+              "tensor": "outputs.cg1_fm0_ca0.visual_transformer_blocks.1@0.out.0"
+            },
+            {
+              "tensor": "outputs.cg1_fm0_ca0.visual_transformer_blocks.1@0.out.1"
+            }
+          ]
+        }
+      }
+    ],
+    "cg1_fm0_ca1": [
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.cg1_fm0_ca1.visual_transformer_blocks.0@0.args.0"
+            },
+            {
+              "tensor": "inputs.cg1_fm0_ca1.visual_transformer_blocks.0@0.args.1"
+            },
+            {
+              "tensor": "inputs.cg1_fm0_ca1.visual_transformer_blocks.0@0.args.2"
+            },
+            {
+              "tensor": "inputs.cg1_fm0_ca1.visual_transformer_blocks.0@0.args.3"
+            },
+            {
+              "tuple": [
+                {
+                  "tensor": "inputs.cg1_fm0_ca1.visual_transformer_blocks.0@0.args.4.0"
+                },
+                {
+                  "tensor": "inputs.cg1_fm0_ca1.visual_transformer_blocks.0@0.args.4.1"
+                }
+              ]
+            },
+            {
+              "tensor": "inputs.cg1_fm0_ca1.visual_transformer_blocks.0@0.args.5"
+            },
+            {
+              "tensor": "inputs.cg1_fm0_ca1.visual_transformer_blocks.0@0.args.6"
+            },
+            {
+              "tensor": "inputs.cg1_fm0_ca1.visual_transformer_blocks.0@0.args.7"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6FusedTransformerDecoderBlock",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "visual_transformer_blocks.0",
+        "output": {
+          "tuple": [
+            {
+              "tensor": "outputs.cg1_fm0_ca1.visual_transformer_blocks.0@0.out.0"
+            },
+            {
+              "tensor": "outputs.cg1_fm0_ca1.visual_transformer_blocks.0@0.out.1"
+            }
+          ]
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.cg1_fm0_ca1.visual_transformer_blocks.1@0.args.0"
+            },
+            {
+              "tensor": "inputs.cg1_fm0_ca1.visual_transformer_blocks.1@0.args.1"
+            },
+            {
+              "tensor": "inputs.cg1_fm0_ca1.visual_transformer_blocks.1@0.args.2"
+            },
+            {
+              "tensor": "inputs.cg1_fm0_ca1.visual_transformer_blocks.1@0.args.3"
+            },
+            {
+              "tuple": [
+                {
+                  "tensor": "inputs.cg1_fm0_ca1.visual_transformer_blocks.1@0.args.4.0"
+                },
+                {
+                  "tensor": "inputs.cg1_fm0_ca1.visual_transformer_blocks.1@0.args.4.1"
+                }
+              ]
+            },
+            {
+              "tensor": "inputs.cg1_fm0_ca1.visual_transformer_blocks.1@0.args.5"
+            },
+            {
+              "tensor": "inputs.cg1_fm0_ca1.visual_transformer_blocks.1@0.args.6"
+            },
+            {
+              "tensor": "inputs.cg1_fm0_ca1.visual_transformer_blocks.1@0.args.7"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6FusedTransformerDecoderBlock",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "visual_transformer_blocks.1",
+        "output": {
+          "tuple": [
+            {
+              "tensor": "outputs.cg1_fm0_ca1.visual_transformer_blocks.1@0.out.0"
+            },
+            {
+              "tensor": "outputs.cg1_fm0_ca1.visual_transformer_blocks.1@0.out.1"
+            }
+          ]
+        }
+      }
+    ],
+    "cg1_fm1_ca0": [
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.cg1_fm1_ca0.visual_transformer_blocks.0@0.args.0"
+            },
+            {
+              "tensor": "inputs.cg1_fm1_ca0.visual_transformer_blocks.0@0.args.1"
+            },
+            {
+              "tensor": "inputs.cg1_fm1_ca0.visual_transformer_blocks.0@0.args.2"
+            },
+            {
+              "tensor": "inputs.cg1_fm1_ca0.visual_transformer_blocks.0@0.args.3"
+            },
+            {
+              "tuple": [
+                {
+                  "tensor": "inputs.cg1_fm1_ca0.visual_transformer_blocks.0@0.args.4.0"
+                },
+                {
+                  "tensor": "inputs.cg1_fm1_ca0.visual_transformer_blocks.0@0.args.4.1"
+                }
+              ]
+            },
+            {
+              "tensor": "inputs.cg1_fm1_ca0.visual_transformer_blocks.0@0.args.5"
+            },
+            {
+              "tensor": "inputs.cg1_fm1_ca0.visual_transformer_blocks.0@0.args.6"
+            },
+            {
+              "tensor": "inputs.cg1_fm1_ca0.visual_transformer_blocks.0@0.args.7"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6FusedTransformerDecoderBlock",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "visual_transformer_blocks.0",
+        "output": {
+          "tuple": [
+            {
+              "tensor": "outputs.cg1_fm1_ca0.visual_transformer_blocks.0@0.out.0"
+            },
+            {
+              "tensor": "outputs.cg1_fm1_ca0.visual_transformer_blocks.0@0.out.1"
+            }
+          ]
+        }
+      },
+      {
+        "args": {
+          "tuple": [
+            {
+              "tensor": "inputs.cg1_fm1_ca0.visual_transformer_blocks.1@0.args.0"
+            },
+            {
+              "tensor": "inputs.cg1_fm1_ca0.visual_transformer_blocks.1@0.args.1"
+            },
+            {
+              "tensor": "inputs.cg1_fm1_ca0.visual_transformer_blocks.1@0.args.2"
+            },
+            {
+              "tensor": "inputs.cg1_fm1_ca0.visual_transformer_blocks.1@0.args.3"
+            },
+            {
+              "tuple": [
+                {
+                  "tensor": "inputs.cg1_fm1_ca0.visual_transformer_blocks.1@0.args.4.0"
+                },
+                {
+                  "tensor": "inputs.cg1_fm1_ca0.visual_transformer_blocks.1@0.args.4.1"
+                }
+              ]
+            },
+            {
+              "tensor": "inputs.cg1_fm1_ca0.visual_transformer_blocks.1@0.args.5"
+            },
+            {
+              "tensor": "inputs.cg1_fm1_ca0.visual_transformer_blocks.1@0.args.6"
+            },
+            {
+              "tensor": "inputs.cg1_fm1_ca0.visual_transformer_blocks.1@0.args.7"
+            }
+          ]
+        },
+        "call": 0,
+        "class": "Kandinsky6FusedTransformerDecoderBlock",
+        "kwargs": {
+          "dict": {}
+        },
+        "module": "visual_transformer_blocks.1",
+        "output": {
+          "tuple": [
+            {
+              "tensor": "outputs.cg1_fm1_ca0.visual_transformer_blocks.1@0.out.0"
+            },
+            {
+              "tensor": "outputs.cg1_fm1_ca0.visual_transformer_blocks.1@0.out.1"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "config": {
+    "audio_freqs_scaling": 0.144,
+    "axes_dims": [
+      2,
+      2,
+      4
+    ],
+    "axes_dims_a": [
+      2,
+      2,
+      4
+    ],
+    "ca_rope": true,
+    "cross_gates": true,
+    "ff_dim": 64,
+    "ff_dim_a": 32,
+    "fix_modulation": true,
+    "in_audio_dim": 40,
+    "in_text_dim": 8,
+    "in_text_dim2": 4,
+    "in_visual_dim": 16,
+    "model_dim": 32,
+    "model_dim_a": 16,
+    "num_text_blocks": 1,
+    "num_visual_blocks": 2,
+    "out_audio_dim": 400,
+    "out_visual_dim": 160,
+    "patch_size": [
+      1,
+      2,
+      2
+    ],
+    "scale_factor": [
+      1.0,
+      2.0,
+      2.0
+    ],
+    "text_token_padding": true,
+    "time_dim": 16,
+    "time_dim_a": 16,
+    "visual_cond": true,
+    "visual_token_type_num_embeddings": 2
+  },
+  "fixture": "dit_variants",
+  "reference": "diffusers.Kandinsky6Transformer3DModel.forward",
+  "seeds": {
+    "numpy": 0,
+    "param_noise_generator": 1,
+    "torch_manual_seed": 0
+  },
+  "variants": {
+    "cg0_fm0_ca0": {
+      "ca_rope": false,
+      "cross_gates": false,
+      "fix_modulation": false
+    },
+    "cg0_fm0_ca1": {
+      "ca_rope": true,
+      "cross_gates": false,
+      "fix_modulation": false
+    },
+    "cg0_fm1_ca0": {
+      "ca_rope": false,
+      "cross_gates": false,
+      "fix_modulation": true
+    },
+    "cg0_fm1_ca1": {
+      "ca_rope": true,
+      "cross_gates": false,
+      "fix_modulation": true
+    },
+    "cg1_fm0_ca0": {
+      "ca_rope": false,
+      "cross_gates": true,
+      "fix_modulation": false
+    },
+    "cg1_fm0_ca1": {
+      "ca_rope": true,
+      "cross_gates": true,
+      "fix_modulation": false
+    },
+    "cg1_fm1_ca0": {
+      "ca_rope": false,
+      "cross_gates": true,
+      "fix_modulation": true
+    }
+  },
+  "versions": {
+    "diffusers": "0.42.1",
+    "numpy": "2.5.4",
+    "torch": "2.15.0",
+    "transformers": "5.22.1"
+  }
+}
