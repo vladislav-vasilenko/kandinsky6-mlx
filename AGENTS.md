@@ -13,7 +13,8 @@ Each file in `specs/` is executed by one run. The run reads the spec, does the w
 - Python is managed with `uv`. Use `uv run` for every command; do not install into the system interpreter.
 - MLX runs only on Apple Silicon. If `import mlx.core` fails, stop and report `BLOCKED: mlx unavailable`.
 - Real checkpoints are large (Lite media part about 9.4 GiB, Qwen 15.5 GiB, Pro DiT about 60 GB). A spec stage that needs real weights first checks free disk space and the presence of weights. If either is missing, it completes the tiny-fixture part, marks the real-weight part `SKIPPED` with the reason, and does not download anything on its own.
-- PyTorch reference runs on real weights may be done on Kaggle. MLX runs need a Mac.
+- PyTorch reference runs on real weights and weight conversion may be done on Kaggle. MLX runs need a Mac.
+- Kaggle kernel runs and Hugging Face uploads are outward actions: prepare them, then wait for the owner's approval.
 
 ## Determinism
 

@@ -25,7 +25,7 @@ Each spec is one executor run. It states what to build, what to read first, whic
 |---|---|---|---|
 | [00](00-bootstrap.spec.md) | Project, tooling, CI on CPU | No | 0.5 d |
 | [01](01-reference-harness.spec.md) | Comparison utils, tiny fixtures, reference runners | No | 1.5 d |
-| [02](02-weight-conversion.spec.md) | diffusers → MLX weight converter | Optional | 1 d |
+| [02](02-weight-conversion.spec.md) | Portable diffusers → MLX weight converter, Kaggle conversion kernel | Stage B (Kaggle) | 1.5 d |
 | [03](03-dit-primitives.spec.md) | RoPE, modulation, attention, FFN, embeddings | No | 2 d |
 | [04](04-dit-blocks.spec.md) | Text encoder block, fused video/audio block, output heads | No | 2 d |
 | [05](05-dit-model.spec.md) | Full DiT, Lite and Pro configs | Stage B | 2 d |
