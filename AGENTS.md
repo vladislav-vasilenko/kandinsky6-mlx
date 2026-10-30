@@ -60,11 +60,12 @@ A spec may tighten or relax a tolerance; relaxing requires a written reason in t
   "validation": [{"name": "...", "metrics": {}, "criterion": "...", "pass": true}],
   "skipped": [{"what": "...", "reason": "..."}],
   "deviations": [{"what": "...", "why": "..."}],
-  "follow_ups": ["..."]
+  "follow_ups": ["..."],
+  "architecture_notes": [{"topic": "...", "note": "...", "optimization": "..."}]
 }
 ```
 
-`PARTIAL` means the tiny-fixture part passed and a real-weight part was skipped for an environment reason. `FAIL` means a criterion was run and not met.
+`architecture_notes` records what the port revealed about the component that matters for later speed or memory work (where compute and memory go, redundant work, exact-equivalent rewrites, what parity forbids), with measured numbers where available. `PARTIAL` means the tiny-fixture part passed and a real-weight part was skipped for an environment reason. `FAIL` means a criterion was run and not met.
 
 ## Attribution
 
