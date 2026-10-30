@@ -32,18 +32,25 @@ def test_pinned_commit_is_in_history_and_has_the_recorder():
     commit = constant("COMMIT")
     require_commit(commit)
     assert git("merge-base", "--is-ancestor", commit, "HEAD").returncode == 0
-    for path in ("reference/record_dit_real.py", "reference/recorder.py", "fixtures/real_inputs/smoke_prompt.txt"):
+    for path in KERNEL_FILES:
         assert git("cat-file", "-e", f"{commit}:{path}").returncode == 0, path
 
 
+# What the kernel runs from the pinned checkout; new files elsewhere in reference/ do not affect it.
+KERNEL_FILES = (
+    "reference/record_dit_real.py",
+    "reference/recorder.py",
+    "src/kandinsky6_mlx/utils/fixtures.py",
+    "fixtures/real_inputs/smoke_prompt.txt",
+)
+
+
 def test_recorder_at_pinned_commit_matches_head():
-    """The kernel runs the pinned recorder; if it changed since, the pin must move."""
+    """The kernel runs the pinned recorder; if any file it runs changed since, the pin must move."""
     commit = constant("COMMIT")
     require_commit(commit)
-    assert (
-        git("diff", "--quiet", commit, "HEAD", "--", "reference/", "src/kandinsky6_mlx/utils/fixtures.py").returncode
-        == 0
-    )
+    changed = git("diff", "--name-only", commit, "HEAD", "--", *KERNEL_FILES).stdout.split()
+    assert not changed, f"changed since the pinned commit: {changed}"
 
 
 def test_metadata_attaches_media_and_text_weights_and_needs_internet():
