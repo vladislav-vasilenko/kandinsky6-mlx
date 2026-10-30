@@ -17,29 +17,25 @@ Produces one fixture (`--out`, default `fixtures/real/dit_smoke`) with:
 
 Text embeddings come from `--text-embeds` (a fixture with `inputs.encoder_hidden_states`, `inputs.pooled_projections`
 and optionally `inputs.encoder_attention_mask`) or are computed from `--prompt` with the checkpoint's Qwen2.5-VL and
-CLIP encoders (in bf16, upcast to float32; their precision does not matter for DiT parity because both sides get the
-same arrays) and saved to `--save-text-embeds` for reuse by spec 09.
+CLIP encoders (Qwen in bf16, CLIP in float32, embeddings stored in float32; their precision does not matter for DiT
+parity because both sides get the same arrays) and saved to `--save-text-embeds` for reuse by spec 09.
 
 Memory: the float32 model is ~12.5 GB and is freed before the bf16 model (~6.3 GB) is loaded; with `--prompt`, Qwen in
 bf16 (~15.5 GB) is loaded and freed first. A Kaggle CPU session (30 GB RAM) is enough.
 
-Running on Kaggle (an outward action: prepare it, then run only with the owner's approval):
+Running on Kaggle (an outward action: prepare it, then run only with the owner's approval): the CPU kernel in
+`kaggle/record_dit/` clones this public repository at a pinned commit, installs the reference pins, takes the
+transformer from the output of `applehawk/k6-lite-diffusers-weights-media` and Qwen from
+`applehawk/k6-lite-diffusers-weights-text` (Lite-distill revision 4c487e8b), downloads the small `tokenizer/`,
+`text_encoder_2/` and `tokenizer_2/` folders of the same revision, and runs
 
-1. `git archive --format=zip -o k6-mlx-src.zip HEAD` and upload it as a private Kaggle dataset; it gives this script,
-   `reference/recorder.py` and `src/kandinsky6_mlx/utils/fixtures.py` (none of them needs MLX).
-2. Create a CPU notebook with that dataset and the outputs of `applehawk/k6-lite-diffusers-weights-media` and
-   `applehawk/k6-lite-diffusers-weights-text` (Lite-distill revision 4c487e8b) attached.
-3. `pip install diffusers==0.42.1 transformers==5.22.1 accelerate==1.13.0`, then
+    python reference/record_dit_real.py --checkpoint /kaggle/input --text-checkpoint <text root> \\
+        --prompt "$(cat fixtures/real_inputs/smoke_prompt.txt)" \\
+        --save-text-embeds /kaggle/working/smoke_text --out /kaggle/working/dit_smoke
 
-       python <src>/reference/record_dit_real.py --checkpoint /kaggle/input --text-checkpoint /kaggle/input \\
-           --prompt "$(cat <src>/fixtures/real_inputs/smoke_prompt.txt)" \\
-           --save-text-embeds /kaggle/working/smoke_text --out /kaggle/working/dit_smoke
-
-   The Smoke prompt is the study notebook's `orbit_woman` preset, `smoke` profile
-   (`applehawk/kandinsky-6-lite-diffusers-generation`, `compile_prompt`), stored in
-   `fixtures/real_inputs/smoke_prompt.txt`.
-
-4. Download `dit_smoke.{safetensors,json}` and `smoke_text.{safetensors,json}` into `fixtures/real/` on the Mac.
+The Smoke prompt is the study notebook's `orbit_woman` preset, `smoke` profile
+(`applehawk/kandinsky-6-lite-diffusers-generation`, `compile_prompt`). Afterwards download
+`dit_smoke.{safetensors,json}` and `smoke_text.{safetensors,json}` into `fixtures/real/` on the Mac.
 """
 
 import argparse
