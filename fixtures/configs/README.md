@@ -10,3 +10,4 @@ reference parameter names and shapes without downloading weights.
 | `lite-distill-scheduler.json` | `kandinskylab/Kandinsky-6.0-Lite-distill-5s-Diffusers` (`scheduler/scheduler_config.json`) | `4c487e8b4aeeb9059e5a77905aa2ddb59ec28f81` |
 | `lite-distill-audio_vae.json` | `kandinskylab/Kandinsky-6.0-Lite-distill-5s-Diffusers` (`audio_vae/config.json`) | `4c487e8b4aeeb9059e5a77905aa2ddb59ec28f81` |
 | `lite-distill-vocoder.json` | `kandinskylab/Kandinsky-6.0-Lite-distill-5s-Diffusers` (`vocoder/config.json`) | `4c487e8b4aeeb9059e5a77905aa2ddb59ec28f81` |
+| `lite-distill-vae.json` | `kandinskylab/Kandinsky-6.0-Lite-distill-5s-Diffusers` (`vae/config.json`) | `4c487e8b4aeeb9059e5a77905aa2ddb59ec28f81` |

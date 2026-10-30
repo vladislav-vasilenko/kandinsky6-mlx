@@ -1,0 +1,132 @@
+{
+  "spec": "08-video-vae-decoder",
+  "status": "PARTIAL",
+  "date": "2026-10-31",
+  "environment": {"chip": "Apple M3 Max", "macos": "27.0.1", "mlx": "0.32.4", "torch": "2.15.0", "diffusers": "0.42.1"},
+  "deliverables": [
+    "src/kandinsky6_mlx/models/video_vae/decoder.py",
+    "tests/parity/video_cases.py",
+    "tests/parity/test_video_vae_decoder.py",
+    "tests/parity/test_video_vae_real.py",
+    "reference/record_video_real.py",
+    "fixtures/configs/lite-distill-vae.json (revision 4c487e8b)",
+    "reports/08-video-vae-decoder.json"
+  ],
+  "tests": {"command": "uv run --group reference pytest -q", "passed": 481, "failed": 0},
+  "validation": [
+    {
+      "name": "stage A: every recorded call of the tiny decoder replayed through MLX (float32, weights moved to the MLX layout by the converter's rules); the mid-block Attention is covered through the mid block",
+      "metrics": {
+        "calls": 22,
+        "worst_rel_max": {
+          "Conv3d": 0.0,
+          "HunyuanVideoCausalConv3d": 8.8e-07,
+          "HunyuanVideoResnetBlockCausal3D": 9.0e-07,
+          "HunyuanVideoMidBlock3D": 7.2e-07,
+          "HunyuanVideoUpsampleCausal3D": 7.1e-07,
+          "HunyuanVideoUpBlock3D": 1.2e-06,
+          "HunyuanVideoDecoder3D": 4.8e-06
+        },
+        "decode": 4.8e-06
+      },
+      "criterion": "rel_max <= 1e-4",
+      "pass": true
+    },
+    {
+      "name": "causal padding on a distinct-integer tensor (replicate: 2 frames in front, none behind, 1 row/column per spatial side)",
+      "metrics": {},
+      "criterion": "exact",
+      "pass": true
+    },
+    {
+      "name": "upsample: frame counts 1 + f_t (T - 1) and values for T in {1, 2, 7}, factors (1,2,2) and (2,2,2)",
+      "metrics": {},
+      "criterion": "counts equal; rel_max <= 1e-5",
+      "pass": true
+    },
+    {
+      "name": "causal frame mask vs prepare_causal_attention_mask",
+      "metrics": {},
+      "criterion": "identical",
+      "pass": true
+    },
+    {
+      "name": "released structure (4 up blocks of 3 resnets, x8 spatial, x4 temporal, mid attention) at a small width vs live torch decode; T = 7 runs the default framewise temporal tiling",
+      "metrics": {"frames_out": {"T1": 1, "T2": 5, "T7": 25}},
+      "criterion": "shapes equal; rel_max <= 1e-4; also with framewise decoding off",
+      "pass": true
+    },
+    {
+      "name": "released config builds the reference decoder parameter names and shapes (converted conv layout)",
+      "metrics": {},
+      "criterion": "identical",
+      "pass": true
+    },
+    {
+      "name": "stage B harness on a tiny VAE saved and converted like the real one (record_video_real.py, 7 latent frames)",
+      "metrics": {},
+      "criterion": "25 frames; rel_max <= 1e-4",
+      "pass": true
+    }
+  ],
+  "skipped": [
+    {
+      "what": "stage B on the real Lite-distill VAE (rel_l2 <= 1e-3, PSNR >= 40 dB, peak memory, outputs/08 MP4s and PNG)",
+      "reason": "the converted vae (0.99 GB) is not on this Mac yet; downloading it waits for the owner's approval (6.4 GiB free disk)"
+    }
+  ],
+  "deviations": [
+    {
+      "what": "decode reproduces the reference's default framewise temporal tiling (use_framewise_decoding=True: tiles of 5 latent frames, stride 3, 4-frame linear blend) instead of a single untiled pass",
+      "why": "the spec assumed no tiling at Smoke size, but diffusers 0.42.1 enables framewise decoding by default and the pipeline never disables it, so the reference decode of 7 latent frames is tiled. The untiled path stays available (use_framewise_decoding = False) and is tested too."
+    },
+    {
+      "what": "the blend reproduces the reference's in-place update: tile i is blended against tile i - 1 as already blended",
+      "why": "blend_t writes into its second argument, which is also the next call's first argument"
+    },
+    {
+      "what": "the mid-block causal mask is boolean instead of an additive 0/-inf float mask",
+      "why": "same attention weights; a (L, L) bool mask is a quarter of the float32 size"
+    },
+    {
+      "what": "activations are channels-last inside the module; decode takes and returns (B, C, T, H, W)",
+      "why": "MLX convolutions are channels-last"
+    }
+  ],
+  "follow_ups": [
+    "After approval: download vae/ at e4d652b7 to weights/lite-distill, run reference/record_video_real.py (torch CPU float32), then `uv run python -m tests.parity.test_video_vae_real` and `pytest tests/parity/test_video_vae_real.py -m real_weights`, and update this report.",
+    "Spec 09: rerun stage B with real Smoke latents (record_video_real.py --latents)."
+  ],
+  "architecture_notes": [
+    {
+      "topic": "framewise temporal tiling recomputes overlap",
+      "note": "Each tile decodes up to 5 latent frames but advances 3, so overlapping frames are decoded twice (7 frames -> tiles at 0, 3, 6 cover 5 + 4 + 1 = 10, i.e. 1.43x; long videos approach 5/3). The 4-frame cross-fade between tiles changes the output, so a streaming decode is not parity-equivalent.",
+      "optimization": "Keep tiling for parity. An optional, non-reference fast mode could stream frames with a per-conv cache of the last 2 frames (the convs are causal in time), decoding each frame once; it would need its own quality check, not parity."
+    },
+    {
+      "topic": "nearest upsample followed by a 3x3x3 conv",
+      "note": "Three up blocks repeat frames/rows/columns (x2 spatial, x2 temporal in two of them) and then convolve, so the conv reads 4-8x duplicated data at the highest resolutions.",
+      "optimization": "Exact rewrite: a conv on a nearest-upsampled input equals 4 (or 8) phase-specific convs on the low-resolution input whose kernels are sums of the original taps (sub-pixel form). Cuts conv FLOPs and memory traffic of the three largest convs by up to 4-8x; results differ only by summation order."
+    },
+    {
+      "topic": "where memory goes",
+      "note": "The last up block runs 128 channels at full output resolution. One float32 activation of a 17-frame tile is 128 x 17 x 256 x 432 x 4 B = 0.96 GB at Smoke and 3.6 GB at Baseline (480 x 864); GroupNorm, SiLU, padding and conv each materialize one.",
+      "optimization": "Spec 10 spatial tiling for Baseline; evaluate per up block (mx.eval) to drop intermediates; bf16 activations halve it (spec 14 must check PSNR)."
+    },
+    {
+      "topic": "replicate padding is a full copy",
+      "note": "Every 3x3x3 causal conv first builds a padded copy (2 extra frames, 1 row and column per side) with mx.pad.",
+      "optimization": "A custom Metal conv or clamped-index gather could read edges in place; low priority next to the conv itself."
+    },
+    {
+      "topic": "mid-block attention",
+      "note": "One head with head_dim 512 over all tokens of a tile (Smoke: 5 x 32 x 54 = 8640 tokens; Baseline: 5 x 60 x 108 = 32400) with a block-causal frame mask (32400^2 bool = 1.05 GB).",
+      "optimization": "Exploit the block structure: frame f attends only frames <= f, so attention can run per query frame against a growing key prefix without a materialized mask."
+    },
+    {
+      "topic": "GroupNorm",
+      "note": "pytorch_compatible GroupNorm makes two passes over large 5D tensors before every conv (2 per resnet, 15 resnets).",
+      "optimization": "Fuse GroupNorm + SiLU (and possibly the following pad) into one kernel."
+    }
+  ]
+}
