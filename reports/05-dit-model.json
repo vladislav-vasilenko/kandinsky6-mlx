@@ -2,7 +2,13 @@
   "spec": "05-dit-model",
   "status": "PARTIAL",
   "date": "2026-10-31",
-  "environment": {"chip": "Apple M3 Max", "macos": "27.0.1", "mlx": "0.32.4", "torch": "2.15.0", "diffusers": "0.42.1"},
+  "environment": {
+    "chip": "Apple M3 Max",
+    "macos": "27.0.1",
+    "mlx": "0.32.4",
+    "torch": "2.15.0",
+    "diffusers": "0.42.1"
+  },
   "deliverables": [
     "src/kandinsky6_mlx/models/dit/model.py",
     "tests/parity/test_dit_model.py",
@@ -10,17 +16,30 @@
     "reference/record_dit_real.py",
     "fixtures/configs/ (Lite-distill and Pro-distill transformer/config.json from the Hub, with revisions)",
     "fixtures/real_inputs/smoke_prompt.txt",
-    "reports/05-dit-model.json"
+    "reports/05-dit-model.json",
+    "kaggle/record_dit/ (CPU kernel for the stage B recording) and tests/unit/test_kaggle_record_dit.py"
   ],
-  "tests": {"command": "uv run --group reference pytest -q", "passed": 161, "failed": 0},
+  "tests": {
+    "command": "uv run --group reference pytest -q",
+    "passed": 164,
+    "failed": 0
+  },
   "validation": [
     {
       "name": "stage A: tiny model final outputs vs recorded reference (float32), scenarios av (padded text mask, token types), rope_pos (custom visual_rope_pos with repeated 0), video_only",
       "metrics": {
         "rel_max": {
-          "av": {"video": 2.84e-07, "audio": 2.78e-07},
-          "rope_pos": {"video": 3.54e-07, "audio": 3.11e-07},
-          "video_only": {"video": 3.17e-07}
+          "av": {
+            "video": 2.84e-07,
+            "audio": 2.78e-07
+          },
+          "rope_pos": {
+            "video": 3.54e-07,
+            "audio": 3.11e-07
+          },
+          "video_only": {
+            "video": 3.17e-07
+          }
         }
       },
       "criterion": "rel_max <= 1e-4; (video,) without audio, (video, audio) with it",
@@ -28,7 +47,9 @@
     },
     {
       "name": "stage A: every encoder and fused block output inside the model's own forward pass, all three scenarios",
-      "metrics": {"blocks_per_scenario": 4},
+      "metrics": {
+        "blocks_per_scenario": 4
+      },
       "criterion": "rel_max <= 1e-4",
       "pass": true
     },
@@ -41,8 +62,14 @@
     {
       "name": "real configs built without weights vs diffusers model on the meta device",
       "metrics": {
-        "lite-distill": {"tensors": 2399, "parameters": 3177988112},
-        "pro-distill": {"tensors": 4471, "parameters": 30139423760},
+        "lite-distill": {
+          "tensors": 2399,
+          "parameters": 3177988112
+        },
+        "pro-distill": {
+          "tensors": 4471,
+          "parameters": 30139423760
+        },
         "peak_rss_of_test_run_mib": 458
       },
       "criterion": "identical parameter names and shapes; equal parameter count",
@@ -57,11 +84,65 @@
     {
       "name": "stage B harness on the tiny model in bf16 (sanity of the criterion, not a parity claim)",
       "metrics": {
-        "per_block_rel_l2_mlx_over_torch": [0.84, 0.95, 0.94, 1.02, 0.94, 0.99],
-        "final_rel_l2": {"video": {"mlx": 7.0e-03, "torch": 7.6e-03}, "audio": {"mlx": 6.6e-03, "torch": 6.4e-03}},
+        "per_block_rel_l2_mlx_over_torch": [
+          0.84,
+          0.95,
+          0.94,
+          1.02,
+          0.94,
+          0.99
+        ],
+        "final_rel_l2": {
+          "video": {
+            "mlx": 0.007,
+            "torch": 0.0076
+          },
+          "audio": {
+            "mlx": 0.0066,
+            "torch": 0.0064
+          }
+        },
         "min_cosine": 0.99998
       },
       "criterion": "rel_l2 <= 2 * torch bf16 rel_l2 and cosine >= 0.999",
+      "pass": true
+    },
+    {
+      "name": "real Lite-distill weights (VVladTech/Kandinsky-6.0-Lite-distill-5s-MLX@e4d652b7, SHA-256 62a3dba4...) load and run in bf16 at Smoke size; random inputs, no parity claim",
+      "metrics": {
+        "load_seconds": 0.8,
+        "forward_seconds": {
+          "first": 1.98,
+          "second": 1.45
+        },
+        "tokens": {
+          "video": 3024,
+          "audio": 45,
+          "text": 1024
+        },
+        "peak_memory_gib": 8.05,
+        "parameter_dtypes": {
+          "bfloat16": 2123,
+          "float32": 276
+        },
+        "outputs": {
+          "video": [
+            1,
+            7,
+            32,
+            54,
+            160
+          ],
+          "audio": [
+            1,
+            45,
+            400
+          ],
+          "dtype": "bfloat16",
+          "finite": true
+        }
+      },
+      "criterion": "loads strictly, keeps the 268 modulation + 8 time-embedding tensors in float32, finite outputs of the reference shapes",
       "pass": true
     }
   ],
