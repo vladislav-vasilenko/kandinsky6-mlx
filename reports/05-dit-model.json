@@ -1,0 +1,94 @@
+{
+  "spec": "05-dit-model",
+  "status": "PARTIAL",
+  "date": "2026-10-31",
+  "environment": {"chip": "Apple M3 Max", "macos": "27.0.1", "mlx": "0.32.4", "torch": "2.15.0", "diffusers": "0.42.1"},
+  "deliverables": [
+    "src/kandinsky6_mlx/models/dit/model.py",
+    "tests/parity/test_dit_model.py",
+    "tests/parity/test_dit_real.py",
+    "reference/record_dit_real.py",
+    "fixtures/configs/ (Lite-distill and Pro-distill transformer/config.json from the Hub, with revisions)",
+    "fixtures/real_inputs/smoke_prompt.txt",
+    "reports/05-dit-model.json"
+  ],
+  "tests": {"command": "uv run --group reference pytest -q", "passed": 161, "failed": 0},
+  "validation": [
+    {
+      "name": "stage A: tiny model final outputs vs recorded reference (float32), scenarios av (padded text mask, token types), rope_pos (custom visual_rope_pos with repeated 0), video_only",
+      "metrics": {
+        "rel_max": {
+          "av": {"video": 2.84e-07, "audio": 2.78e-07},
+          "rope_pos": {"video": 3.54e-07, "audio": 3.11e-07},
+          "video_only": {"video": 3.17e-07}
+        }
+      },
+      "criterion": "rel_max <= 1e-4; (video,) without audio, (video, audio) with it",
+      "pass": true
+    },
+    {
+      "name": "stage A: every encoder and fused block output inside the model's own forward pass, all three scenarios",
+      "metrics": {"blocks_per_scenario": 4},
+      "criterion": "rel_max <= 1e-4",
+      "pass": true
+    },
+    {
+      "name": "from_converted: converted directory with BF16-stored modulation and an unknown config key (is_multimodal)",
+      "metrics": {},
+      "criterion": "float32 load matches the reference at rel_max <= 1e-4; bf16 load keeps every time_embeddings/modulation parameter float32 and all others bf16, outputs bf16 with cosine >= 0.999",
+      "pass": true
+    },
+    {
+      "name": "real configs built without weights vs diffusers model on the meta device",
+      "metrics": {
+        "lite-distill": {"tensors": 2399, "parameters": 3177988112},
+        "pro-distill": {"tensors": 4471, "parameters": 30139423760},
+        "peak_rss_of_test_run_mib": 458
+      },
+      "criterion": "identical parameter names and shapes; equal parameter count",
+      "pass": true
+    },
+    {
+      "name": "stage B harness on a tiny model at Smoke size (3024 video tokens): torch recording with record_dit_real.py, conversion, MLX replay in float32",
+      "metrics": {},
+      "criterion": "every block (on recorded inputs and inside the forward pass) and the final outputs at rel_max <= 1e-4",
+      "pass": true
+    },
+    {
+      "name": "stage B harness on the tiny model in bf16 (sanity of the criterion, not a parity claim)",
+      "metrics": {
+        "per_block_rel_l2_mlx_over_torch": [0.84, 0.95, 0.94, 1.02, 0.94, 0.99],
+        "final_rel_l2": {"video": {"mlx": 7.0e-03, "torch": 7.6e-03}, "audio": {"mlx": 6.6e-03, "torch": 6.4e-03}},
+        "min_cosine": 0.99998
+      },
+      "criterion": "rel_l2 <= 2 * torch bf16 rel_l2 and cosine >= 0.999",
+      "pass": true
+    }
+  ],
+  "skipped": [
+    {
+      "what": "stage B on the real Lite-distill weights (per-block and final bf16 parity)",
+      "reason": "needs the float32 reference recording fixtures/real/dit_smoke from reference/record_dit_real.py, which runs on Kaggle (Lite in float32 is ~12.5 GB RAM; 11-13 GiB free disk here) and is an outward action waiting for the owner's approval. The converted transformer comes from VVladTech/Kandinsky-6.0-Lite-distill-5s-MLX@e4d652b7."
+    }
+  ],
+  "deviations": [
+    {
+      "what": "the model casts floating inputs (latents, text embeddings, pooled embedding, audio latents) to its dtype; the timestep stays as given",
+      "why": "torch raises on a dtype mismatch, but MLX silently promotes a float32 input against bf16 weights and would run the whole model in float32. In float32 the cast is a no-op."
+    },
+    {
+      "what": "returns a tuple (video,) or (video, audio), like the reference with return_dict=False; there is no output dataclass",
+      "why": "the pipeline (spec 09) is the only caller"
+    },
+    {
+      "what": "stage B inputs: text embeddings computed from the study notebook's Smoke prompt with the pipeline's own encode_prompt (padded to 1024 tokens with the boolean mask) instead of the notebook's cache",
+      "why": "the notebook's output holds no cached embeddings, and its cache drops the padding; keeping the mask exercises the masked path the pipeline uses."
+    }
+  ],
+  "follow_ups": [
+    "Run reference/record_dit_real.py on Kaggle (CPU, inputs: k6-lite-diffusers-weights-media and -text outputs plus this repository's source) after approval, copy dit_smoke and smoke_text to fixtures/real/, then run `uv run pytest tests/parity/test_dit_real.py -m real_weights` and update this report.",
+    "fixtures/real/smoke_text from that run is the cached text-embedding input for spec 09.",
+    "ComfyUI-Shared on this Mac holds the original Lite-distill diffusers transformer, Qwen2.5-VL-7B and CLIP-L in ComfyUI single-file form; possibly reusable in spec 11 instead of downloading.",
+    "Per-block mx.eval to bound memory and timing of a full forward are spec 14 topics."
+  ]
+}
