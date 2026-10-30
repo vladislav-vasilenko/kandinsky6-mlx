@@ -20,7 +20,7 @@
   "validation": [
     {"name": "fixture determinism", "metrics": {"files": 6, "byte_identical": 6}, "criterion": "two runs give byte-identical safetensors", "pass": true},
     {"name": "fixtures/tiny size", "metrics": {"total_mib": 9.8}, "criterion": "< 20 MB", "pass": true},
-    {"name": "recorded calls replay", "metrics": {"calls": 340, "max_rel_max": "<= 1e-6"}, "criterion": "each recorded module reproduces its recorded output from its recorded inputs, rel_max <= 1e-6", "pass": true},
+    {"name": "recorded calls replay", "metrics": {"calls": 340, "rel_max_same_machine": "<= 1e-6", "rel_max_ci_runner": "3.3e-6 (video VAE)"}, "criterion": "each recorded module reproduces its recorded output from its recorded inputs: rel_max <= 1e-6 in-process, <= 1e-5 for saved fixtures replayed on another machine", "pass": true},
     {"name": "recorder CLI on a saved tiny DiT", "metrics": {"block_calls": 4}, "criterion": "outputs equal a direct forward, rel_max <= 1e-6", "pass": true},
     {"name": "uv run ruff check", "metrics": {}, "criterion": "no findings", "pass": true}
   ],
@@ -36,9 +36,11 @@
   "deviations": [
     {"what": "bfloat16 tensors are stored once in their own dtype, not also as float32", "why": "bfloat16 -> float32 is exact; load_fixture(backend='numpy') returns the float32 copy"},
     {"what": "parameters left constant by default init (norm scales/biases, learnable gains, Snake alpha/beta) get deterministic noise; audio VAE data_mean/data_std buffers too", "why": "otherwise these parameters would not affect outputs and parity tests could not catch wrong handling of them"},
+    {"what": "replay tolerance 1e-5 for saved fixtures replayed on another machine", "why": "the GitHub macOS runner reproduced the video VAE decoder recordings at rel_max 3.3e-6: float32 convolution reductions run in a different order on a different CPU; same-machine and in-process replays meet 1e-6"},
     {"what": "CI installs the reference group", "why": "fixture and recorder tests need PyTorch and diffusers"}
   ],
   "follow_ups": [
+    "Fixture byte-identity holds per machine; another CPU may produce float32 differences around 1e-6.",
     "Real-weight recordings (spec 05+) need a machine with the checkpoint, e.g. Kaggle.",
     "A video VAE encoder fixture is added in spec 12."
   ]

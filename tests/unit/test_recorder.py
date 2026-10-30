@@ -16,6 +16,9 @@ from reference.make_tiny_fixtures import build, dit_inputs
 from reference.recorder import ActivationRecorder, iter_tensors, recorded_output, replay
 
 TINY = Path(__file__).resolve().parents[2] / "fixtures" / "tiny"
+# Saved fixtures may be replayed on another CPU, where float32 reductions (e.g. convolutions) run in a different
+# order; in-process replays keep the strict tolerance.
+CROSS_MACHINE_TOL = 1e-5
 
 
 @pytest.fixture(scope="module")
@@ -124,4 +127,4 @@ def test_every_recorded_call_replays(name, class_name, config, tag):
         calls = meta["calls"][run_tag]
         assert calls
         for call in calls:
-            assert_same(replay(model, call, tensors), recorded_output(call, tensors))
+            assert_same(replay(model, call, tensors), recorded_output(call, tensors), CROSS_MACHINE_TOL)
