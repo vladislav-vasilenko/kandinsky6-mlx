@@ -10,7 +10,7 @@
     "tests/parity/test_dit_primitives.py",
     "reports/03-dit-primitives.json"
   ],
-  "tests": {"command": "uv run pytest -q", "passed": 100, "failed": 0},
+  "tests": {"command": "uv run pytest -q", "passed": 103, "failed": 0},
   "validation": [
     {
       "name": "recorded tiny-DiT primitive calls replayed through MLX (scenario av, float32, GPU)",
@@ -36,10 +36,17 @@
     {"name": "RoPE3D with repeated temporal position 0, released axes", "metrics": {}, "criterion": "rel_max <= 1e-6", "pass": true},
     {"name": "apply_scale_shift / apply_gate_sum with bf16 inputs, (B,C) and (B,1,C)", "metrics": {}, "criterion": "bf16 output, bit-exact vs torch", "pass": true},
     {"name": "RMSNorm vs torch.nn.RMSNorm(eps=None)", "metrics": {"bf16": "bit-exact", "float32_rel_max": "<= 1e-6"}, "criterion": "as stated", "pass": true},
+    {"name": "apply_rotary on random q/k", "metrics": {"rel_max": 6.3e-08}, "criterion": "rel_max <= 1e-6", "pass": true},
+    {"name": "attention cross kv_dim 16 -> 32, separate rope_q/rope_kv, batch 2 with different padding per row", "metrics": {"rel_max": 1.4e-07}, "criterion": "rel_max <= 1e-4", "pass": true},
+    {"name": "bf16 dtype propagation", "metrics": {"attention_rel_l2_vs_torch_bf16": 3.9e-03}, "criterion": "attention and FFN return bf16, modulation with float32 weights returns float32, as the reference", "pass": true},
     {"name": "RoPE1D over 2048 positions (head 64/128, scaling 1 and 0.144) and timestep embedding at t in [0, 1000]", "metrics": {"max_abs_vs_torch_cpu": {"rope_head128": 6.1e-05, "timestep_emb": 6.1e-05}}, "criterion": "error vs a float64 ground truth no larger than 1.1x the reference's own error", "pass": true}
   ],
   "skipped": [],
   "deviations": [
+    {
+      "what": "the (B, L_kv) text padding mask is passed to mx.fast.scaled_dot_product_attention as a boolean mask reshaped to (B, 1, 1, L_kv), not converted to an additive mask",
+      "why": "Equivalent semantics with no -inf arithmetic; diffusers' native backend passes the same boolean (B, 1, 1, L_kv) mask to torch SDPA. Verified with batch 2 and different padding per row."
+    },
     {
       "what": "RMSNorm computes in float32 with the float32 epsilon for every input dtype",
       "why": "torch.nn.RMSNorm(eps=None) does this (verified bit-exact for bf16). The spec assumed finfo(input dtype).eps, which for bf16 is 0.0078 and changed outputs by up to 90% in a test."

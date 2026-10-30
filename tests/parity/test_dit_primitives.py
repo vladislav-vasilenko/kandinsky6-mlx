@@ -138,3 +138,81 @@ def test_rms_norm_matches_torch(dtype):
         np.testing.assert_array_equal(np.array(got.astype(mx.float32)), ref)
     else:
         assert compare(got, ref)["rel_max"] <= 1e-6
+
+
+def _load_torch_weights(module, torch_module):
+    module.load_weights([(k, mx.array(v.detach().float().numpy())) for k, v in torch_module.state_dict().items()])
+
+
+def test_apply_rotary_on_random_qk():
+    torch = pytest.importorskip("torch")
+    from diffusers.models.transformers.transformer_kandinsky6 import Kandinsky6RoPE1D, apply_rotary
+
+    x = np.random.default_rng(0).standard_normal((2, 7, 3, 8)).astype(np.float32)
+    pos = np.arange(7)
+    ref = apply_rotary(torch.from_numpy(x), Kandinsky6RoPE1D(8)(torch.from_numpy(pos)))
+    got = P.apply_rotary(mx.array(x), P.Kandinsky6RoPE1D(8)(mx.array(pos)))
+    assert compare(got, ref)["rel_max"] <= 1e-6
+
+
+def test_attention_mask_with_batch_of_two():
+    """Rows padded differently: a (B, L_kv) mask must hide keys per batch row, not broadcast over queries."""
+    torch = pytest.importorskip("torch")
+    from diffusers.models.transformers.transformer_kandinsky6 import Kandinsky6Attention, Kandinsky6RoPE1D
+
+    torch.manual_seed(0)
+    rng = np.random.default_rng(0)
+    ref_attn = Kandinsky6Attention(32, 8, kv_dim=16).eval()
+    attn = P.Kandinsky6Attention(32, 8, 16)
+    _load_torch_weights(attn, ref_attn)
+    hidden = rng.standard_normal((2, 6, 32)).astype(np.float32)
+    context = rng.standard_normal((2, 5, 16)).astype(np.float32)
+    mask = np.array([[1, 1, 1, 0, 0], [1, 1, 1, 1, 1]], bool)
+    rope_q, rope_kv = Kandinsky6RoPE1D(8)(torch.arange(6)), Kandinsky6RoPE1D(8)(torch.arange(5))
+    with torch.no_grad():
+        ref = ref_attn(
+            torch.from_numpy(hidden), torch.from_numpy(context), torch.from_numpy(mask), rope_q=rope_q, rope_kv=rope_kv
+        )
+    got = attn(
+        mx.array(hidden),
+        mx.array(context),
+        mx.array(mask),
+        rope_q=mx.array(rope_q.numpy()),
+        rope_kv=mx.array(rope_kv.numpy()),
+    )
+    assert compare(got, ref)["rel_max"] <= 1e-4
+
+
+def test_bf16_dtype_propagation():
+    """Attention and FFN in bf16 return bf16; modulation with float32 weights returns float32 for bf16 input."""
+    torch = pytest.importorskip("torch")
+    from diffusers.models.attention import FeedForward
+    from diffusers.models.transformers.transformer_kandinsky6 import Kandinsky6Attention, Kandinsky6Modulation
+
+    torch.manual_seed(0)
+    x = np.random.default_rng(0).standard_normal((1, 6, 32)).astype(np.float32)
+
+    ref_attn = Kandinsky6Attention(32, 8).to(torch.bfloat16)
+    attn = P.Kandinsky6Attention(32, 8)
+    _load_torch_weights(attn, ref_attn)
+    attn.set_dtype(mx.bfloat16)
+    with torch.no_grad():
+        ref = ref_attn(torch.from_numpy(x).bfloat16())
+    got = attn(mx.array(x).astype(mx.bfloat16))
+    assert got.dtype == mx.bfloat16 and ref.dtype == torch.bfloat16
+    assert compare(got, ref.float())["cosine"] >= 0.999
+
+    ref_ff = FeedForward(32, inner_dim=64, activation_fn="gelu", bias=False).to(torch.bfloat16)
+    ff = P.FeedForward(32, 64, bias=False)
+    _load_torch_weights(ff, ref_ff)
+    ff.set_dtype(mx.bfloat16)
+    with torch.no_grad():
+        assert ref_ff(torch.from_numpy(x).bfloat16()).dtype == torch.bfloat16
+    assert ff(mx.array(x).astype(mx.bfloat16)).dtype == mx.bfloat16
+
+    ref_mod = Kandinsky6Modulation(16, 32, 3)
+    mod = P.Kandinsky6Modulation(16, 32, 3)
+    _load_torch_weights(mod, ref_mod)
+    with torch.no_grad():
+        assert ref_mod(torch.ones(1, 16, dtype=torch.bfloat16)).dtype == torch.float32
+    assert mod(mx.ones((1, 16), dtype=mx.bfloat16)).dtype == mx.float32
