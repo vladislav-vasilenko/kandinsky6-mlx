@@ -10,6 +10,9 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # tests/unit/test_kaggle_record_dit.py checks the commit pinned by the Kaggle kernel.
+          fetch-depth: 0
       - uses: astral-sh/setup-uv@v6
       - run: uv sync --group dev --group reference
       - run: uv run ruff check
