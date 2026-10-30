@@ -1,0 +1,16 @@
+{
+  "id": "applehawk/k6-lite-distill-mlx-convert",
+  "title": "K6 Lite Distill MLX Convert",
+  "code_file": "convert_k6.py",
+  "language": "python",
+  "kernel_type": "script",
+  "is_private": true,
+  "enable_gpu": false,
+  "enable_internet": true,
+  "dataset_sources": [],
+  "competition_sources": [],
+  "kernel_sources": [
+    "applehawk/k6-lite-diffusers-weights-media"
+  ],
+  "model_sources": []
+}

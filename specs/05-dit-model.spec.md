@@ -29,6 +29,7 @@ The complete DiT that loads converted weights for any Kandinsky 6 checkpoint fro
 
 - Forward order: text RoPE from `arange(L_text)` → two text branches (video and audio, each with its own embeddings, time embedding + pooled embedding, encoder blocks) → visual patchify (+ token type embeddings per frame) → visual RoPE from per-axis positions (default `arange`, overridable by `visual_rope_pos`) → flatten → audio embeddings and 1D RoPE → fused blocks → reshape to `(B, T', H', W', C)` → output heads.
 - The timestep passed to the model is on the `[0, num_train_timesteps]` scale; check how the pipeline passes it in spec 09.
+- Precision: after loading, cast parameters selected by `kandinsky6_mlx.utils.dtype_policy.keeps_fp32` (time embeddings, every modulation) to float32, as diffusers does with `_keep_in_fp32_modules`; in the Lite checkpoint 268 of them are stored as BF16.
 - Memory: build the model with `mx` lazy evaluation and load weights before any forward; for stage B use the Lite model only.
 
 ## Tests
