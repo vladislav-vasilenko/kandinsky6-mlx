@@ -1,0 +1,78 @@
+{
+  "spec": "04-dit-blocks",
+  "status": "PASS",
+  "date": "2026-10-31",
+  "environment": {"chip": "Apple M3 Max", "macos": "27.0.1", "mlx": "0.32.4", "torch": "2.15.0", "diffusers": "0.42.1"},
+  "deliverables": [
+    "src/kandinsky6_mlx/models/dit/blocks.py",
+    "tests/parity/dit_cases.py (replay_calls: weights_scope, config override, tuple outputs with absent modalities; build_block, block_results)",
+    "tests/parity/test_dit_blocks.py",
+    "reports/04-dit-blocks.json"
+  ],
+  "tests": {"command": "uv run --group reference pytest -q", "passed": 149, "failed": 0},
+  "validation": [
+    {
+      "name": "recorded tiny-DiT block calls replayed through MLX (float32): dit fixture scenarios av, rope_pos, video_only and dit_variants for the 7 non-released flag combinations",
+      "metrics": {
+        "calls": 28,
+        "worst_rel_max": {
+          "Kandinsky6TransformerEncoderBlock (padded text mask)": 1.34e-07,
+          "Kandinsky6FusedTransformerDecoderBlock released flags (av)": 1.21e-07,
+          "Kandinsky6FusedTransformerDecoderBlock rope_pos": 1.15e-07,
+          "Kandinsky6FusedTransformerDecoderBlock video_only (aud=None)": 1.76e-07,
+          "Kandinsky6FusedTransformerDecoderBlock cg0_fm0_ca0": 1.86e-07,
+          "Kandinsky6FusedTransformerDecoderBlock cg0_fm0_ca1": 1.87e-07,
+          "Kandinsky6FusedTransformerDecoderBlock cg0_fm1_ca0": 1.31e-07,
+          "Kandinsky6FusedTransformerDecoderBlock cg0_fm1_ca1": 1.30e-07,
+          "Kandinsky6FusedTransformerDecoderBlock cg1_fm0_ca0": 2.10e-07,
+          "Kandinsky6FusedTransformerDecoderBlock cg1_fm0_ca1": 1.25e-07,
+          "Kandinsky6FusedTransformerDecoderBlock cg1_fm1_ca0": 1.16e-07,
+          "Kandinsky6OutLayer": 2.19e-07,
+          "Kandinsky6OutLayerAudio": 1.67e-07
+        }
+      },
+      "criterion": "rel_max <= 1e-4",
+      "pass": true
+    },
+    {
+      "name": "live torch vs MLX fused block with equal video/audio widths (16), all 8 (cross_gates, fix_modulation, ca_rope) combinations plus aud=None",
+      "metrics": {"worst_rel_max": 2.23e-07},
+      "criterion": "rel_max <= 1e-4",
+      "pass": true
+    },
+    {
+      "name": "live torch vs MLX encoder block, batch 2, with and without a per-row padding mask",
+      "metrics": {},
+      "criterion": "rel_max <= 1e-4",
+      "pass": true
+    },
+    {
+      "name": "deliberately inverted cross-modal gate swap (test-only monkeypatch of _cross_modal_gates)",
+      "metrics": {"rel_max_cross_gates_false": 0.378, "rel_max_cross_gates_true": 0.444, "released_tiny_config": "broadcast error (1,1,16) vs (1,18,32)"},
+      "criterion": "detected: rel_max > 1e-2 with equal widths, failure on the recorded fixture",
+      "pass": true
+    },
+    {"name": "video head unpatchify element order (distinct integers)", "metrics": {}, "criterion": "exact", "pass": true},
+    {
+      "name": "audio head double norm",
+      "metrics": {},
+      "criterion": "with both norms rel_max <= 1e-4 vs recorded output; without the second norm rel_max > 1e-2",
+      "pass": true
+    }
+  ],
+  "skipped": [],
+  "deviations": [
+    {
+      "what": "the fused block's per-modality steps live in two methods of Kandinsky6TransformerDecoderBlock (self_and_text_attention, feed_forward_residual), and the gate choice in Kandinsky6FusedTransformerDecoderBlock._cross_modal_gates",
+      "why": "The video and audio paths are the same code in the reference, written twice; parameter paths are unchanged, and the gate method is the seam the swap-detection test patches. The order of operations follows the reference: the video text cross-attention residual is added only after the audio stream is updated, and cross-modal keys/values are the pre-cross-attention states."
+    },
+    {
+      "what": "the reference's .type_as(...) after each apply_gate_sum is not repeated",
+      "why": "apply_gate_sum already returns the dtype of its first argument, which is the stream being cast to, so the cast is a no-op."
+    }
+  ],
+  "follow_ups": [
+    "bf16 parity of the blocks is measured in spec 05 stage B against the float32 reference.",
+    "All reference branches were reachable with tiny configs: fix_modulation=False needs time_dim == time_dim_a, which the tiny config has; no stop condition was hit."
+  ]
+}
