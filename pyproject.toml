@@ -1,0 +1,45 @@
+[project]
+name = "kandinsky6-mlx"
+version = "0.0.0"
+description = "MLX port of Kandinsky 6 text/image-to-video+audio models"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+dependencies = [
+    "mlx>=0.25",
+    "numpy>=1.26",
+    "safetensors>=0.5",
+    "huggingface_hub>=0.30,<2",
+    "av>=14",
+    "pillow>=10.4",
+]
+
+[dependency-groups]
+# PyTorch reference used only to produce fixtures and run parity tests.
+reference = [
+    "torch>=2.4",
+    "diffusers==0.42.1",
+    "transformers==5.22.1",
+    "accelerate==1.13.0",
+]
+dev = [
+    "pytest>=8",
+    "ruff>=0.6",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/kandinsky6_mlx"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "real_weights: needs downloaded checkpoint weights",
+    "slow: takes more than a minute",
+]
+
+[tool.ruff]
+line-length = 120
