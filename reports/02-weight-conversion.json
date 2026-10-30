@@ -2,7 +2,13 @@
   "spec": "02-weight-conversion",
   "status": "PARTIAL",
   "date": "2026-10-31",
-  "environment": {"chip": "Apple M3 Max", "macos": "27.0.1", "mlx": "0.32.4", "torch": "2.15.0", "diffusers": "0.42.1"},
+  "environment": {
+    "chip": "Apple M3 Max",
+    "macos": "27.0.1",
+    "mlx": "0.32.4",
+    "torch": "2.15.0",
+    "diffusers": "0.42.1"
+  },
   "deliverables": [
     "src/kandinsky6_mlx/convert/convert.py",
     "src/kandinsky6_mlx/convert/layouts.py",
@@ -16,37 +22,161 @@
     "tests/unit/test_kaggle_convert_sync.py",
     "reports/02-weight-conversion.json"
   ],
-  "tests": {"command": "uv run pytest -q", "passed": 41, "failed": 0},
+  "tests": {
+    "command": "uv run pytest -q",
+    "passed": 41,
+    "failed": 0
+  },
   "validation": [
-    {"name": "tiny models: names, MLX layouts, exact values", "metrics": {"components": 4}, "criterion": "converted names equal reference state_dict; conv weights transposed; values bit-exact", "pass": true},
-    {"name": "conv layout table vs nn.Conv* modules", "metrics": {"false_positives": 0, "missed": 0}, "criterion": "exact match per component", "pass": true},
-    {"name": "MLX conv3d / conv1d / conv_transpose1d with converted weights vs torch", "metrics": {"rel_max": "<= 1e-5"}, "criterion": "rel_max <= 1e-5 float32", "pass": true},
-    {"name": "BF16 pass-through", "metrics": {}, "criterion": "byte-identical tensor data", "pass": true},
-    {"name": "portability", "metrics": {}, "criterion": "CLI converts with mlx and torch unimportable", "pass": true},
-    {"name": "Kaggle kernel in sync and converts a snapshot layout", "metrics": {}, "criterion": "build --check passes; kernel finds the snapshot under a nested input path and converts it", "pass": true},
+    {
+      "name": "tiny models: names, MLX layouts, exact values",
+      "metrics": {
+        "components": 4
+      },
+      "criterion": "converted names equal reference state_dict; conv weights transposed; values bit-exact",
+      "pass": true
+    },
+    {
+      "name": "conv layout table vs nn.Conv* modules",
+      "metrics": {
+        "false_positives": 0,
+        "missed": 0
+      },
+      "criterion": "exact match per component",
+      "pass": true
+    },
+    {
+      "name": "MLX conv3d / conv1d / conv_transpose1d with converted weights vs torch",
+      "metrics": {
+        "rel_max": "<= 1e-5"
+      },
+      "criterion": "rel_max <= 1e-5 float32",
+      "pass": true
+    },
+    {
+      "name": "BF16 pass-through",
+      "metrics": {},
+      "criterion": "byte-identical tensor data",
+      "pass": true
+    },
+    {
+      "name": "portability",
+      "metrics": {},
+      "criterion": "CLI converts with mlx and torch unimportable",
+      "pass": true
+    },
+    {
+      "name": "Kaggle kernel in sync and converts a snapshot layout",
+      "metrics": {},
+      "criterion": "build --check passes; kernel finds the snapshot under a nested input path and converts it",
+      "pass": true
+    },
     {
       "name": "real checkpoint names (headers only, Lite-distill @ 4c487e8b)",
       "metrics": {
-        "transformer": {"tensors": 2399, "unknown": 0, "missing": 0, "transposed": 0, "dtypes": {"BF16": 1976, "F32": 423}},
-        "vae": {"tensors": 248, "unknown": 0, "missing": 0, "transposed": 64},
-        "audio_vae": {"tensors": 726, "kept": 59, "dropped": 667, "unknown": 0, "missing": 0, "transposed": 53},
-        "vocoder": {"tensors": 667, "unknown": 0, "missing": 0, "transposed": 116}
+        "transformer": {
+          "tensors": 2399,
+          "unknown": 0,
+          "missing": 0,
+          "transposed": 0,
+          "dtypes": {
+            "BF16": 1976,
+            "F32": 423
+          }
+        },
+        "vae": {
+          "tensors": 248,
+          "unknown": 0,
+          "missing": 0,
+          "transposed": 64
+        },
+        "audio_vae": {
+          "tensors": 726,
+          "kept": 59,
+          "dropped": 667,
+          "unknown": 0,
+          "missing": 0,
+          "transposed": 53
+        },
+        "vocoder": {
+          "tensors": 667,
+          "unknown": 0,
+          "missing": 0,
+          "transposed": 116
+        }
       },
       "criterion": "every tensor matches the reference class built from the checkpoint config; conv ranks correct; 667 vocoder keys dropped from audio_vae",
+      "pass": true
+    },
+    {
+      "name": "stage B: Kaggle CPU conversion of Lite-distill @ 4c487e8b (kernel applehawk/k6-lite-distill-mlx-convert v1, UPLOAD=False)",
+      "metrics": {
+        "transformer": {
+          "tensors": 2399,
+          "dtypes": {
+            "BF16": 1976,
+            "F32": 423
+          },
+          "bytes": 6381600552,
+          "seconds": 91.24,
+          "source_sha256": "b1b52668...",
+          "output_sha256": "62a3dba4a4187f56e525997f0270b282e3787f735879b0bc3cd316dbc4579fee"
+        },
+        "vae": {
+          "tensors": 248,
+          "transposed": 64,
+          "seconds": 16.97,
+          "source_sha256": "7c68a629..."
+        },
+        "audio_vae": {
+          "tensors": 59,
+          "dropped": 667,
+          "transposed": 53,
+          "bytes": 1222459336,
+          "source_bytes": 1711158920,
+          "seconds": 25.17,
+          "source_sha256": "dfccdf9d..."
+        },
+        "vocoder": {
+          "tensors": 667,
+          "transposed": 116,
+          "seconds": 9.75,
+          "source_sha256": "abf05368..."
+        },
+        "total_output_gib": 8.46,
+        "wall_seconds": 144
+      },
+      "criterion": "every component converts; audio_vae loses exactly 667 tensors; DiT keeps 1976 BF16 + 423 F32",
       "pass": true
     }
   ],
   "skipped": [
-    {"what": "stage B conversion of real weights on Kaggle (kernel applehawk/k6-lite-distill-mlx-convert)", "reason": "running a Kaggle kernel and uploading to Hugging Face are outward actions waiting for the owner's approval; the Mac has 13 GB free, not enough to convert locally"}
+    {
+      "what": "upload to the private Hugging Face repository VVladTech/Kandinsky-6.0-Lite-distill-5s-MLX",
+      "reason": "needs the HF_TOKEN Kaggle Secret, readable only in a run started from the Kaggle editor by the owner"
+    }
   ],
   "deviations": [
-    {"what": "default storage keeps every stored dtype; float32 for time embeddings and modulation is applied by the MLX loader (spec 05), not stored", "why": "the Lite DiT stores 268 modulation tensors (549M parameters) as BF16; storing them as F32 would add 1.02 GiB without new information"},
-    {"what": "no Conv2d test", "why": "no component of Kandinsky 6 has a Conv2d"},
-    {"what": "no float32 -> bfloat16 cast", "why": "no storage mode needs it"},
-    {"what": "ruff excludes kaggle/", "why": "generated file inlining linted modules"}
+    {
+      "what": "default storage keeps every stored dtype; float32 for time embeddings and modulation is applied by the MLX loader (spec 05), not stored",
+      "why": "the Lite DiT stores 268 modulation tensors (549M parameters) as BF16; storing them as F32 would add 1.02 GiB without new information"
+    },
+    {
+      "what": "no Conv2d test",
+      "why": "no component of Kandinsky 6 has a Conv2d"
+    },
+    {
+      "what": "no float32 -> bfloat16 cast",
+      "why": "no storage mode needs it"
+    },
+    {
+      "what": "ruff excludes kaggle/",
+      "why": "generated file inlining linted modules"
+    }
   ],
   "follow_ups": [
-    "Run the Kaggle kernel after approval; expected output about 8.0 GiB (DiT 5.95, video VAE 0.92, audio VAE 0.68 after dropping the vocoder copy, vocoder 0.46).",
+    "Owner runs the kernel from the Kaggle editor with HF_TOKEN attached and UPLOAD = True; then record the Hub commit here.",
+    "audio_vae output (1,222,459,336 B) is 32 B smaller than the file in Hub PR #3 (1,222,459,368 B): same tensors, different header padding.",
     "Pro checkpoints (DiT about 60 GB) may need sharded output files."
   ]
 }
