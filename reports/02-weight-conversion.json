@@ -191,5 +191,17 @@
     "audio_vae output (1,222,459,336 B) is 32 B smaller than the file in Hub PR #3 (1,222,459,368 B): same tensors, different header padding.",
     "Pro checkpoints (DiT about 60 GB) may need sharded output files.",
     "The kernel's UPLOAD flag is a module constant set after the docstring; a second assignment added at the top of the script is overwritten by it. The generator could log 'upload skipped' when UPLOAD is False."
+  ],
+  "architecture_notes": [
+    {
+      "topic": "load path",
+      "note": "from_converted maps the 6.4 GB transformer lazily and is ready in 0.8-1.1 s (scripts/profile_components.py (real Lite-distill weights, bf16, M3 Max, 2026-10-31)); BF16 tensors are stored byte-identical, no conversion at load.",
+      "optimization": "Keep the single-file safetensors layout; sharding is only needed for Pro."
+    },
+    {
+      "topic": "float32 modulation costs memory",
+      "note": "268 modulation tensors (549M parameters) are stored BF16 but upcast to float32 at load as diffusers does: 2.2 GB resident instead of 1.1 GB.",
+      "optimization": "Modulation outputs depend only on the timestep and the pooled text, not on the latents, so all 10 steps' modulation vectors can be computed once up front in float32 and the weights freed: exact, saves about 2.2 GB during sampling (see spec 05 notes)."
+    }
   ]
 }

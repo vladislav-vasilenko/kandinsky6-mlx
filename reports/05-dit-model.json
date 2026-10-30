@@ -171,5 +171,27 @@
     "fixtures/real/smoke_text from that run is the cached text-embedding input for spec 09.",
     "ComfyUI-Shared on this Mac holds the original Lite-distill diffusers transformer, Qwen2.5-VL-7B and CLIP-L in ComfyUI single-file form; possibly reusable in spec 11 instead of downloading.",
     "Per-block mx.eval to bound memory and timing of a full forward are spec 14 topics."
+  ],
+  "architecture_notes": [
+    {
+      "topic": "end-to-end cost",
+      "note": "Measured forward: 1.45 s at Smoke, 76 s at Baseline (peak 8.05 / 11.6 GiB); the sum of profiled blocks predicts 1.45 s and 71.9 s (scripts/profile_components.py (real Lite-distill weights, bf16, M3 Max, 2026-10-31)). 10 Baseline steps are about 12.7 min on DiT alone.",
+      "optimization": "Baseline is attention bound; Smoke has room for mx.compile and fusion."
+    },
+    {
+      "topic": "text padding is wasted work and removable exactly",
+      "note": "The pipeline pads the prompt to 1024 tokens with a mask (about 200 valid for the Smoke prompt). Masked keys get zero weight and padded queries never influence other tokens, so dropping the padding before the model changes outputs only by summation order: rel_max 1.5e-6 (video) and 2.3e-6 (audio) on the real model in float32 at Smoke. Saves 4 text blocks x (9.0 -> 2.6 ms) and 32 x (6.9 -> 4.5 ms) cross-attention: about 7% at Smoke, about 1% at Baseline.",
+      "optimization": "Trim padded text (right padding keeps RoPE positions) in the MLX pipeline (spec 09/14); keep the masked path for parity tests."
+    },
+    {
+      "topic": "per-step invariants",
+      "note": "Video and audio RoPE tables, the text input projections (video/audio_text_embeddings) and the per-step modulation vectors depend only on the prompt, the grid and the timestep, not on the latents; the text encoder blocks depend on the timestep through their modulation and must run every step.",
+      "optimization": "Cache RoPE tables and text projections for the whole generation; precompute all steps' modulation vectors and free the 2.2 GB of float32 modulation weights."
+    },
+    {
+      "topic": "lazy graph",
+      "note": "The whole 32-block forward is built lazily and evaluated once; peak memory is set by the largest block activations (Baseline 11.6 GiB including 6.4 GB of weights + 2.2 GB float32 modulation).",
+      "optimization": "Evaluate per block if memory gets tight (spec 14); mx.compile on a block function is the next experiment."
+    }
   ]
 }

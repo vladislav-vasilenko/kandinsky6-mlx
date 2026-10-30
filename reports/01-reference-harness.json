@@ -2,7 +2,13 @@
   "spec": "01-reference-harness",
   "status": "PASS",
   "date": "2026-10-31",
-  "environment": {"chip": "Apple M3 Max", "macos": "27.0.1", "mlx": "0.32.4", "torch": "2.15.0", "diffusers": "0.42.1"},
+  "environment": {
+    "chip": "Apple M3 Max",
+    "macos": "27.0.1",
+    "mlx": "0.32.4",
+    "torch": "2.15.0",
+    "diffusers": "0.42.1"
+  },
   "deliverables": [
     "src/kandinsky6_mlx/utils/compare.py",
     "src/kandinsky6_mlx/utils/fixtures.py",
@@ -16,13 +22,53 @@
     "tests/unit/test_recorder.py",
     "reports/01-reference-harness.json"
   ],
-  "tests": {"command": "uv run pytest -q", "passed": 26, "failed": 0},
+  "tests": {
+    "command": "uv run pytest -q",
+    "passed": 26,
+    "failed": 0
+  },
   "validation": [
-    {"name": "fixture determinism", "metrics": {"files": 6, "byte_identical": 6}, "criterion": "two runs give byte-identical safetensors", "pass": true},
-    {"name": "fixtures/tiny size", "metrics": {"total_mib": 9.8}, "criterion": "< 20 MB", "pass": true},
-    {"name": "recorded calls replay", "metrics": {"calls": 340, "rel_max_same_machine": "<= 1e-6", "rel_max_ci_runner": "3.3e-6 (video VAE)"}, "criterion": "each recorded module reproduces its recorded output from its recorded inputs: rel_max <= 1e-6 in-process, <= 1e-5 for saved fixtures replayed on another machine", "pass": true},
-    {"name": "recorder CLI on a saved tiny DiT", "metrics": {"block_calls": 4}, "criterion": "outputs equal a direct forward, rel_max <= 1e-6", "pass": true},
-    {"name": "uv run ruff check", "metrics": {}, "criterion": "no findings", "pass": true}
+    {
+      "name": "fixture determinism",
+      "metrics": {
+        "files": 6,
+        "byte_identical": 6
+      },
+      "criterion": "two runs give byte-identical safetensors",
+      "pass": true
+    },
+    {
+      "name": "fixtures/tiny size",
+      "metrics": {
+        "total_mib": 9.8
+      },
+      "criterion": "< 20 MB",
+      "pass": true
+    },
+    {
+      "name": "recorded calls replay",
+      "metrics": {
+        "calls": 340,
+        "rel_max_same_machine": "<= 1e-6",
+        "rel_max_ci_runner": "3.3e-6 (video VAE)"
+      },
+      "criterion": "each recorded module reproduces its recorded output from its recorded inputs: rel_max <= 1e-6 in-process, <= 1e-5 for saved fixtures replayed on another machine",
+      "pass": true
+    },
+    {
+      "name": "recorder CLI on a saved tiny DiT",
+      "metrics": {
+        "block_calls": 4
+      },
+      "criterion": "outputs equal a direct forward, rel_max <= 1e-6",
+      "pass": true
+    },
+    {
+      "name": "uv run ruff check",
+      "metrics": {},
+      "criterion": "no findings",
+      "pass": true
+    }
   ],
   "fixtures": {
     "dit": "scenarios av (video+audio, padded text mask, token types; 51 calls of every primitive and block), video_only (blocks), rope_pos (repeated temporal position 0; blocks)",
@@ -32,16 +78,45 @@
     "vocoder": "mel [1,16,12] -> waveform [1,1,192]; 232 calls (Snake, filters, AMP blocks, transposed convs)",
     "piflow": "released Lite-distill config, 10 steps for a video-like [1,3,2,3,16] and an audio-like [1,6,40] sample with widened random model outputs"
   },
-  "skipped": [{"what": "running the recorder on real checkpoints", "reason": "out of scope for spec 01; done in later specs"}],
+  "skipped": [
+    {
+      "what": "running the recorder on real checkpoints",
+      "reason": "out of scope for spec 01; done in later specs"
+    }
+  ],
   "deviations": [
-    {"what": "bfloat16 tensors are stored once in their own dtype, not also as float32", "why": "bfloat16 -> float32 is exact; load_fixture(backend='numpy') returns the float32 copy"},
-    {"what": "parameters left constant by default init (norm scales/biases, learnable gains, Snake alpha/beta) get deterministic noise; audio VAE data_mean/data_std buffers too", "why": "otherwise these parameters would not affect outputs and parity tests could not catch wrong handling of them"},
-    {"what": "replay tolerance 1e-5 for saved fixtures replayed on another machine", "why": "the GitHub macOS runner reproduced the video VAE decoder recordings at rel_max 3.3e-6: float32 convolution reductions run in a different order on a different CPU; same-machine and in-process replays meet 1e-6"},
-    {"what": "CI installs the reference group", "why": "fixture and recorder tests need PyTorch and diffusers"}
+    {
+      "what": "bfloat16 tensors are stored once in their own dtype, not also as float32",
+      "why": "bfloat16 -> float32 is exact; load_fixture(backend='numpy') returns the float32 copy"
+    },
+    {
+      "what": "parameters left constant by default init (norm scales/biases, learnable gains, Snake alpha/beta) get deterministic noise; audio VAE data_mean/data_std buffers too",
+      "why": "otherwise these parameters would not affect outputs and parity tests could not catch wrong handling of them"
+    },
+    {
+      "what": "replay tolerance 1e-5 for saved fixtures replayed on another machine",
+      "why": "the GitHub macOS runner reproduced the video VAE decoder recordings at rel_max 3.3e-6: float32 convolution reductions run in a different order on a different CPU; same-machine and in-process replays meet 1e-6"
+    },
+    {
+      "what": "CI installs the reference group",
+      "why": "fixture and recorder tests need PyTorch and diffusers"
+    }
   ],
   "follow_ups": [
     "Fixture byte-identity holds per machine; another CPU may produce float32 differences around 1e-6.",
     "Real-weight recordings (spec 05+) need a machine with the checkpoint, e.g. Kaggle.",
     "A video VAE encoder fixture is added in spec 12."
+  ],
+  "architecture_notes": [
+    {
+      "topic": "reference cost on CPU",
+      "note": "torch CPU float32 runs of the real audio decode take 7.4 s and of the video VAE a few minutes locally; the Lite DiT in float32 needs about 12.5 GB of RAM plus recordings, which is why its reference runs on Kaggle.",
+      "optimization": "Record each real-weight reference once and replay it; never put the torch reference in a timing loop."
+    },
+    {
+      "topic": "recording size",
+      "note": "Recording every block input at Smoke size would be about 2 GB for the DiT; spec 05 records only the first block's inputs of each chain and every output (about 0.8 GB).",
+      "optimization": "Chain block inputs from previous outputs in any future large recording."
+    }
   ]
 }

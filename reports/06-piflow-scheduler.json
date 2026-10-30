@@ -2,19 +2,40 @@
   "spec": "06-piflow-scheduler",
   "status": "PASS",
   "date": "2026-10-31",
-  "environment": {"chip": "Apple M3 Max", "macos": "27.0.1", "mlx": "0.32.4", "torch": "2.15.0", "diffusers": "0.42.1"},
+  "environment": {
+    "chip": "Apple M3 Max",
+    "macos": "27.0.1",
+    "mlx": "0.32.4",
+    "torch": "2.15.0",
+    "diffusers": "0.42.1"
+  },
   "deliverables": [
     "src/kandinsky6_mlx/schedulers/piflow.py",
     "tests/parity/test_piflow.py",
     "fixtures/configs/lite-distill-scheduler.json (released scheduler_config.json, revision 4c487e8b)",
     "reports/06-piflow-scheduler.json"
   ],
-  "tests": {"command": "uv run --group reference pytest -q", "passed": 181, "failed": 0},
+  "tests": {
+    "command": "uv run --group reference pytest -q",
+    "passed": 181,
+    "failed": 0
+  },
   "validation": [
     {
       "name": "set_timesteps(10) with the released config vs the reference",
       "metrics": {
-        "timesteps": [1000.0, 977.012, 949.367, 915.493, 873.016, 818.182, 744.681, 641.026, 483.871, 217.391],
+        "timesteps": [
+          1000.0,
+          977.012,
+          949.367,
+          915.493,
+          873.016,
+          818.182,
+          744.681,
+          641.026,
+          483.871,
+          217.391
+        ],
         "timesteps_and_sigmas": "bit-identical (also for 1 and 4 steps)"
       },
       "criterion": "rel_max <= 1e-6",
@@ -22,21 +43,90 @@
     },
     {
       "name": "substeps per step from the reference formula round(delta_raw * 128).clamp(min=1), on the reference's own raw schedule",
-      "metrics": {"10_steps": [13, 13, 13, 13, 13, 13, 13, 13, 13, 7], "policy_evaluations": 124},
+      "metrics": {
+        "10_steps": [
+          13,
+          13,
+          13,
+          13,
+          13,
+          13,
+          13,
+          13,
+          13,
+          7
+        ],
+        "policy_evaluations": 124
+      },
       "criterion": "equal for 1, 4 and 10 steps",
       "pass": true
     },
     {
       "name": "ten steps on the spec 01 fixture (video [1,3,2,3,16], audio [1,6,40], recorded model outputs)",
-      "metrics": {"rel_max_per_step": {"video": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "audio": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}},
+      "metrics": {
+        "rel_max_per_step": {
+          "video": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "audio": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      },
       "criterion": "rel_max <= 1e-5 per step",
       "pass": true
     },
     {
       "name": "ten steps at Smoke shapes (video latents [1,7,32,54,16], audio [1,45,40]; NumPy model outputs) vs live torch",
       "metrics": {
-        "rel_max_per_step": {"video": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "audio": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]},
-        "mlx_seconds_10_steps": {"video": 0.023, "audio": 0.006}
+        "rel_max_per_step": {
+          "video": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "audio": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "mlx_seconds_10_steps": {
+          "video": 0.023,
+          "audio": 0.006
+        }
       },
       "criterion": "rel_max <= 1e-5 per step; 1 and 4 steps also tested",
       "pass": true
@@ -77,5 +167,17 @@
   ],
   "follow_ups": [
     "Spec 09 runs the real 10-step loop and compares latents with the diffusers pipeline from the same noise."
+  ],
+  "architecture_notes": [
+    {
+      "topic": "scheduler cost",
+      "note": "10 PiFlow steps (124 policy evaluations) on Smoke video latents take 23 ms in MLX, audio 6 ms; the DiT forward is 1.45 s per step.",
+      "optimization": "None needed; host-side NumPy scalars avoid device syncs."
+    },
+    {
+      "topic": "widened output",
+      "note": "PiFlow needs n_grid = 10 predictions per channel, so the DiT heads output 160 video and 400 audio channels; the extra projection width is negligible next to attention.",
+      "optimization": "None."
+    }
   ]
 }

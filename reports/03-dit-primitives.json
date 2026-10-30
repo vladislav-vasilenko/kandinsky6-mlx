@@ -2,7 +2,13 @@
   "spec": "03-dit-primitives",
   "status": "PASS",
   "date": "2026-10-31",
-  "environment": {"chip": "Apple M3 Max", "macos": "27.0.1", "mlx": "0.32.4", "torch": "2.15.0", "diffusers": "0.42.1"},
+  "environment": {
+    "chip": "Apple M3 Max",
+    "macos": "27.0.1",
+    "mlx": "0.32.4",
+    "torch": "2.15.0",
+    "diffusers": "0.42.1"
+  },
   "deliverables": [
     "src/kandinsky6_mlx/models/dit/primitives.py",
     "src/kandinsky6_mlx/utils/fixtures.py (unflatten, load_module_weights)",
@@ -10,7 +16,11 @@
     "tests/parity/test_dit_primitives.py",
     "reports/03-dit-primitives.json"
   ],
-  "tests": {"command": "uv run pytest -q", "passed": 103, "failed": 0},
+  "tests": {
+    "command": "uv run pytest -q",
+    "passed": 103,
+    "failed": 0
+  },
   "validation": [
     {
       "name": "recorded tiny-DiT primitive calls replayed through MLX (scenario av, float32, GPU)",
@@ -31,15 +41,74 @@
       "criterion": "RoPE <= 1e-6, attention and FFN <= 1e-4, others <= 1e-5",
       "pass": true
     },
-    {"name": "attention coverage", "metrics": {}, "criterion": "text self-attention with padding mask, video/audio self- and text cross-attention, va/av cross-modal attention with separate rope_q/rope_kv", "pass": true},
-    {"name": "patchify element order (distinct integers)", "metrics": {}, "criterion": "exact", "pass": true},
-    {"name": "RoPE3D with repeated temporal position 0, released axes", "metrics": {}, "criterion": "rel_max <= 1e-6", "pass": true},
-    {"name": "apply_scale_shift / apply_gate_sum with bf16 inputs, (B,C) and (B,1,C)", "metrics": {}, "criterion": "bf16 output, bit-exact vs torch", "pass": true},
-    {"name": "RMSNorm vs torch.nn.RMSNorm(eps=None)", "metrics": {"bf16": "bit-exact", "float32_rel_max": "<= 1e-6"}, "criterion": "as stated", "pass": true},
-    {"name": "apply_rotary on random q/k", "metrics": {"rel_max": 6.3e-08}, "criterion": "rel_max <= 1e-6", "pass": true},
-    {"name": "attention cross kv_dim 16 -> 32, separate rope_q/rope_kv, batch 2 with different padding per row", "metrics": {"rel_max": 1.4e-07}, "criterion": "rel_max <= 1e-4", "pass": true},
-    {"name": "bf16 dtype propagation", "metrics": {"attention_rel_l2_vs_torch_bf16": 3.9e-03}, "criterion": "attention and FFN return bf16, modulation with float32 weights returns float32, as the reference", "pass": true},
-    {"name": "RoPE1D over 2048 positions (head 64/128, scaling 1 and 0.144) and timestep embedding at t in [0, 1000]", "metrics": {"max_abs_vs_torch_cpu": {"rope_head128": 6.1e-05, "timestep_emb": 6.1e-05}}, "criterion": "error vs a float64 ground truth no larger than 1.1x the reference's own error", "pass": true}
+    {
+      "name": "attention coverage",
+      "metrics": {},
+      "criterion": "text self-attention with padding mask, video/audio self- and text cross-attention, va/av cross-modal attention with separate rope_q/rope_kv",
+      "pass": true
+    },
+    {
+      "name": "patchify element order (distinct integers)",
+      "metrics": {},
+      "criterion": "exact",
+      "pass": true
+    },
+    {
+      "name": "RoPE3D with repeated temporal position 0, released axes",
+      "metrics": {},
+      "criterion": "rel_max <= 1e-6",
+      "pass": true
+    },
+    {
+      "name": "apply_scale_shift / apply_gate_sum with bf16 inputs, (B,C) and (B,1,C)",
+      "metrics": {},
+      "criterion": "bf16 output, bit-exact vs torch",
+      "pass": true
+    },
+    {
+      "name": "RMSNorm vs torch.nn.RMSNorm(eps=None)",
+      "metrics": {
+        "bf16": "bit-exact",
+        "float32_rel_max": "<= 1e-6"
+      },
+      "criterion": "as stated",
+      "pass": true
+    },
+    {
+      "name": "apply_rotary on random q/k",
+      "metrics": {
+        "rel_max": 6.3e-08
+      },
+      "criterion": "rel_max <= 1e-6",
+      "pass": true
+    },
+    {
+      "name": "attention cross kv_dim 16 -> 32, separate rope_q/rope_kv, batch 2 with different padding per row",
+      "metrics": {
+        "rel_max": 1.4e-07
+      },
+      "criterion": "rel_max <= 1e-4",
+      "pass": true
+    },
+    {
+      "name": "bf16 dtype propagation",
+      "metrics": {
+        "attention_rel_l2_vs_torch_bf16": 0.0039
+      },
+      "criterion": "attention and FFN return bf16, modulation with float32 weights returns float32, as the reference",
+      "pass": true
+    },
+    {
+      "name": "RoPE1D over 2048 positions (head 64/128, scaling 1 and 0.144) and timestep embedding at t in [0, 1000]",
+      "metrics": {
+        "max_abs_vs_torch_cpu": {
+          "rope_head128": 6.1e-05,
+          "timestep_emb": 6.1e-05
+        }
+      },
+      "criterion": "error vs a float64 ground truth no larger than 1.1x the reference's own error",
+      "pass": true
+    }
   ],
   "skipped": [],
   "deviations": [
@@ -59,5 +128,22 @@
   "follow_ups": [
     "bf16 parity of attention and blocks is measured in spec 05 stage B against the float32 reference.",
     "Spec 04 builds blocks on these primitives; dit_cases.replay_calls is reused there."
+  ],
+  "architecture_notes": [
+    {
+      "topic": "attention dominates",
+      "note": "At Baseline (50 220 video tokens, 28 heads of 64) mx.fast.scaled_dot_product_attention alone takes 1.57 s of a 2.24 s fused block (70%); at Smoke it is 6 ms of 44 ms. Estimated throughput about 11.5 TFLOPS in that kernel (scripts/profile_components.py (real Lite-distill weights, bf16, M3 Max, 2026-10-31)).",
+      "optimization": "Little to gain by rewriting SDPA itself; gains must come from fewer tokens or less attention work (spec 14), not from the glue."
+    },
+    {
+      "topic": "RoPE as 2x2 matrices",
+      "note": "The rotation-matrix formulation kept for exact parity costs 24.5 MiB of float32 table at Baseline; building it takes 1.3 ms and applying it 15 ms per tensor (q and k: about 1.3% of a block).",
+      "optimization": "The video table is identical for every step and block: build once per generation. mx.fast.rope would save the table but changes rounding; only consider it with a bf16 parity check."
+    },
+    {
+      "topic": "float32 glue",
+      "note": "LayerNorm in float32 plus apply_scale_shift and apply_gate_sum on (1, 50220, 1792) costs about 19 ms per use, about 7 uses per fused block (about 6% of a Baseline block).",
+      "optimization": "Fuse norm + scale/shift (+ gate) into one kernel (mx.compile or a custom Metal kernel); parity is easy to keep because each op is elementwise in float32."
+    }
   ]
 }

@@ -141,5 +141,22 @@
   ],
   "follow_ups": [
     "Spec 09: rerun stage B with real Smoke audio latents (record_audio_real.py --latents) so the WAV files are listenable; the parity result is expected to hold."
+  ],
+  "architecture_notes": [
+    {
+      "topic": "vocoder dominates audio",
+      "note": "Real weights: audio VAE decode 12 ms (Smoke) / 16 ms (Baseline); vocoder 0.28 s / 1.44 s; peak 3.4 / 4.75 GiB (scripts/profile_components.py (real Lite-distill weights, bf16, M3 Max, 2026-10-31)).",
+      "optimization": "Optimize the vocoder only."
+    },
+    {
+      "topic": "anti-aliased activations are the vocoder's cost",
+      "note": "Each of the 6 stages runs 18 anti-aliased activations (2x upsample by a 12-tap depthwise transposed conv, SnakeBeta, 12-tap depthwise downsample). At Baseline one activation takes 11-14 ms, about 0.22 s of each stage's 0.23-0.28 s; stage time stays flat because length x channels is constant per stage, i.e. it is memory-bandwidth bound.",
+      "optimization": "A fused Metal kernel (mx.fast.metal_kernel) doing upsample -> snake -> downsample in registers would cut the 4 full-size intermediates per activation; the convolutions themselves are a small share."
+    },
+    {
+      "topic": "audio VAE attention",
+      "note": "The mid-block attention is one head over 2048 channels and only 45-218 frames.",
+      "optimization": "Negligible cost; leave as is."
+    }
   ]
 }
