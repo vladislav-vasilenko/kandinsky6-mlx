@@ -21,13 +21,13 @@ Apple Silicon has unified memory: there is no separate VRAM. "Memory" below mean
 | Weight conversion, Lite-distill | 02 stage B | **0 on the Mac** (Kaggle); ~20 GB if run locally | 16 GB, CPU only | Runs on a Kaggle CPU kernel from the existing weight snapshot (9.4 GiB source + ~8.5 GiB output in `/kaggle/working`). The converter needs only NumPy and safetensors (no MLX, PyTorch or GPU) |
 | Download of converted Lite weights | 05–09 stage B | **~8.5 GB** | — | From the private Hugging Face repository the Kaggle kernel uploads to |
 | Real-weight parity (DiT, VAEs) | 05–08 stage B | +1–3 GB | 32 GB | Recorded reference activations (Smoke size). Reference fp32 runs are done on Kaggle, not on the Mac |
-| First MP4, Lite-distill Smoke | 09 | ~20 GB total | 32 GB recommended | DiT bf16 ~6 GB + activations; text embeddings from cache |
+| First MP4, Lite-distill Smoke | 09 | ~10 GB total (converted weights + outputs) | 32 GB recommended | DiT bf16 ~6 GB + activations; text embeddings from cache |
 | Prompt → video | 11 | **+16 GB** (bf16 Qwen) or +5 GB (4-bit) | 32 GB (bf16 Qwen) | Qwen loaded, used and freed before the DiT; CLIP 0.46 GB |
 | Baseline 512×768, 121 frames | 10 | same | 32 GB+ | Tiled VAE decode |
 | Lite base (CFG) | 13 | +~8 GB | 32 GB | Separate DiT weights of the same size |
 | Pro-distill | 14 | +~60 GB bf16 (~16 GB 4-bit) | 128 GB bf16, ~48 GB 4-bit | DiT ~30B parameters; feasibility decided in spec 14 |
 
-Recommended total to go through the MVP with prompt input (Lite-distill, converted weights, bf16 Qwen, reference recordings, outputs): **about 45–50 GB free SSD**. Deleting the source safetensors after conversion saves ~9 GB.
+Recommended total to go through the MVP with prompt input on the Mac, with conversion on Kaggle (converted Lite weights ~8.5 GB, bf16 Qwen ~16 GB, reference recordings and outputs a few GB): **about 30 GB free SSD**; with a 4-bit Qwen, about 20 GB. Converting locally adds ~18 GB during conversion.
 
 ## Where each kind of work runs
 
