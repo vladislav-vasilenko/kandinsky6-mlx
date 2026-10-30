@@ -1,6 +1,6 @@
 {
   "spec": "02-weight-conversion",
-  "status": "PARTIAL",
+  "status": "PASS",
   "date": "2026-10-31",
   "environment": {
     "chip": "Apple M3 Max",
@@ -148,14 +148,27 @@
       },
       "criterion": "every component converts; audio_vae loses exactly 667 tensors; DiT keeps 1976 BF16 + 423 F32",
       "pass": true
-    }
-  ],
-  "skipped": [
+    },
     {
-      "what": "upload to the private Hugging Face repository VVladTech/Kandinsky-6.0-Lite-distill-5s-MLX",
-      "reason": "needs the HF_TOKEN Kaggle Secret, readable only in a run started from the Kaggle editor by the owner"
+      "name": "stage B upload: Kaggle editor run with HF_TOKEN, UPLOAD = True",
+      "metrics": {
+        "repository": "VVladTech/Kandinsky-6.0-Lite-distill-5s-MLX (private)",
+        "revision": "e4d652b7ddbf670b7aa6400a60317fc205459b7d",
+        "committed": "2026-10-30T23:03:58Z",
+        "files": 17,
+        "total_gib": 8.46,
+        "sha256": {
+          "transformer": "62a3dba4a4187f56e525997f0270b282e3787f735879b0bc3cd316dbc4579fee",
+          "vae": "c90f898a5284ed365630f02d099247b6c0ae79ab6c93d16c0fbcbb109c693d12",
+          "audio_vae": "ad3869e1145db1e5ce2f657c909ede6586278655e00960f58f9507b0b2d890a3",
+          "vocoder": "7d903ad9b4c3d80cef04b5fbcca30568e3c6485102b32493e4f9dec0ae09f388"
+        }
+      },
+      "criterion": "LFS SHA-256 of every model.safetensors on the Hub equals the conversion log",
+      "pass": true
     }
   ],
+  "skipped": [],
   "deviations": [
     {
       "what": "default storage keeps every stored dtype; float32 for time embeddings and modulation is applied by the MLX loader (spec 05), not stored",
@@ -175,8 +188,8 @@
     }
   ],
   "follow_ups": [
-    "Owner runs the kernel from the Kaggle editor with HF_TOKEN attached and UPLOAD = True; then record the Hub commit here.",
     "audio_vae output (1,222,459,336 B) is 32 B smaller than the file in Hub PR #3 (1,222,459,368 B): same tensors, different header padding.",
-    "Pro checkpoints (DiT about 60 GB) may need sharded output files."
+    "Pro checkpoints (DiT about 60 GB) may need sharded output files.",
+    "The kernel's UPLOAD flag is a module constant set after the docstring; a second assignment added at the top of the script is overwritten by it. The generator could log 'upload skipped' when UPLOAD is False."
   ]
 }
