@@ -1,0 +1,56 @@
+{
+  "spec": "03-dit-primitives",
+  "status": "PASS",
+  "date": "2026-10-31",
+  "environment": {"chip": "Apple M3 Max", "macos": "27.0.1", "mlx": "0.32.4", "torch": "2.15.0", "diffusers": "0.42.1"},
+  "deliverables": [
+    "src/kandinsky6_mlx/models/dit/primitives.py",
+    "src/kandinsky6_mlx/utils/fixtures.py (unflatten, load_module_weights)",
+    "tests/parity/dit_cases.py",
+    "tests/parity/test_dit_primitives.py",
+    "reports/03-dit-primitives.json"
+  ],
+  "tests": {"command": "uv run pytest -q", "passed": 100, "failed": 0},
+  "validation": [
+    {
+      "name": "recorded tiny-DiT primitive calls replayed through MLX (scenario av, float32, GPU)",
+      "metrics": {
+        "calls": 45,
+        "worst_rel_max_per_class": {
+          "Kandinsky6RoPE1D": 1.19e-07,
+          "Kandinsky6RoPE3D": 5.96e-08,
+          "Kandinsky6Attention": 3.36e-07,
+          "FeedForward": 4.46e-07,
+          "Kandinsky6Modulation": 2.14e-07,
+          "Kandinsky6TextEmbeddings": 2.02e-07,
+          "Kandinsky6VisualEmbeddings": 2.89e-07,
+          "Kandinsky6TimeEmbeddings": 2.17e-07,
+          "Embedding": 0.0
+        }
+      },
+      "criterion": "RoPE <= 1e-6, attention and FFN <= 1e-4, others <= 1e-5",
+      "pass": true
+    },
+    {"name": "attention coverage", "metrics": {}, "criterion": "text self-attention with padding mask, video/audio self- and text cross-attention, va/av cross-modal attention with separate rope_q/rope_kv", "pass": true},
+    {"name": "patchify element order (distinct integers)", "metrics": {}, "criterion": "exact", "pass": true},
+    {"name": "RoPE3D with repeated temporal position 0, released axes", "metrics": {}, "criterion": "rel_max <= 1e-6", "pass": true},
+    {"name": "apply_scale_shift / apply_gate_sum with bf16 inputs, (B,C) and (B,1,C)", "metrics": {}, "criterion": "bf16 output, bit-exact vs torch", "pass": true},
+    {"name": "RMSNorm vs torch.nn.RMSNorm(eps=None)", "metrics": {"bf16": "bit-exact", "float32_rel_max": "<= 1e-6"}, "criterion": "as stated", "pass": true},
+    {"name": "RoPE1D over 2048 positions (head 64/128, scaling 1 and 0.144) and timestep embedding at t in [0, 1000]", "metrics": {"max_abs_vs_torch_cpu": {"rope_head128": 6.1e-05, "timestep_emb": 6.1e-05}}, "criterion": "error vs a float64 ground truth no larger than 1.1x the reference's own error", "pass": true}
+  ],
+  "skipped": [],
+  "deviations": [
+    {
+      "what": "RMSNorm computes in float32 with the float32 epsilon for every input dtype",
+      "why": "torch.nn.RMSNorm(eps=None) does this (verified bit-exact for bf16). The spec assumed finfo(input dtype).eps, which for bf16 is 0.0078 and changed outputs by up to 90% in a test."
+    },
+    {
+      "what": "rotary and timestep frequencies are computed in float64 and rounded once to float32; long-position parity is judged against a float64 ground truth instead of torch CPU bits",
+      "why": "torch CPU float32 exp is off by one ulp for 667 of the frequencies checked and torch CUDA differs again; at position ~2000 or t ~1000 one ulp of frequency is one ulp of the angle (~6e-5). The port's error vs float64 is no larger than the reference's (5.4e-5 vs 6.3e-5 for the timestep embedding). Recorded small-position calls match at <= 1.2e-7."
+    }
+  ],
+  "follow_ups": [
+    "bf16 parity of attention and blocks is measured in spec 05 stage B against the float32 reference.",
+    "Spec 04 builds blocks on these primitives; dit_cases.replay_calls is reused there."
+  ]
+}

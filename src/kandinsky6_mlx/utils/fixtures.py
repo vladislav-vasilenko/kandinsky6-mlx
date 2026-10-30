@@ -60,3 +60,27 @@ def select(tensors: dict[str, Any], prefix: str) -> dict[str, Any]:
     """Return the tensors under `prefix.` with the prefix removed."""
     start = prefix + "."
     return {key[len(start) :]: value for key, value in tensors.items() if key.startswith(start)}
+
+
+def unflatten(spec: Any, tensors: dict[str, Any]) -> Any:
+    """Rebuild an argument structure recorded by `reference.recorder.flatten`, with arrays from `tensors`."""
+    if "tensor" in spec:
+        return tensors[spec["tensor"]]
+    if "none" in spec:
+        return None
+    if "value" in spec:
+        return spec["value"]
+    if "dict" in spec:
+        return {key: unflatten(value, tensors) for key, value in spec["dict"].items()}
+    if "tuple" in spec:
+        return tuple(unflatten(value, tensors) for value in spec["tuple"])
+    if "list" in spec:
+        return [unflatten(value, tensors) for value in spec["list"]]
+    raise ValueError(f"bad spec {spec}")
+
+
+def load_module_weights(module: Any, tensors: dict[str, Any], prefix: str, strict: bool = True) -> None:
+    """Load the MLX arrays under `prefix.` (e.g. `weights.video_time_embeddings`) into an MLX module."""
+    start = prefix + "."
+    weights = [(key[len(start) :], value) for key, value in tensors.items() if key.startswith(start)]
+    module.load_weights(weights, strict=strict)
