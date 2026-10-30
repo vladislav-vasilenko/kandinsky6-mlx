@@ -1,0 +1,46 @@
+{
+  "spec": "00-bootstrap",
+  "status": "PASS",
+  "date": "2026-10-31",
+  "environment": {
+    "chip": "Apple M3 Max",
+    "memory": "48 GiB",
+    "macos": "27.0.1",
+    "python": "3.12.9",
+    "mlx": "0.32.4",
+    "numpy": "2.5.4",
+    "safetensors": "0.8.0",
+    "huggingface_hub": "1.33.0",
+    "av": "19.0.2",
+    "pillow": "13.0.0",
+    "torch": "2.15.0",
+    "diffusers": "0.42.1",
+    "transformers": "5.22.1",
+    "accelerate": "1.13.0",
+    "mlx_default_device": "gpu",
+    "free_disk_gib": 13.2,
+    "venv_size_with_reference": "1.1 GiB"
+  },
+  "deliverables": [
+    "uv.lock",
+    "scripts/check_environment.py",
+    "tests/unit/test_environment.py",
+    ".github/workflows/ci.yml",
+    "reports/00-bootstrap.json"
+  ],
+  "tests": {"command": "uv run pytest -q", "passed": 3, "failed": 0},
+  "validation": [
+    {"name": "uv sync --group dev", "metrics": {}, "criterion": "succeeds", "pass": true},
+    {"name": "uv sync --group dev --group reference", "metrics": {}, "criterion": "succeeds", "pass": true},
+    {"name": "torch absent after dev-only sync", "metrics": {"torch_installed": false}, "criterion": "default install does not pull PyTorch", "pass": true},
+    {"name": "reference classes import", "metrics": {"classes": ["Kandinsky6Transformer3DModel", "AutoencoderKLHunyuanVideo", "PiflowScheduler", "MMAudioVAE", "MMAudioVocoder"]}, "criterion": "import without error", "pass": true},
+    {"name": "uv run ruff check", "metrics": {}, "criterion": "no findings", "pass": true}
+  ],
+  "skipped": [],
+  "deviations": [
+    {"what": "CI runner macos-latest instead of macos-14", "why": "GitHub retires macOS 14 images on 2026-11-02; the first run was cancelled by a scheduled brownout"}
+  ],
+  "follow_ups": [
+    "Free disk is 13.2 GiB: enough for stage A of specs 01-08, not for real-weight conversion (about 20 GB) or the MVP with Qwen (about 45-50 GB)."
+  ]
+}
