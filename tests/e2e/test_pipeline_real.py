@@ -5,7 +5,8 @@ Needs `weights/lite-distill` (override with `K6_LITE_WEIGHTS`) and two recording
 reference) and `fixtures/real/pipeline_smoke_bf16` (diffusers with a bf16 transformer, the drift basis). Criteria, as
 relaxed in report 09 because diffusers in bf16 itself misses the spec's absolute thresholds: per-step latent rel_l2
 <= 2 x the torch bf16 drift at that step and cosine >= 0.99 (the spec's stop condition); final frames PSNR within
-1 dB of torch bf16's (>= 30 dB without a drift basis); the audio SNR is reported. Running this file as a script prints the metrics and writes `outputs/09/mlx.mp4` and
+1 dB of torch bf16's (>= 30 dB without a drift basis); the audio SNR is reported. The port itself is checked by
+`test_real_smoke_pipeline_fp32` with thresholds derived from four seeds (see FP32_*). Running this file as a script prints the metrics and writes `outputs/09/mlx.mp4` and
 `outputs/09/reference.mp4`:
 
     uv run python -m tests.e2e.test_pipeline_real
@@ -32,6 +33,22 @@ DRIFT = ROOT / "fixtures" / "real" / "pipeline_smoke_bf16"
 # Reference decodes of REFERENCE's final latents (record_video_real.py / record_audio_real.py --latents).
 FRAMES = ROOT / "fixtures" / "real" / "pipeline_smoke_frames"
 AUDIO = ROOT / "fixtures" / "real" / "pipeline_smoke_audio"
+
+# Float32 MLX pipeline vs the float32 diffusers pipeline: the check of the port itself. Derived in report 09 from
+# seeds 42, 1, 2, 3 (worst observed: latent rel_l2 7.2e-5, frames 96.6 dB, audio 84.2 dB): 10x the worst rel_l2,
+# and the worst PSNR/SNR minus 20 dB. rel_max is reported only: over 10 steps single elements reach 9e-4, above the
+# AGENTS.md per-block 1e-4, while rel_l2 stays below 1e-4.
+FP32_MAX_REL_L2 = 7.2e-4
+FP32_MIN_FRAMES_PSNR_DB = 76.0
+FP32_MIN_AUDIO_SNR_DB = 64.0
+SEEDS = (42, 1, 2, 3)
+
+
+def seed_fixtures(seed: int) -> tuple[Path, Path, Path, Path]:
+    """Reference, bf16 drift, reference frames and audio recorded for `seed` (seed 42 has the original names)."""
+    stem = "pipeline_smoke" if seed == 42 else f"pipeline_smoke_seed{seed}"
+    root = ROOT / "fixtures" / "real"
+    return root / f"{stem}_fp32", root / f"{stem}_bf16", root / f"{stem}_frames", root / f"{stem}_audio"
 
 
 def reference_media(ref: dict, frames: Path | None, audio: Path | None) -> tuple[np.ndarray, np.ndarray]:
@@ -85,7 +102,7 @@ def stage_b_metrics(
         for name, got in (("video", video), ("audio", audio)):
             key = f"outputs.step.{i}.{'latents' if name == 'video' else 'audio_latents'}"
             metrics = compare(got, ref[key])
-            entry[name] = {"rel_l2": metrics["rel_l2"], "cosine": metrics["cosine"]}
+            entry[name] = {"rel_l2": metrics["rel_l2"], "cosine": metrics["cosine"], "rel_max": metrics["rel_max"]}
             if basis is not None:
                 entry[name]["torch_bf16_rel_l2"] = compare(basis[key], ref[key])["rel_l2"]
         steps.append(entry)
@@ -133,6 +150,24 @@ def test_real_smoke_pipeline_bf16():
         pytest.skip(f"needs {missing}")
     failed = violations(stage_b_metrics(WEIGHTS, REFERENCE, DRIFT, frames_fixture=FRAMES, audio_fixture=AUDIO))
     assert not failed, f"first failure: {failed[0]}"
+
+
+@pytest.mark.real_weights
+@pytest.mark.slow
+@pytest.mark.parametrize("seed", SEEDS)
+def test_real_smoke_pipeline_fp32(seed):
+    """The port check: float32 MLX vs float32 diffusers from the same noise, tight thresholds derived in report 09."""
+    reference, _, frames, audio = seed_fixtures(seed)
+    files = [WEIGHTS / "transformer" / "model.safetensors"]
+    files += [f.with_suffix(".safetensors") for f in (reference, frames, audio)]
+    missing = [str(f) for f in files if not f.is_file()]
+    if missing:
+        pytest.skip(f"needs {missing}")
+    result = stage_b_metrics(WEIGHTS, reference, None, dtype=mx.float32, frames_fixture=frames, audio_fixture=audio)
+    worst = max((m["rel_l2"], i, name) for i, entry in enumerate(result["steps"]) for name, m in entry.items())
+    assert worst[0] <= FP32_MAX_REL_L2, f"step {worst[1]} {worst[2]}: rel_l2 {worst[0]:.2e}"
+    assert result["frames_psnr_db"] >= FP32_MIN_FRAMES_PSNR_DB, result["frames_psnr_db"]
+    assert result["audio_snr_db"] >= FP32_MIN_AUDIO_SNR_DB, result["audio_snr_db"]
 
 
 def test_stage_b_harness_on_tiny_pipeline(tiny_pipelines, tmp_path):
