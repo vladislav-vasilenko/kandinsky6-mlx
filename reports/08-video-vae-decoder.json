@@ -152,7 +152,8 @@
   "follow_ups": [
     "Spec 09: rerun stage B with real Smoke latents (record_video_real.py --latents) and judge tiled vs untiled decode visually on real content.",
     "Spec 10: Baseline needs spatial chunking too: at 480x864 one output frame of a 128-channel conv needs about 5.7 GB of temporary memory by itself.",
-    "Pin torch in future Kaggle kernels."
+    "Pin torch in future Kaggle kernels.",
+    "16 GB profile (owner's request, 2026-10-31): the VAE must fit a pipeline peak of about 10 GB on a 16 GB Mac. Spec 10 sizes spatial tiling and the conv chunk budget for it (today 20.3 GiB at Smoke); the overall profile is a goal of spec 14 (see specs/14-performance-memory.spec.md)."
   ],
   "architecture_notes": [
     {

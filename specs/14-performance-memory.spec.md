@@ -8,7 +8,18 @@ real_weights: required
 
 ## Goal
 
-Make the port practical: measure, then reduce time and memory, without losing parity silently. Decide whether Pro is feasible on available Macs.
+Make the port practical: measure, then reduce time and memory, without losing parity silently. Decide whether Pro is feasible on available Macs, and make Lite run on a 16 GB Apple Silicon laptop.
+
+## 16 GB profile (added after spec 08)
+
+A 16 GB Mac leaves about 10-11 GB for MLX once macOS and apps take theirs, so the profile targets a peak of about 10 GB for the whole Lite pipeline at Smoke (Baseline if it fits). Measured starting points (reports 05, 07, 08): DiT bf16 peak 8.05 GiB (Smoke) / 11.6 GiB (Baseline) including 2.2 GB of float32 modulation weights; VAE decode 20.3 GiB at Smoke with chunked convs; vocoder 3.4 / 4.75 GiB; Qwen 7B in bf16 16.6 GB.
+
+- Load components one at a time and free each before the next (text encoder -> DiT -> VAE -> vocoder), with `mx.clear_cache()` between stages.
+- Precompute the per-step modulation vectors for all steps (they depend only on the timestep and the pooled text) and free the float32 modulation weights: exact, about -2.2 GB (report 05).
+- VAE: spatial tiling and a smaller conv chunk budget from spec 10, sized for the profile.
+- Text: 4-bit Qwen or cached embeddings from spec 11.
+- DiT: 8-bit `Linear` weights if the above is not enough (drift reported as below).
+- Verify on the development Mac with `mx.set_memory_limit` at the profile budget; record whether a real 16 GB machine was available for a final run.
 
 ## Read first
 
@@ -39,6 +50,7 @@ Compare with the Kaggle 2Ã—T4 numbers recorded in the study repository (Smoke â‰
 
 - [ ] Benchmark table for at least one chip, Smoke and Baseline.
 - [ ] Each optimization's speed/memory gain and parity effect recorded.
+- [ ] 16 GB profile: peak memory per stage under the limit at Smoke (and Baseline if reached), with the settings that achieve it and their parity or PSNR effect.
 - [ ] Pro feasibility verdict: memory estimate per quantization level and, if a machine allows, one Pro-distill Smoke run.
 
 ## Out of scope
