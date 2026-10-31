@@ -145,6 +145,206 @@
       "pass": true
     },
     {
+      "name": "analysis: why the spec's per-token cosine >= 0.999 fails in bf16 for both torch and MLX",
+      "metrics": {
+        "tokens_below_0.999": {
+          "smoke": {
+            "tokens": 238,
+            "mlx_bf16": 1,
+            "torch_bf16": 0,
+            "both": 0
+          },
+          "baseline": {
+            "tokens": 295,
+            "mlx_bf16": 2,
+            "torch_bf16": 2,
+            "both": 1
+          },
+          "fox (en)": {
+            "tokens": 31,
+            "mlx_bf16": 0,
+            "torch_bf16": 0,
+            "both": 0
+          },
+          "fox (ru)": {
+            "tokens": 34,
+            "mlx_bf16": 0,
+            "torch_bf16": 2,
+            "both": 0
+          },
+          "empty": {
+            "tokens": 1,
+            "mlx_bf16": 0,
+            "torch_bf16": 0,
+            "both": 0
+          }
+        },
+        "totals": {
+          "tokens": 599,
+          "mlx_bf16_below": 3,
+          "torch_bf16_below": 4,
+          "both_below": 1
+        },
+        "worst_tokens": {
+          "smoke": {
+            "mlx": [
+              [
+                140,
+                "Ġ",
+                0.99852,
+                302.0
+              ],
+              [
+                82,
+                "1",
+                0.99934,
+                299.9
+              ]
+            ],
+            "torch": [
+              [
+                140,
+                "Ġ",
+                0.99905,
+                302.0
+              ],
+              [
+                74,
+                "ĠThe",
+                0.99949,
+                316.6
+              ]
+            ]
+          },
+          "baseline": {
+            "mlx": [
+              [
+                86,
+                "Ġorbit",
+                0.99897,
+                325.8
+              ],
+              [
+                154,
+                "Ġ",
+                0.999,
+                253.3
+              ]
+            ],
+            "torch": [
+              [
+                101,
+                "Ġthe",
+                0.99892,
+                322.4
+              ],
+              [
+                86,
+                "Ġorbit",
+                0.99893,
+                325.8
+              ]
+            ]
+          },
+          "fox (en)": {
+            "mlx": [
+              [
+                9,
+                ",",
+                0.99973,
+                303.8
+              ],
+              [
+                25,
+                ".<",
+                0.9998,
+                283.0
+              ]
+            ],
+            "torch": [
+              [
+                9,
+                ",",
+                0.99904,
+                303.8
+              ],
+              [
+                22,
+                "Ġdistant",
+                0.99917,
+                318.4
+              ]
+            ]
+          },
+          "fox (ru)": {
+            "mlx": [
+              [
+                24,
+                "ĠÐ·Ð°Ð¼",
+                0.99945,
+                294.5
+              ],
+              [
+                12,
+                "ÐµÐ¶",
+                0.99961,
+                245.3
+              ]
+            ],
+            "torch": [
+              [
+                24,
+                "ĠÐ·Ð°Ð¼",
+                0.99844,
+                294.5
+              ],
+              [
+                12,
+                "ÐµÐ¶",
+                0.99885,
+                245.3
+              ]
+            ]
+          },
+          "empty": {
+            "mlx": [
+              [
+                0,
+                "<|im_end|>",
+                0.99964,
+                251.6
+              ]
+            ],
+            "torch": [
+              [
+                0,
+                "<|im_end|>",
+                0.99973,
+                251.6
+              ]
+            ]
+          }
+        },
+        "per_token_error_correlation_mlx_vs_torch": {
+          "smoke": 0.83,
+          "baseline": 0.77,
+          "fox (en)": 0.63,
+          "fox (ru)": 0.89,
+          "empty": null
+        },
+        "mlx_bf16_vs_torch_bf16_rel_l2": {
+          "smoke": 0.0118,
+          "baseline": 0.0128,
+          "fox (en)": 0.0194,
+          "fox (ru)": 0.014,
+          "empty": 0.0198
+        },
+        "global_cosine_from_rel_l2": "rel_l2 1.5-2.7e-2 means a global cosine of about 0.9996-0.9999, which meets the AGENTS.md cosine >= 0.999; only the per-token minimum fails"
+      },
+      "criterion": "explanatory, no threshold",
+      "pass": true
+    },
+    {
       "name": "stage B: CLIP-L pooled vs transformers float32",
       "metrics": {
         "max_rel_l2": 3.9e-06
@@ -239,7 +439,7 @@
   "deviations": [
     {
       "what": "bf16 Qwen: per-token cosine >= 0.998 and the AGENTS.md drift criterion instead of the spec's per-token cosine >= 0.999",
-      "why": "torch bf16 itself (SDPA, as the pipeline loads Qwen) reaches only 0.99844 on its worst token vs float32; MLX bf16 reaches 0.99852 and its rel_l2 is 0.55-1.17x torch's. The float32 MLX path meets tight thresholds (rel_l2 <= 2.3e-5), so the port is exact and the gap is bf16 rounding of the model."
+      "why": "Neither implementation meets the spec's per-token threshold in bf16: torch bf16 (SDPA on MPS, as the pipeline loads Qwen) has 4 of 602 tokens below 0.999 (worst 0.99844), MLX bf16 has 3 (worst 0.99852); only one token is below in both. The float32 MLX path matches the float32 reference at rel_l2 <= 2.3e-5, so the port is exact. Likely causes, from the analysis in validation: (1) bf16 keeps 8 mantissa bits, and rounding in the residual stream accumulates over 28 layers to rel_l2 about 1.5e-2, i.e. a mean token cosine near 0.9999 with a tail; (2) a per-token minimum over about 600 tokens is an extreme-value statistic, much stricter than the global cosine of AGENTS.md (about 0.9996-0.9999 here, which passes); (3) the sensitive tokens are a property of the model: the per-token errors of torch and MLX correlate at 0.63-0.89 and their worst tokens coincide (a lone space before a digit, '1', ';', 'orbit', the Cyrillic 'зам' of 'замедленная'); (4) which of those tokens crosses 0.999 then depends on kernel details that differ between the two implementations (Metal kernels of MLX's fused SDPA, RMSNorm and matmuls vs torch MPS kernels: accumulation order and where intermediates are rounded), while the precision policy is the same (RoPE angles in float32 with cos/sin cast to bf16, RMSNorm in float32, softmax in float32 inside SDPA): MLX bf16 and torch bf16 differ from each other by rel_l2 1.2-2.0e-2, as much as each differs from float32. The criterion used instead: AGENTS.md (rel_l2 <= 2 x torch bf16 drift per prompt) and per-token cosine >= 0.998. Downstream, even float32 instead of bf16 embeddings move a Smoke video to 23-26 dB PSNR (quantization study), so a 0.999 vs 0.998 token cosine has no visible effect on its own. Users who want the reference-exact embeddings can encode in float32 (--qwen-dtype float32, 28 GB peak)."
     },
     {
       "what": "the float32 Qwen reference is computed layer by layer, not by one Qwen2_5_VLForConditionalGeneration call",
@@ -278,6 +478,11 @@
       "topic": "quantization recommendation",
       "note": "8-bit Qwen: supported (embedding rel_l2 2.9e-2 = 1.09x bf16's, video PSNR at the float32-vs-bf16 level). 6-bit (rel_l2 8.6e-2, worst token cosine 0.84) and 4-bit (0.22, 0.34): not supported.",
       "optimization": "The 16 GB profile (spec 14) can use 8-bit Qwen."
+    },
+    {
+      "topic": "bf16 precision of Qwen2.5-VL-7B text states",
+      "note": "Final hidden states have norms of 250-350 per token; bf16 rounding over 28 layers gives rel_l2 about 1.5e-2 vs float32 in both torch and MLX, concentrated on a few context-sensitive tokens (whitespace, digits, punctuation, rare subwords). An earlier attempt with eager attention in bf16 gave token cosines down to 0.27: rounding the large attention logits to bf16 before the softmax is far worse than SDPA.",
+      "optimization": "Keep SDPA-style attention with float32 softmax (mx.fast.scaled_dot_product_attention does); if text fidelity ever matters more, encode in float32 (only once per prompt, ~1 s) — memory, not speed, is the cost."
     }
   ]
 }
