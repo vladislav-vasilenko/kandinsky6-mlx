@@ -1,6 +1,6 @@
 {
   "spec": "12-i2v",
-  "status": "PARTIAL",
+  "status": "PASS",
   "date": "2026-11-01",
   "environment": {
     "chip": "Apple M3 Max (40-core GPU, 48 GB)",
@@ -160,14 +160,17 @@
       },
       "criterion": "I2V video produced",
       "pass": true
-    }
-  ],
-  "skipped": [
+    },
     {
-      "what": "owner's visual check of outputs/12/i2v_side_by_side.png (same scene / differs)",
-      "reason": "pending; status PARTIAL until recorded"
+      "name": "owner's visual check of the side-by-side I2V sheet",
+      "metrics": {
+        "visual_check": "same scene"
+      },
+      "criterion": "recorded by the owner",
+      "pass": true
     }
   ],
+  "skipped": [],
   "deviations": [
     {
       "what": "the image latent sample uses explicit NumPy noise (drawn after the video and audio noise from the seed when not given)",
@@ -187,7 +190,6 @@
     }
   ],
   "follow_ups": [
-    "Owner's visual check, then status PASS.",
     "Port tiled_encode for Baseline I2V with vae_tiling, or encode untiled and document the difference.",
     "I2V presets of the study notebook (mario_*) need their reference images (owner's files)."
   ],
@@ -207,5 +209,11 @@
       "note": "The generated first frame reaches 31.8-38.7 dB PSNR against the preprocessed input image, identical between MLX and torch float32 to 0.01 dB; the model does not copy the input exactly (the tail frame conditions, it does not replace frame 0).",
       "optimization": "None for the port; a pixel-exact first frame would need replacing frame 0 after decoding, which the reference does not do."
     }
-  ]
+  ],
+  "visual_check": {
+    "result": "same scene (owner: maximal similarity)",
+    "by": "owner",
+    "date": "2026-11-01",
+    "material": "outputs/12/i2v_side_by_side.png (MLX bf16 and torch float32, two images, frames 0/12/24)"
+  }
 }
