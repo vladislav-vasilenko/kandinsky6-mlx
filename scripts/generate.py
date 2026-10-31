@@ -14,6 +14,7 @@ from pathlib import Path
 
 import mlx.core as mx
 
+from kandinsky6_mlx.models.video_vae.decoder import TilingConfig
 from kandinsky6_mlx.pipelines.export import write_mp4
 from kandinsky6_mlx.pipelines.t2v import PRESETS, Kandinsky6Pipeline, load_text_embeds
 
@@ -33,12 +34,16 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--latents", type=Path, help="fixture with inputs.latents / inputs.audio_latents")
     parser.add_argument("--dtype", choices=sorted(DTYPES), default="bfloat16", help="DiT compute dtype")
     parser.add_argument("--no-audio", action="store_true")
+    parser.add_argument("--vae-tiling", choices=("preset", "on", "off"), default="preset", help="spatial VAE tiles")
+    parser.add_argument("--save-latents", type=Path, help="also save the final video latents (fixture inputs.latents)")
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args(argv)
 
     size = PRESETS[args.preset] | {
         k: v for k, v in (("height", args.height), ("width", args.width), ("num_frames", args.num_frames)) if v
     }
+    if args.vae_tiling != "preset":
+        size["vae_tiling"] = TilingConfig() if args.vae_tiling == "on" else None
     start = time.perf_counter()
     pipeline = Kandinsky6Pipeline.from_converted(args.weights, DTYPES[args.dtype], audio=not args.no_audio)
     load_seconds = time.perf_counter() - start
@@ -57,9 +62,17 @@ def main(argv: list[str] | None = None) -> int:
     )
     audio = None if output.audio is None else output.audio[0]
     write_mp4(args.out, output.frames[0], output.frame_rate, audio, output.sample_rate)
+    if args.save_latents is not None:
+        args.save_latents.parent.mkdir(parents=True, exist_ok=True)
+        mx.save_safetensors(
+            str(args.save_latents.with_suffix(".safetensors")), {"inputs.latents": mx.array(output.latents)}
+        )
+        meta = {"fixture": args.save_latents.name, "layout": "(B, 16, T, H/8, W/8), not divided by scaling_factor"}
+        args.save_latents.with_suffix(".json").write_text(json.dumps(meta | {"seed": args.seed}, indent=2) + "\n")
     report = {
         "out": str(args.out),
-        "size": size,
+        "size": {k: v for k, v in size.items() if k != "vae_tiling"},
+        "vae_tiling": size.get("vae_tiling") is not None,
         "steps": args.steps,
         "seed": args.seed,
         "dtype": args.dtype,

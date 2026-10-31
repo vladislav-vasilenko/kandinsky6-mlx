@@ -6,12 +6,18 @@ inside the model; `decode` takes and returns the reference layout `(B, C, T, H, 
 MLX layout `[out, kT, kH, kW, in]` written by the converter.
 
 Like the reference, `decode` splits more than `tile_sample_min_num_frames // 4` latent frames into overlapping
-temporal tiles and blends them (`use_framewise_decoding`, on by default); spatial tiling is spec 10.
+temporal tiles and blends them (`use_framewise_decoding`, on by default). With `tiling=TilingConfig(...)` it also
+splits each temporal tile into overlapping spatial tiles, as the reference does after `enable_tiling(...)`
+(`tiled_decode`, `_temporal_tiled_decode`): same tile order, overlaps, crops and linear blends, including the
+reference's in-place blending (a tile is blended against neighbours that are already blended). Every tile is evaluated
+before the next one, so peak memory follows the tile size, not the video size.
 """
 
 import math
+from dataclasses import dataclass
 
 import mlx.core as mx
+import numpy as np
 from mlx import nn
 
 
@@ -205,6 +211,37 @@ class HunyuanVideoDecoder3D(nn.Module):
         return self.conv_out(nn.silu(self.conv_norm_out(x)))
 
 
+@dataclass(frozen=True)
+class TilingConfig:
+    """`AutoencoderKLHunyuanVideo.enable_tiling` arguments, in sample pixels / frames; defaults are the reference's
+    (also what the study notebook passes for Baseline)."""
+
+    tile_sample_min_height: int = 256
+    tile_sample_min_width: int = 256
+    tile_sample_min_num_frames: int = 16
+    tile_sample_stride_height: int = 192
+    tile_sample_stride_width: int = 192
+    tile_sample_stride_num_frames: int = 12
+
+
+def blend(a: mx.array, b: mx.array, blend_extent: int, axis: int) -> mx.array:
+    """The reference's `blend_v/h/t`: the first `blend_extent` slices of `b` along `axis` become
+    `a[-extent + x] * (1 - x / extent) + b[x] * (x / extent)`. The weights are the reference's Python floats rounded
+    to float32, as torch does when it multiplies a float32 tensor by a Python scalar."""
+    blend_extent = min(a.shape[axis], b.shape[axis], blend_extent)
+    if blend_extent == 0:
+        return b
+    ratio = np.arange(blend_extent) / blend_extent
+    shape = [1] * a.ndim
+    shape[axis] = blend_extent
+    weight_a = mx.array((1 - ratio).astype(np.float32)).reshape(shape)
+    weight_b = mx.array(ratio.astype(np.float32)).reshape(shape)
+    head_a = mx.take(a, mx.arange(a.shape[axis] - blend_extent, a.shape[axis]), axis=axis)
+    head_b = mx.take(b, mx.arange(blend_extent), axis=axis)
+    rest_b = mx.take(b, mx.arange(blend_extent, b.shape[axis]), axis=axis)
+    return mx.concatenate([head_a * weight_a + head_b * weight_b, rest_b], axis=axis)
+
+
 class AutoencoderKLHunyuanVideo(nn.Module):
     """`AutoencoderKLHunyuanVideo` with `decode` only."""
 
@@ -265,15 +302,60 @@ class AutoencoderKLHunyuanVideo(nn.Module):
     def _decode_tile(self, z: mx.array) -> mx.array:
         return self.decoder(self.post_quant_conv(z))
 
-    def _temporal_tiled_decode(self, z: mx.array) -> mx.array:
+    def _tiled_decode(self, z: mx.array, tiling: TilingConfig) -> mx.array:
+        """`tiled_decode`: overlapping spatial tiles of channels-last latents `(B, T, H, W, C)`."""
+        _, _, height, width, _ = z.shape
+        ratio = self.spatial_compression_ratio
+        min_h, min_w = tiling.tile_sample_min_height // ratio, tiling.tile_sample_min_width // ratio
+        stride_h, stride_w = tiling.tile_sample_stride_height // ratio, tiling.tile_sample_stride_width // ratio
+        blend_h = tiling.tile_sample_min_height - tiling.tile_sample_stride_height
+        blend_w = tiling.tile_sample_min_width - tiling.tile_sample_stride_width
+        rows = []
+        for i in range(0, height, stride_h):
+            row = []
+            for j in range(0, width, stride_w):
+                tile = self._decode_tile(z[:, :, i : i + min_h, j : j + min_w])
+                mx.eval(tile)
+                row.append(tile)
+            rows.append(row)
+        result_rows = []
+        for i, row in enumerate(rows):
+            result_row = []
+            for j in range(len(row)):
+                tile = row[j]
+                if i > 0:
+                    tile = blend(rows[i - 1][j], tile, blend_h, axis=2)
+                if j > 0:
+                    tile = blend(row[j - 1], tile, blend_w, axis=3)
+                row[j] = tile  # in place in the reference: later neighbours see the blended tile
+                result_row.append(tile[:, :, : tiling.tile_sample_stride_height, : tiling.tile_sample_stride_width])
+            mx.eval(row)
+            result_rows.append(mx.concatenate(result_row, axis=3))
+        out = mx.concatenate(result_rows, axis=2)[:, :, : height * ratio, : width * ratio]
+        mx.eval(out)
+        return out
+
+    def _needs_spatial_tiling(self, z: mx.array, tiling: TilingConfig | None) -> bool:
+        ratio = self.spatial_compression_ratio
+        return tiling is not None and (
+            z.shape[3] > tiling.tile_sample_min_width // ratio or z.shape[2] > tiling.tile_sample_min_height // ratio
+        )
+
+    def _temporal_tiled_decode(self, z: mx.array, tiling: TilingConfig | None = None) -> mx.array:
+        min_frames = tiling.tile_sample_min_num_frames if tiling else self.tile_sample_min_num_frames
+        stride_sample_frames = tiling.tile_sample_stride_num_frames if tiling else self.tile_sample_stride_num_frames
         num_frames = z.shape[1]
         num_sample_frames = (num_frames - 1) * self.temporal_compression_ratio + 1
-        tile_frames = self.tile_sample_min_num_frames // self.temporal_compression_ratio
-        stride_frames = self.tile_sample_stride_num_frames // self.temporal_compression_ratio
-        blend_frames = self.tile_sample_min_num_frames - self.tile_sample_stride_num_frames
+        tile_frames = min_frames // self.temporal_compression_ratio
+        stride_frames = stride_sample_frames // self.temporal_compression_ratio
+        blend_frames = min_frames - stride_sample_frames
         row = []
         for i in range(0, num_frames, stride_frames):
-            decoded = self._decode_tile(z[:, i : i + tile_frames + 1])
+            tile = z[:, i : i + tile_frames + 1]
+            if self._needs_spatial_tiling(tile, tiling):
+                decoded = self._tiled_decode(tile, tiling)
+            else:
+                decoded = self._decode_tile(tile)
             if i > 0:
                 decoded = decoded[:, 1:]
             mx.eval(decoded)
@@ -282,26 +364,23 @@ class AutoencoderKLHunyuanVideo(nn.Module):
         for i in range(len(row)):
             if i > 0:
                 # The reference blends in place, so tile i is blended against the already blended tile i - 1.
-                row[i] = self._blend_t(row[i - 1], row[i], blend_frames)
-                result.append(row[i][:, : self.tile_sample_stride_num_frames])
+                row[i] = blend(row[i - 1], row[i], blend_frames, axis=1)
+                result.append(row[i][:, :stride_sample_frames])
             else:
-                result.append(row[i][:, : self.tile_sample_stride_num_frames + 1])
+                result.append(row[i][:, : stride_sample_frames + 1])
         return mx.concatenate(result, axis=1)[:, :num_sample_frames]
 
-    @staticmethod
-    def _blend_t(a: mx.array, b: mx.array, blend_extent: int) -> mx.array:
-        blend_extent = min(a.shape[1], b.shape[1], blend_extent)
-        frames = [
-            a[:, -blend_extent + x] * (1 - x / blend_extent) + b[:, x] * (x / blend_extent) for x in range(blend_extent)
-        ]
-        return mx.concatenate([mx.stack(frames, axis=1), b[:, blend_extent:]], axis=1) if frames else b
+    def decode(self, z: mx.array, tiling: TilingConfig | None = None) -> mx.array:
+        """Latents already divided by `scaling_factor`, `(B, C, T, H, W)` -> frames `(B, 3, 4(T-1)+1, 8H, 8W)`.
 
-    def decode(self, z: mx.array) -> mx.array:
-        """Latents already divided by `scaling_factor`, `(B, C, T, H, W)` -> frames `(B, 3, 4(T-1)+1, 8H, 8W)`."""
+        `tiling=None` is the reference's default state (temporal tiles only); a `TilingConfig` is the state after
+        `enable_tiling(**asdict(tiling))`, which also sets the temporal tile size and stride."""
         z = z.transpose(0, 2, 3, 4, 1)
-        tile_frames = self.tile_sample_min_num_frames // self.temporal_compression_ratio
-        if self.use_framewise_decoding and z.shape[1] > tile_frames:
-            out = self._temporal_tiled_decode(z)
+        min_frames = tiling.tile_sample_min_num_frames if tiling else self.tile_sample_min_num_frames
+        if self.use_framewise_decoding and z.shape[1] > min_frames // self.temporal_compression_ratio:
+            out = self._temporal_tiled_decode(z, tiling)
+        elif self._needs_spatial_tiling(z, tiling):
+            out = self._tiled_decode(z, tiling)
         else:
             out = self._decode_tile(z)
         return out.transpose(0, 4, 1, 2, 3)

@@ -20,13 +20,14 @@ import numpy as np
 
 from kandinsky6_mlx.models.audio_vae.decoder import MMAudioVAE
 from kandinsky6_mlx.models.dit.model import Kandinsky6Transformer3DModel
-from kandinsky6_mlx.models.video_vae.decoder import AutoencoderKLHunyuanVideo
+from kandinsky6_mlx.models.video_vae.decoder import AutoencoderKLHunyuanVideo, TilingConfig
 from kandinsky6_mlx.models.vocoder.bigvgan import MMAudioVocoder
 from kandinsky6_mlx.schedulers.piflow import PiflowScheduler
 
 PRESETS = {
     "smoke": {"height": 256, "width": 432, "num_frames": 25},
-    "baseline": {"height": 480, "width": 864, "num_frames": 121},
+    # The study notebook decodes Baseline with `vae.enable_tiling()` at the reference defaults.
+    "baseline": {"height": 480, "width": 864, "num_frames": 121, "vae_tiling": TilingConfig()},
 }
 
 
@@ -39,6 +40,7 @@ class PipelineOutput:
     timings: dict = field(default_factory=dict)  # seconds per stage
     peak_memory_gib: dict = field(default_factory=dict)  # per stage
     step_latents: list = field(default_factory=list)  # (video, audio) after each step, if requested
+    latents: np.ndarray | None = None  # final video latents, diffusers layout (B, 16, T, H/8, W/8), float32
 
 
 def load_text_embeds(path: str | Path, trim_padding: bool = True) -> dict[str, mx.array]:
@@ -155,9 +157,12 @@ class Kandinsky6Pipeline:
         sample_audio: bool = True,
         return_step_latents: bool = False,
         release_transformer: bool = False,
+        vae_tiling: TilingConfig | None = None,
     ) -> PipelineOutput:
         """Generate one video (batch 1). `release_transformer` frees the DiT after denoising, before the decoders run
-        (about 8 GB at bf16); the pipeline then cannot be called again."""
+        (about 8 GB at bf16); the pipeline then cannot be called again. `vae_tiling` decodes in spatial tiles as the
+        reference does after `vae.enable_tiling(...)` (the Baseline preset sets the reference defaults); without it
+        only the reference's default temporal tiling is used."""
         if self.transformer is None:
             raise RuntimeError("the transformer was released by a previous call with release_transformer=True")
         if guidance_scale > 1.0:
@@ -217,8 +222,10 @@ class Kandinsky6Pipeline:
         mx.clear_cache()
         mx.reset_peak_memory()
         start = time.perf_counter()
-        z = video.transpose(0, 4, 1, 2, 3).astype(mx.float32) / self.vae.scaling_factor
-        frames = self.vae.decode(z)
+        final = video.transpose(0, 4, 1, 2, 3).astype(mx.float32)
+        output.latents = np.array(final)
+        z = final / self.vae.scaling_factor
+        frames = self.vae.decode(z, tiling=vae_tiling)
         frames = mx.clip(frames / 2 + 0.5, 0, 1).transpose(0, 2, 3, 4, 1)
         output.frames = np.array(frames)
         output.timings["video_decode"] = time.perf_counter() - start
