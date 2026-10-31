@@ -14,6 +14,6 @@ jobs:
           # tests/unit/test_kaggle_record_dit.py checks the commit pinned by the Kaggle kernel.
           fetch-depth: 0
       - uses: astral-sh/setup-uv@v6
-      - run: uv sync --group dev --group reference
+      - run: uv sync --group dev --group reference --extra text
       - run: uv run ruff check
       - run: uv run pytest -q -m "not real_weights and not slow"
