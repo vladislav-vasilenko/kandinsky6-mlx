@@ -32,9 +32,17 @@ class HunyuanVideoCausalConv3d(nn.Module):
     # Budget for the conv's temporary buffer per chunk.
     chunk_bytes = 1 << 30
 
-    def __init__(self, in_channels: int, out_channels: int, kernel_size: int = 3, stride: int = 1, bias: bool = True):
+    def __init__(
+        self,
+        in_channels: int,
+        out_channels: int,
+        kernel_size: int = 3,
+        stride: int | tuple[int, int, int] = 1,
+        bias: bool = True,
+    ):
         super().__init__()
         self.kernel_size = kernel_size
+        self.strided = stride not in (1, (1, 1, 1))  # the encoder's downsamplers; chunking assumes stride 1
         self.conv = nn.Conv3d(in_channels, out_channels, kernel_size, stride, bias=bias)
 
     def __call__(self, x: mx.array) -> mx.array:
@@ -46,7 +54,7 @@ class HunyuanVideoCausalConv3d(nn.Module):
         out_frames = x.shape[1] - (k - 1)
         per_frame = (x.shape[2] - k + 1) * (x.shape[3] - k + 1) * k**3 * x.shape[4] * x.itemsize
         chunk = max(1, self.chunk_bytes // per_frame)
-        if chunk >= out_frames:
+        if chunk >= out_frames or self.strided:
             return self.conv(x)
         parts = []
         for start in range(0, out_frames, chunk):

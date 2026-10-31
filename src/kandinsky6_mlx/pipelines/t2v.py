@@ -86,6 +86,7 @@ class Kandinsky6Pipeline:
         self.patch_size = transformer.patch_size
         self.audio_sample_rate = audio_vae.sample_rate if audio_vae is not None else 44_100
         self.audio_latent_hop_length = audio_vae.latent_hop_length if audio_vae is not None else 1024
+        self.vae_path = None  # converted vae/ directory: the encoder is loaded from it only for image-to-video
 
     @classmethod
     def from_converted(
@@ -112,7 +113,40 @@ class Kandinsky6Pipeline:
             vocoder.load_weights(str(path / "vocoder" / "model.safetensors"))
         scheduler_file = path / "scheduler" / "scheduler_config.json"
         scheduler_config = json.loads(scheduler_file.read_text()) if scheduler_file.is_file() else {}
-        return cls(transformer, vae, audio_vae, vocoder, scheduler_config)
+        pipeline = cls(transformer, vae, audio_vae, vocoder, scheduler_config)
+        pipeline.vae_path = path / "vae"
+        return pipeline
+
+    def encode_image(self, image, height: int, width: int, noise: np.ndarray) -> mx.array:
+        """`Kandinsky6TI2VAPipeline.encode_image`: preprocess (resize and centre-crop to `height x width`, [-1, 1]),
+        encode one frame, sample the latent distribution with the given standard-normal `noise` `(1, 16, 1, H/8, W/8)`
+        and scale by `scaling_factor`. Returns the first-frame latents `(1, H/8, W/8, 16)` in float32. The encoder is
+        loaded from the converted `vae/` and freed afterwards."""
+        from PIL import Image
+
+        from kandinsky6_mlx.models.video_vae.encoder import HunyuanVideoVAEEncoder
+        from kandinsky6_mlx.pipelines.image import preprocess_image
+
+        if self.vae_path is None:
+            raise ValueError("image-to-video needs a pipeline loaded with from_converted (for the VAE encoder)")
+        if not isinstance(image, Image.Image):
+            image = Image.open(image)
+        pixels = preprocess_image(image, height, width, self.vae_scale_factor_spatial)[:, :, None]
+        encoder = HunyuanVideoVAEEncoder.from_config(json.loads((self.vae_path / "config.json").read_text()))
+        encoder.load_weights(
+            HunyuanVideoVAEEncoder.encoder_weights(mx.load(str(self.vae_path / "model.safetensors"))), strict=True
+        )
+        mean, logvar = encoder.encode(mx.array(pixels))
+        latents = HunyuanVideoVAEEncoder.sample(mean, logvar, mx.array(noise)) * encoder.scaling_factor
+        latents = latents[:, :, 0].transpose(0, 2, 3, 1).astype(mx.float32)
+        mx.eval(latents)
+        del encoder
+        mx.clear_cache()
+        return latents
+
+    def image_noise_shape(self, height: int, width: int) -> tuple:
+        s = self.vae_scale_factor_spatial
+        return (1, self.transformer.in_visual_dim, 1, height // s, width // s)
 
     def latent_shapes(self, height: int, width: int, num_frames: int, frame_rate: float) -> tuple[tuple, tuple]:
         """Diffusers layouts: video `(1, 16, T, H/8, W/8)` and audio `(1, 40, L)`."""
@@ -160,13 +194,22 @@ class Kandinsky6Pipeline:
         vae_tiling: TilingConfig | None = None,
         progress: bool = False,
         on_latents=None,
+        image=None,
+        image_noise: np.ndarray | mx.array | None = None,
     ) -> PipelineOutput:
         """Generate one video (batch 1). `release_transformer` frees the DiT after denoising, before the decoders run
         (about 8 GB at bf16); the pipeline then cannot be called again. `vae_tiling` decodes in spatial tiles as the
         reference does after `vae.enable_tiling(...)` (the Baseline preset sets the reference defaults); without it
         only the reference's default temporal tiling is used. `progress` shows tqdm bars for the denoising steps and
         the VAE tiles. `on_latents(latents)` receives the final video latents (diffusers layout, float32 NumPy) right
-        after denoising, before the decoders run, so a caller can keep them even if decoding fails."""
+        after denoising, before the decoders run, so a caller can keep them even if decoding fails.
+
+        `image` (a PIL image or a path) conditions the first frame as diffusers 0.42.1 does: its encoded latents are
+        appended as an extra tail frame that is reset to them before every step, carries a conditioning mask of 1 and
+        visual token type 1, and reuses the first frame's rotary position; the tail is dropped before decoding.
+        `image_noise` is the standard-normal sample of the encoder's latent distribution (drawn from the seed, after
+        the video and audio noise, when not given). Step latents then include the tail frame, like the reference's
+        callback."""
         if self.transformer is None:
             raise RuntimeError("the transformer was released by a previous call with release_transformer=True")
         if guidance_scale > 1.0:
@@ -180,10 +223,29 @@ class Kandinsky6Pipeline:
             latents = rng.standard_normal(video_shape).astype(np.float32)
         if sample_audio and audio_latents is None:
             audio_latents = rng.standard_normal(audio_shape).astype(np.float32)
+        first_frame = None
+        if image is not None:
+            if image_noise is None:
+                image_noise = rng.standard_normal(self.image_noise_shape(height, width)).astype(np.float32)
+            first_frame = self.encode_image(image, height, width, image_noise)
 
         dtype = self.transformer.dtype
         # Transformer layouts: video (B, T, H, W, C), audio (B, L, C), in the transformer's dtype.
         video = mx.array(latents).transpose(0, 2, 3, 4, 1).astype(dtype)
+        visual_token_type_ids = visual_rope_pos = None
+        if first_frame is not None:
+            # Tail conditioning: the reference frame as an extra latent frame of token type 1 at the first frame's
+            # temporal rotary position.
+            first_frame = first_frame.astype(dtype)
+            num_latent_frames = video.shape[1]
+            video = mx.concatenate([video, first_frame[:, None]], axis=1)
+            visual_token_type_ids = mx.array([[0] * num_latent_frames + [1]])
+            patch_t, patch_h, patch_w = self.patch_size
+            visual_rope_pos = (
+                mx.concatenate([mx.arange(num_latent_frames // patch_t), mx.zeros(1, dtype=mx.int32)]),
+                mx.arange(video.shape[2] // patch_h),
+                mx.arange(video.shape[3] // patch_w),
+            )
         audio = mx.array(audio_latents).transpose(0, 2, 1).astype(dtype) if sample_audio else None
         text = {k: (v.astype(dtype) if k != "encoder_attention_mask" else v) for k, v in text_embeds.items()}
 
@@ -200,10 +262,13 @@ class Kandinsky6Pipeline:
 
         for t in tqdm(np.array(scheduler.timesteps), desc="denoise", unit="step", disable=not progress):
             timestep = mx.array(np.array([t], dtype=np.float32))
-            # Visual conditioning channels for text-to-video: zero conditioning latent and zero mask.
-            model_input = mx.concatenate(
-                [video, mx.zeros_like(video), mx.zeros((*video.shape[:-1], 1), dtype)], axis=-1
-            )
+            # Visual conditioning channels: [latent | conditioning latent (always zero) | mask]; with an image the tail
+            # frame is reset to the reference latents and its mask is 1.
+            mask = mx.zeros((*video.shape[:-1], 1), dtype)
+            if first_frame is not None:
+                video = mx.concatenate([video[:, :-1], first_frame[:, None]], axis=1)
+                mask = mx.concatenate([mask[:, :-1], mx.ones_like(mask[:, -1:])], axis=1)
+            model_input = mx.concatenate([video, mx.zeros_like(video), mask], axis=-1)
             noise_pred = self.transformer(
                 hidden_states=model_input,
                 encoder_hidden_states=text["encoder_hidden_states"],
@@ -211,6 +276,8 @@ class Kandinsky6Pipeline:
                 timestep=timestep,
                 audio_hidden_states=audio,
                 encoder_attention_mask=text.get("encoder_attention_mask"),
+                visual_rope_pos=visual_rope_pos,
+                visual_token_type_ids=visual_token_type_ids,
             )
             video = scheduler.step(noise_pred[0], timestep, video)
             if sample_audio:
@@ -225,6 +292,8 @@ class Kandinsky6Pipeline:
             self.transformer = None
             del noise_pred, model_input
 
+        if first_frame is not None:
+            video = video[:, :-1]  # drop the conditioning tail frame
         mx.clear_cache()
         mx.reset_peak_memory()
         start = time.perf_counter()

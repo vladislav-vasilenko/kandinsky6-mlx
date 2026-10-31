@@ -39,6 +39,7 @@ def main(argv: list[str] | None = None) -> int:
     text.add_argument("--prompt-file", type=Path)
     text.add_argument("--text-embeds", type=Path, help="cached embeddings (scripts/encode_prompt.py)")
     add_text_arguments(parser)
+    parser.add_argument("--image", type=Path, help="reference image for image-to-video (first frame)")
     parser.add_argument("--preset", choices=sorted(PRESETS), default="smoke")
     parser.add_argument("--height", type=int)
     parser.add_argument("--width", type=int)
@@ -100,6 +101,7 @@ def main(argv: list[str] | None = None) -> int:
         release_transformer=True,
         progress=True,
         on_latents=save_latents if args.save_latents is not None else None,
+        image=args.image,
         **noise,
     )
     audio = None if output.audio is None else output.audio[0]
@@ -111,6 +113,7 @@ def main(argv: list[str] | None = None) -> int:
         "vae_tiling": size.get("vae_tiling") is not None,
         "steps": args.steps,
         "seed": args.seed,
+        "image": str(args.image) if args.image else None,
         "dtype": args.dtype,
         "seconds": seconds | {"load": round(load_seconds, 2)} | {k: round(v, 2) for k, v in output.timings.items()},
         "peak_memory_gib": {k: round(v, 2) for k, v in output.peak_memory_gib.items()},

@@ -121,6 +121,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--converted", type=Path, help="converted root for vae/audio_vae/vocoder")
     parser.add_argument("--scheduler-config", type=Path, help="scheduler_config.json (with --converted)")
     parser.add_argument("--output-type", choices=("np", "latent"), default="np")
+    parser.add_argument("--image", type=Path, help="reference image for image-to-video (spec 12)")
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args(argv)
     if args.converted is not None and args.scheduler_config is None:
@@ -128,8 +129,14 @@ def main(argv: list[str] | None = None) -> int:
 
     height, width, num_frames = PRESETS[args.preset]
     latent_only = args.output_type == "latent"
+    # The VAE is needed to encode the reference image even when the run stops at the latents.
     pipe = build_pipeline(
-        args.checkpoint, DTYPES[args.dtype], args.device, args.converted, args.scheduler_config, not latent_only
+        args.checkpoint,
+        DTYPES[args.dtype],
+        args.device,
+        args.converted,
+        args.scheduler_config,
+        not latent_only or args.image is not None,
     )
     embeds, pooled = load_text(args.text_embeds)
     num_latent_frames = (num_frames - 1) // 4 + 1
@@ -139,6 +146,20 @@ def main(argv: list[str] | None = None) -> int:
     rng = np.random.default_rng(args.seed)
     latents = rng.standard_normal((1, 16, num_latent_frames, height // 8, width // 8)).astype(np.float32)
     audio_latents = rng.standard_normal((1, 40, audio_length)).astype(np.float32)
+    image = image_noise = None
+    if args.image is not None:
+        from diffusers.models.autoencoders import vae as vae_module
+        from PIL import Image
+
+        # The pipeline samples the image latent distribution with a torch generator; use NumPy noise drawn after the
+        # video and audio noise, as the MLX pipeline does, so both start from the same sample.
+        image = Image.open(args.image)
+        image_noise = rng.standard_normal((1, 16, 1, height // 8, width // 8)).astype(np.float32)
+        noise = torch.from_numpy(image_noise)
+        original_sample = vae_module.DiagonalGaussianDistribution.sample
+        vae_module.DiagonalGaussianDistribution.sample = lambda self, generator=None: (
+            self.mean + self.std * noise.to(self.mean.device, self.mean.dtype)
+        )
 
     steps: list[tuple[torch.Tensor, torch.Tensor]] = []
 
@@ -147,22 +168,27 @@ def main(argv: list[str] | None = None) -> int:
         return {}
 
     started = time.time()
-    with torch.no_grad():
-        video, audio = pipe(
-            prompt_embeds=embeds.to(args.device),
-            pooled_prompt_embeds=pooled.to(args.device),
-            latents=torch.from_numpy(latents).to(args.device),
-            audio_latents=torch.from_numpy(audio_latents).to(args.device),
-            height=height,
-            width=width,
-            num_frames=num_frames,
-            num_inference_steps=args.steps,
-            guidance_scale=1.0,
-            output_type=args.output_type,
-            return_dict=False,
-            callback_on_step_end=record,
-            callback_on_step_end_tensor_inputs=["latents", "audio_latents"],
-        )
+    try:
+        with torch.no_grad():
+            video, audio = pipe(
+                image=image,
+                prompt_embeds=embeds.to(args.device),
+                pooled_prompt_embeds=pooled.to(args.device),
+                latents=torch.from_numpy(latents).to(args.device),
+                audio_latents=torch.from_numpy(audio_latents).to(args.device),
+                height=height,
+                width=width,
+                num_frames=num_frames,
+                num_inference_steps=args.steps,
+                guidance_scale=1.0,
+                output_type=args.output_type,
+                return_dict=False,
+                callback_on_step_end=record,
+                callback_on_step_end_tensor_inputs=["latents", "audio_latents"],
+            )
+    finally:
+        if image is not None:
+            vae_module.DiagonalGaussianDistribution.sample = original_sample
     seconds = time.time() - started
     tensors = {
         "inputs.latents": latents,
@@ -170,6 +196,8 @@ def main(argv: list[str] | None = None) -> int:
         "inputs.encoder_hidden_states": embeds,
         "inputs.pooled_projections": pooled,
     }
+    if image_noise is not None:
+        tensors["inputs.image_noise"] = image_noise
     if not latent_only:
         tensors["outputs.frames"] = np.asarray(video, np.float32)
         tensors["outputs.audio"] = np.asarray(audio, np.float32)
@@ -184,6 +212,7 @@ def main(argv: list[str] | None = None) -> int:
             "reference": f"diffusers.Kandinsky6TI2VAPipeline.__call__ (T2V, guidance_scale=1, output_type={args.output_type})",
             "checkpoint": str(args.checkpoint),
             "converted": str(args.converted) if args.converted else None,
+            "image": str(args.image) if args.image else None,
             "transformer_dtype": args.dtype,
             "device": args.device,
             "preset": args.preset,
@@ -197,7 +226,8 @@ def main(argv: list[str] | None = None) -> int:
         final = args.out.with_name(args.out.name + "_final")
         save_fixture(
             final,
-            {"inputs.latents": steps[-1][0], "inputs.audio_latents": steps[-1][1]},
+            # Without the image-conditioning tail frame, which the pipeline drops before decoding.
+            {"inputs.latents": steps[-1][0][:, : latents.shape[2]], "inputs.audio_latents": steps[-1][1]},
             {"fixture": final.name, "source": f"last step of {args.out.name}"},
         )
     print(f"{len(steps)} steps in {seconds:.0f} s -> {args.out}")

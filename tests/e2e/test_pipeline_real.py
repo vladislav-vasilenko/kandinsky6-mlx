@@ -92,6 +92,8 @@ def stage_b_metrics(
         num_inference_steps=meta["steps"],
         latents=ref["inputs.latents"],
         audio_latents=ref["inputs.audio_latents"],
+        image=meta.get("image"),
+        image_noise=ref.get("inputs.image_noise"),
         return_step_latents=True,
         release_transformer=True,
     )
@@ -119,7 +121,8 @@ def stage_b_metrics(
         if "outputs.frames" in basis:
             torch_frames = basis["outputs.frames"]
         else:  # latent-only recording: decode its last step with the (float32, verified) MLX VAE
-            last = mx.array(basis[f"outputs.step.{len(steps) - 1}.latents"]).transpose(0, 4, 1, 2, 3)
+            last = basis[f"outputs.step.{len(steps) - 1}.latents"][:, : ref["inputs.latents"].shape[2]]  # no I2V tail
+            last = mx.array(last).transpose(0, 4, 1, 2, 3)
             decoded = pipeline.vae.decode(last / pipeline.vae.scaling_factor)
             torch_frames = np.array(mx.clip(decoded / 2 + 0.5, 0, 1).transpose(0, 2, 3, 4, 1))
         result["torch_bf16_frames_psnr_db"] = psnr_db(torch_frames, ref_frames)
@@ -170,8 +173,10 @@ def test_real_smoke_pipeline_fp32(seed):
     assert result["audio_snr_db"] >= FP32_MIN_AUDIO_SNR_DB, result["audio_snr_db"]
 
 
-def test_stage_b_harness_on_tiny_pipeline(tiny_pipelines, tmp_path):
-    """record_pipeline_run.py on the tiny pipeline's diffusers snapshot, then the MLX side in float32."""
+@pytest.mark.parametrize("i2v", [False, True], ids=["t2v", "i2v"])
+def test_stage_b_harness_on_tiny_pipeline(tiny_pipelines, tmp_path, i2v):
+    """record_pipeline_run.py on the tiny pipeline's diffusers snapshot, then the MLX side in float32; `i2v` adds a
+    reference image (spec 12) and checks the recorder restores the patched latent sampling."""
     from kandinsky6_mlx.utils.fixtures import save_fixture
     from reference import record_pipeline_run
 
@@ -194,7 +199,17 @@ def test_stage_b_harness_on_tiny_pipeline(tiny_pipelines, tmp_path):
         "--out",
         str(out),
     ]
+    if i2v:
+        from diffusers.models.autoencoders import vae as vae_module
+
+        from tests.parity.test_video_vae_encoder import synthetic_image
+
+        synthetic_image(300, 200, seed=2).save(tmp_path / "image.png")
+        args += ["--image", str(tmp_path / "image.png")]
+        sample = vae_module.DiagonalGaussianDistribution.sample
     assert record_pipeline_run.main(args) == 0
+    if i2v:
+        assert vae_module.DiagonalGaussianDistribution.sample is sample
     result = stage_b_metrics(root / "converted", out, out, dtype=mx.float32)
     assert len(result["steps"]) == 3
     assert result["frames_psnr_db"] > 60 and result["audio_snr_db"] > 60
