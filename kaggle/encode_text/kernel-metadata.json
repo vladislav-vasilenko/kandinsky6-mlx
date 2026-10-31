@@ -1,0 +1,16 @@
+{
+  "id": "applehawk/k6-lite-smoke-text",
+  "title": "K6 Lite Smoke Text",
+  "code_file": "encode_text_k6.py",
+  "language": "python",
+  "kernel_type": "script",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_internet": true,
+  "dataset_sources": [],
+  "competition_sources": [],
+  "kernel_sources": [
+    "applehawk/k6-lite-diffusers-weights-text"
+  ],
+  "model_sources": []
+}

@@ -11,7 +11,7 @@
   "competition_sources": [],
   "kernel_sources": [
     "applehawk/k6-lite-diffusers-weights-media",
-    "applehawk/k6-lite-diffusers-weights-text"
+    "applehawk/k6-lite-smoke-text"
   ],
   "model_sources": []
 }

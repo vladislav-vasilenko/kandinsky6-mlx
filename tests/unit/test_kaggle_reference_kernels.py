@@ -11,16 +11,27 @@ ROOT = Path(__file__).resolve().parents[2]
 
 # Per kernel: directory, code file, files run from the pinned checkout, attached Kaggle outputs.
 KERNELS = {
+    "text": (
+        "kaggle/encode_text",
+        "encode_text_k6.py",
+        (
+            "reference/encode_text.py",
+            "reference/recorder.py",
+            "src/kandinsky6_mlx/utils/fixtures.py",
+            "fixtures/real_inputs/smoke_prompt.txt",
+        ),
+        {"applehawk/k6-lite-diffusers-weights-text"},
+    ),
     "dit": (
         "kaggle/record_dit",
         "record_dit_k6.py",
         (
             "reference/record_dit_real.py",
+            "reference/encode_text.py",
             "reference/recorder.py",
             "src/kandinsky6_mlx/utils/fixtures.py",
-            "fixtures/real_inputs/smoke_prompt.txt",
         ),
-        {"applehawk/k6-lite-diffusers-weights-media", "applehawk/k6-lite-diffusers-weights-text"},
+        {"applehawk/k6-lite-diffusers-weights-media", "applehawk/k6-lite-smoke-text"},
     ),
     "vae": (
         "kaggle/record_vae",
@@ -78,5 +89,7 @@ def test_recorder_at_pinned_commit_matches_head(kernel):
 def test_metadata_attaches_weights_and_needs_internet(kernel):
     directory, code_file, _, sources = KERNELS[kernel]
     meta = json.loads((ROOT / directory / "kernel-metadata.json").read_text())
-    assert meta["code_file"] == code_file and meta["enable_internet"] and not meta["enable_gpu"]
+    assert meta["code_file"] == code_file and meta["enable_internet"]
+    # Only text encoding needs a GPU; the float32 references run on the CPU.
+    assert meta["enable_gpu"] == (kernel == "text")
     assert set(meta["kernel_sources"]) == sources
