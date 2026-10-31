@@ -12,6 +12,7 @@ dependencies = [
     "huggingface_hub>=0.30,<2",
     "av>=14",
     "pillow>=10.4",
+    "tqdm>=4.66",
 ]
 
 [project.optional-dependencies]

@@ -277,6 +277,7 @@ class AutoencoderKLHunyuanVideo(nn.Module):
         self.use_framewise_decoding = True
         self.tile_sample_min_num_frames = 16
         self.tile_sample_stride_num_frames = 12
+        self._callback = None
 
     @classmethod
     def from_config(cls, config: dict) -> "AutoencoderKLHunyuanVideo":
@@ -316,6 +317,7 @@ class AutoencoderKLHunyuanVideo(nn.Module):
             for j in range(0, width, stride_w):
                 tile = self._decode_tile(z[:, :, i : i + min_h, j : j + min_w])
                 mx.eval(tile)
+                self._tile_done()
                 row.append(tile)
             rows.append(row)
         result_rows = []
@@ -356,6 +358,8 @@ class AutoencoderKLHunyuanVideo(nn.Module):
                 decoded = self._tiled_decode(tile, tiling)
             else:
                 decoded = self._decode_tile(tile)
+                mx.eval(decoded)
+                self._tile_done()
             if i > 0:
                 decoded = decoded[:, 1:]
             mx.eval(decoded)
@@ -370,11 +374,33 @@ class AutoencoderKLHunyuanVideo(nn.Module):
                 result.append(row[i][:, : stride_sample_frames + 1])
         return mx.concatenate(result, axis=1)[:, :num_sample_frames]
 
-    def decode(self, z: mx.array, tiling: TilingConfig | None = None) -> mx.array:
+    def _tile_done(self) -> None:
+        if self._callback is not None:
+            self._callback()
+
+    def num_tiles(self, latent_shape: tuple[int, ...], tiling: TilingConfig | None = None) -> int:
+        """How many tiles `decode` runs for latents of shape `(B, C, T, H, W)` (for progress reporting)."""
+        _, _, frames, height, width = latent_shape
+        min_frames = tiling.tile_sample_min_num_frames if tiling else self.tile_sample_min_num_frames
+        stride_sample = tiling.tile_sample_stride_num_frames if tiling else self.tile_sample_stride_num_frames
+        stride_frames = stride_sample // self.temporal_compression_ratio
+        temporal = self.use_framewise_decoding and frames > min_frames // self.temporal_compression_ratio
+        num_temporal = len(range(0, frames, stride_frames)) if temporal else 1
+        spatial = 1
+        if tiling is not None and self._needs_spatial_tiling(mx.zeros((1, 1, height, width, 1)), tiling):
+            ratio = self.spatial_compression_ratio
+            spatial = len(range(0, height, tiling.tile_sample_stride_height // ratio)) * len(
+                range(0, width, tiling.tile_sample_stride_width // ratio)
+            )
+        return num_temporal * spatial
+
+    def decode(self, z: mx.array, tiling: TilingConfig | None = None, callback=None) -> mx.array:
         """Latents already divided by `scaling_factor`, `(B, C, T, H, W)` -> frames `(B, 3, 4(T-1)+1, 8H, 8W)`.
 
         `tiling=None` is the reference's default state (temporal tiles only); a `TilingConfig` is the state after
-        `enable_tiling(**asdict(tiling))`, which also sets the temporal tile size and stride."""
+        `enable_tiling(**asdict(tiling))`, which also sets the temporal tile size and stride. `callback()` is called
+        after every decoded tile."""
+        self._callback = callback
         z = z.transpose(0, 2, 3, 4, 1)
         min_frames = tiling.tile_sample_min_num_frames if tiling else self.tile_sample_min_num_frames
         if self.use_framewise_decoding and z.shape[1] > min_frames // self.temporal_compression_ratio:
@@ -383,4 +409,7 @@ class AutoencoderKLHunyuanVideo(nn.Module):
             out = self._tiled_decode(z, tiling)
         else:
             out = self._decode_tile(z)
+            mx.eval(out)
+            self._tile_done()
+        self._callback = None
         return out.transpose(0, 4, 1, 2, 3)

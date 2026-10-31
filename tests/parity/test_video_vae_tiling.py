@@ -59,3 +59,18 @@ def test_blend_matches_reference_loops(axis):
     to_ref = lambda x: torch.from_numpy(x.transpose(0, 4, 1, 2, 3).copy())
     expected = reference_blend(None, to_ref(a), to_ref(b), 4).numpy().transpose(0, 2, 3, 4, 1)
     np.testing.assert_array_equal(np.array(blend(mx.array(a), mx.array(b), 4, axis)), expected)
+
+
+@pytest.mark.parametrize("case", [*CASES, "no-tiling-T7", "no-tiling-T2"])
+def test_tile_callback_count_matches_num_tiles(case):
+    """Progress reporting: `decode` calls back once per tile and `num_tiles` predicts how many."""
+    pytest.importorskip("torch")
+    _, _, model = _small_released_structure()
+    if case in CASES:
+        tiling, (frames, height, width) = CASES[case]
+    else:
+        tiling, (frames, height, width) = None, (int(case[-1]), 4, 6)
+    shape = (1, 16, frames, height, width)
+    calls = []
+    model.decode(mx.zeros(shape), tiling=tiling, callback=lambda: calls.append(1))
+    assert len(calls) == model.num_tiles(shape, tiling) >= 1

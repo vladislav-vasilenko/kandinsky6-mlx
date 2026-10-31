@@ -35,7 +35,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--dtype", choices=sorted(DTYPES), default="bfloat16", help="DiT compute dtype")
     parser.add_argument("--no-audio", action="store_true")
     parser.add_argument("--vae-tiling", choices=("preset", "on", "off"), default="preset", help="spatial VAE tiles")
-    parser.add_argument("--save-latents", type=Path, help="also save the final video latents (fixture inputs.latents)")
+    parser.add_argument(
+        "--save-latents", type=Path, help="also save the final video latents as inputs.latents (B, T, H, W, 16)"
+    )
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args(argv)
 
@@ -58,6 +60,7 @@ def main(argv: list[str] | None = None) -> int:
         seed=args.seed,
         sample_audio=not args.no_audio,
         release_transformer=True,
+        progress=True,
         **noise,
     )
     audio = None if output.audio is None else output.audio[0]
@@ -65,9 +68,13 @@ def main(argv: list[str] | None = None) -> int:
     if args.save_latents is not None:
         args.save_latents.parent.mkdir(parents=True, exist_ok=True)
         mx.save_safetensors(
-            str(args.save_latents.with_suffix(".safetensors")), {"inputs.latents": mx.array(output.latents)}
+            str(args.save_latents.with_suffix(".safetensors")),
+            {"inputs.latents": mx.array(output.latents).transpose(0, 2, 3, 4, 1)},
         )
-        meta = {"fixture": args.save_latents.name, "layout": "(B, 16, T, H/8, W/8), not divided by scaling_factor"}
+        meta = {
+            "fixture": args.save_latents.name,
+            "layout": "(B, T, H/8, W/8, 16) like the transformer, not divided by scaling_factor",
+        }
         args.save_latents.with_suffix(".json").write_text(json.dumps(meta | {"seed": args.seed}, indent=2) + "\n")
     report = {
         "out": str(args.out),

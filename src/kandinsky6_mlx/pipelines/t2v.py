@@ -158,11 +158,13 @@ class Kandinsky6Pipeline:
         return_step_latents: bool = False,
         release_transformer: bool = False,
         vae_tiling: TilingConfig | None = None,
+        progress: bool = False,
     ) -> PipelineOutput:
         """Generate one video (batch 1). `release_transformer` frees the DiT after denoising, before the decoders run
         (about 8 GB at bf16); the pipeline then cannot be called again. `vae_tiling` decodes in spatial tiles as the
         reference does after `vae.enable_tiling(...)` (the Baseline preset sets the reference defaults); without it
-        only the reference's default temporal tiling is used."""
+        only the reference's default temporal tiling is used. `progress` shows tqdm bars for the denoising steps and
+        the VAE tiles."""
         if self.transformer is None:
             raise RuntimeError("the transformer was released by a previous call with release_transformer=True")
         if guidance_scale > 1.0:
@@ -192,7 +194,9 @@ class Kandinsky6Pipeline:
         output = PipelineOutput(np.zeros(0), None, self.audio_sample_rate, frame_rate)
         mx.reset_peak_memory()
         start = time.perf_counter()
-        for t in np.array(scheduler.timesteps):
+        from tqdm.auto import tqdm
+
+        for t in tqdm(np.array(scheduler.timesteps), desc="denoise", unit="step", disable=not progress):
             timestep = mx.array(np.array([t], dtype=np.float32))
             # Visual conditioning channels for text-to-video: zero conditioning latent and zero mask.
             model_input = mx.concatenate(
@@ -225,7 +229,10 @@ class Kandinsky6Pipeline:
         final = video.transpose(0, 4, 1, 2, 3).astype(mx.float32)
         output.latents = np.array(final)
         z = final / self.vae.scaling_factor
-        frames = self.vae.decode(z, tiling=vae_tiling)
+        with tqdm(
+            total=self.vae.num_tiles(z.shape, vae_tiling), desc="video decode", unit="tile", disable=not progress
+        ) as bar:
+            frames = self.vae.decode(z, tiling=vae_tiling, callback=bar.update)
         frames = mx.clip(frames / 2 + 0.5, 0, 1).transpose(0, 2, 3, 4, 1)
         output.frames = np.array(frames)
         output.timings["video_decode"] = time.perf_counter() - start
