@@ -68,7 +68,11 @@ def main(argv: list[str] | None = None) -> int:
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
     save_file(
-        {"inputs.encoder_hidden_states": np.array(embeds), "inputs.pooled_projections": pooled},
+        # safetensors.numpy writes the raw buffer: arrays must be C-contiguous.
+        {
+            "inputs.encoder_hidden_states": np.ascontiguousarray(np.array(embeds)),
+            "inputs.pooled_projections": np.ascontiguousarray(pooled),
+        },
         str(args.out.with_suffix(".safetensors")),
     )
     meta = {

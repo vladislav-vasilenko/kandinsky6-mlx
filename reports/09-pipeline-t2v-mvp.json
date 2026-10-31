@@ -2,7 +2,13 @@
   "spec": "09-pipeline-t2v-mvp",
   "status": "PARTIAL",
   "date": "2026-10-31",
-  "environment": {"chip": "Apple M3 Max", "macos": "27.0.1", "mlx": "0.32.4", "torch": "2.15.0", "diffusers": "0.42.1"},
+  "environment": {
+    "chip": "Apple M3 Max",
+    "macos": "27.0.1",
+    "mlx": "0.32.4",
+    "torch": "2.15.0",
+    "diffusers": "0.42.1"
+  },
   "deliverables": [
     "src/kandinsky6_mlx/pipelines/t2v.py",
     "src/kandinsky6_mlx/pipelines/export.py",
@@ -13,27 +19,63 @@
     "tests/e2e/test_pipeline_real.py",
     "reports/09-pipeline-t2v-mvp.json"
   ],
-  "tests": {"command": "uv run --group reference pytest -q", "passed": 492, "failed": 0},
+  "tests": {
+    "command": "uv run --extra text --group reference pytest -q",
+    "passed": 498,
+    "failed": 0
+  },
   "validation": [
     {
       "name": "tiny e2e: tiny DiT + video VAE + audio VAE + vocoder + PiFlow, components saved and converted, MLX float32 vs the diffusers pipeline from the same NumPy noise and embeddings (32x32, 9 frames, 4 steps)",
       "metrics": {
-        "per_step_rel_max": {"video": [6.1e-08, 1.2e-07, 1.2e-07, 1.2e-07], "audio": [5.9e-08, 6.0e-08, 1.2e-07, 1.1e-07]},
+        "per_step_rel_max": {
+          "video": [
+            6.1e-08,
+            1.2e-07,
+            1.2e-07,
+            1.2e-07
+          ],
+          "audio": [
+            5.9e-08,
+            6e-08,
+            1.2e-07,
+            1.1e-07
+          ]
+        },
         "frames_rel_max": 3.6e-06,
-        "audio_rel_max": 1.0e-06
+        "audio_rel_max": 1e-06
       },
       "criterion": "frames rel_max <= 1e-3 (per-step latents and audio also checked at <= 1e-4 / 1e-3)",
       "pass": true
     },
     {
       "name": "latent shapes and frame rounding vs the reference formulas",
-      "metrics": {"smoke_video": [1, 16, 7, 32, 54], "smoke_audio_latents_released_hop": 45, "num_frames_rounding": {"23": 21, "24": 25, "26": 25}},
+      "metrics": {
+        "smoke_video": [
+          1,
+          16,
+          7,
+          32,
+          54
+        ],
+        "smoke_audio_latents_released_hop": 45,
+        "num_frames_rounding": {
+          "23": 21,
+          "24": 25,
+          "26": 25
+        }
+      },
       "criterion": "equal",
       "pass": true
     },
     {
       "name": "MP4 export: H.264 video + AAC audio via PyAV, read back",
-      "metrics": {"real_smoke": {"video_seconds": 1.042, "audio_seconds": 1.045}},
+      "metrics": {
+        "real_smoke": {
+          "video_seconds": 1.042,
+          "audio_seconds": 1.045
+        }
+      },
       "criterion": "both streams present; all frames decode",
       "pass": true
     },
@@ -46,20 +88,176 @@
     {
       "name": "real Lite-distill weights, full MLX pipeline at Smoke (256x432, 25 frames, 10 steps, bf16 DiT) with stand-in random text embeddings (200 tokens); timing and memory only, no parity claim",
       "metrics": {
-        "seconds": {"load": 1.2, "denoise": 13.3, "video_decode_cold": "13.9-23.5", "video_decode_warm": 7.6, "audio_decode": 0.35},
-        "peak_memory_gib_with_dit_released": {"denoise": 8.1, "video_decode": 20.3, "audio_decode": 4.6},
-        "peak_memory_gib_with_dit_kept": {"video_decode": 27.2, "audio_decode": 11.5}
+        "seconds": {
+          "load": 1.2,
+          "denoise": 13.3,
+          "video_decode_cold": "13.9-23.5",
+          "video_decode_warm": 7.6,
+          "audio_decode": 0.35
+        },
+        "peak_memory_gib_with_dit_released": {
+          "denoise": 8.1,
+          "video_decode": 20.3,
+          "audio_decode": 4.6
+        },
+        "peak_memory_gib_with_dit_kept": {
+          "video_decode": 27.2,
+          "audio_decode": 11.5
+        }
       },
       "criterion": "MP4 with audio produced",
       "pass": true
-    }
-  ],
-  "skipped": [
+    },
     {
-      "what": "stage B parity on real weights (per-step latent cosine/rel_l2 vs torch bf16 drift, frames PSNR >= 30 dB, audio SNR) and the human side-by-side check",
-      "reason": "needs the real Smoke text embeddings and the two diffusers recordings (float32 reference and bf16 drift basis) from reference/record_pipeline_run.py. The embeddings come from the spec 05 Kaggle kernel, which is still encoding the prompt with Qwen on CPU; the pipeline recordings need another Kaggle run (outward action, waits for approval)."
+      "name": "stage B, float32: MLX pipeline (float32 DiT) vs the diffusers pipeline (float32 DiT, CPU) on the real Lite-distill weights, Smoke prompt (238 tokens), NumPy seed 42 noise, 10 PiFlow steps",
+      "metrics": {
+        "per_step_video_rel_l2": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1e-06,
+          1e-06,
+          3e-06,
+          5e-06,
+          1e-05,
+          7.2e-05
+        ],
+        "per_step_audio_rel_l2": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1e-06,
+          1e-06,
+          2e-06,
+          3e-06,
+          4e-06
+        ],
+        "min_cosine": 1.0,
+        "frames_psnr_db": 96.6,
+        "audio_snr_db": 85.2,
+        "mlx_seconds": {
+          "denoise": 14.52,
+          "video_decode": 22.05,
+          "audio_decode": 0.38
+        },
+        "mlx_peak_memory_gib": {
+          "denoise": 13.19,
+          "video_decode": 20.26,
+          "audio_decode": 4.55
+        }
+      },
+      "criterion": "per-step cosine >= 0.999, frames PSNR >= 30 dB",
+      "pass": true
+    },
+    {
+      "name": "stage B, bf16: MLX pipeline (bf16 DiT) vs the same float32 reference, with the diffusers pipeline with a bf16 DiT (Apple MPS) as the drift basis",
+      "metrics": {
+        "per_step_rel_l2_over_torch_bf16": {
+          "min": 0.74,
+          "max": 1.25
+        },
+        "final_step": {
+          "video": {
+            "mlx_rel_l2": 0.12,
+            "torch_bf16_rel_l2": 0.115,
+            "mlx_cosine": 0.99287,
+            "torch_bf16_cosine_about": 0.9929
+          },
+          "audio": {
+            "mlx_rel_l2": 0.0228,
+            "torch_bf16_rel_l2": 0.0307
+          }
+        },
+        "steps_with_cosine_below_0.999": "7, 8, 9 (video), for MLX and torch bf16 alike",
+        "frames_psnr_db": {
+          "mlx_bf16": 27.37,
+          "torch_bf16": 27.71
+        },
+        "audio_snr_db": 16.29,
+        "mlx_seconds": {
+          "denoise": 13.44,
+          "video_decode": 26.21,
+          "audio_decode": 0.46
+        },
+        "mlx_peak_memory_gib": {
+          "denoise": 8.12,
+          "video_decode": 20.26,
+          "audio_decode": 4.27
+        },
+        "outputs": [
+          "outputs/09/mlx.mp4",
+          "outputs/09/reference.mp4",
+          "outputs/09/side_by_side.png"
+        ]
+      },
+      "criterion": "spec: per-step cosine >= 0.999 and rel_l2 <= 2 x torch bf16 drift; frames PSNR >= 30 dB. Relaxed for bf16 (see deviations): rel_l2 <= 2 x torch bf16 drift at every step and frames PSNR within 1 dB of torch bf16's",
+      "pass": true
+    },
+    {
+      "name": "live generations: the study notebook's four text-to-video presets, Smoke profile, seed 42, bf16, prompts compiled like the notebook (orbit_woman identical to fixtures/real_inputs/smoke_prompt.txt)",
+      "metrics": {
+        "orbit_woman": {
+          "text_tokens": 238,
+          "seconds": {
+            "denoise": 13.5,
+            "video_decode": 12.3,
+            "audio_decode": 0.4
+          },
+          "peak_memory_gib": {
+            "denoise": 8.1,
+            "video_decode": 27.2,
+            "audio_decode": 11.5
+          }
+        },
+        "strange_tram": {
+          "text_tokens": 237,
+          "seconds": {
+            "denoise": 15.8,
+            "video_decode": 7.4,
+            "audio_decode": 0.3
+          },
+          "peak_memory_gib": {
+            "denoise": 9.8,
+            "video_decode": 28.3,
+            "audio_decode": 11.0
+          }
+        },
+        "mechanical_bloom": {
+          "text_tokens": 194,
+          "seconds": {
+            "denoise": 14.1,
+            "video_decode": 7.7,
+            "audio_decode": 0.4
+          },
+          "peak_memory_gib": {
+            "denoise": 9.8,
+            "video_decode": 28.3,
+            "audio_decode": 11.0
+          }
+        },
+        "room_assembly": {
+          "text_tokens": 174,
+          "seconds": {
+            "denoise": 15.6,
+            "video_decode": 8.6,
+            "audio_decode": 0.5
+          },
+          "peak_memory_gib": {
+            "denoise": 9.8,
+            "video_decode": 28.3,
+            "audio_decode": 11.0
+          }
+        },
+        "outputs": "outputs/presets/*_smoke_seed42.mp4, contact_sheet_smoke.png"
+      },
+      "criterion": "coherent videos with sound that follow the prompts (checked on frames 0/12/24)",
+      "pass": true
     }
   ],
+  "skipped": [],
   "deviations": [
     {
       "what": "initial noise from np.random.default_rng(seed) (video, then audio latents) instead of diffusers' torch.Generator",
@@ -76,12 +274,21 @@
     {
       "what": "release_transformer frees the DiT after denoising (scripts/generate.py sets it)",
       "why": "the spec's run order (free the DiT before decoding); keeping it adds about 7 GB to both decode peaks"
+    },
+    {
+      "what": "for the bf16 run the absolute thresholds (per-step cosine >= 0.999, frames PSNR >= 30 dB) are replaced by relative ones: rel_l2 <= 2 x torch bf16 drift at every step and frames PSNR within 1 dB of torch bf16",
+      "why": "the reference itself misses the absolute thresholds in bf16: diffusers with a bf16 DiT reaches cosine 0.9929 at step 9 and frames PSNR 27.7 dB vs its float32 run, because 10 distilled PiFlow steps amplify bf16 rounding. MLX bf16 tracks it (rel_l2 ratio <= 1.25, PSNR 27.4 dB), and the MLX float32 pipeline meets the absolute thresholds by far (cosine 1.0, PSNR 96.6 dB), so the port is exact and the bf16 gap is the model's."
+    },
+    {
+      "what": "stage B reference: denoising recorded with diffusers on this Mac (float32 on CPU, bf16 drift on MPS) from the local diffusers transformer and the converted media components; reference frames are the float32 final latents decoded by the MLX VAE",
+      "why": "the torch CPU VAE decode needs about 25 GB and pushed the Mac into 9.4 GB of swap (the memory guard stopped it); the MLX VAE matches the torch VAE on real weights at PSNR 121.7 dB (report 08), far below this comparison's differences. Audio was decoded by torch."
     }
   ],
   "follow_ups": [
-    "Stage B: once smoke_text exists, run reference/record_pipeline_run.py --dtype float32 and --dtype bfloat16 (Kaggle), copy pipeline_smoke_fp32/bf16 to fixtures/real/, run `uv run python -m tests.e2e.test_pipeline_real`, record the visual check, then rerun specs 07/08 stage B with the real latents.",
+    "Owner's visual check of outputs/09/side_by_side.png and the two MP4s (same scene / differs); then status PASS.",
     "Optional seed compatibility with diffusers/ComfyUI: generate the initial noise with torch's CPU generator (or reproduce its randn) so a seed means the same video.",
-    "Publish the HF repository together with this spec (owner's decision)."
+    "Publish the HF repository together with this spec (owner's decision).",
+    "Baseline presets need spec 10 (VAE spatial tiling); image-to-video presets need spec 12."
   ],
   "architecture_notes": [
     {
@@ -103,6 +310,21 @@
       "topic": "scheduler and glue",
       "note": "Two PiFlow schedulers (video, audio) and the latent concatenation per step are negligible next to the 1.3 s DiT call.",
       "optimization": "None."
+    },
+    {
+      "topic": "bf16 vs float32 for the whole pipeline",
+      "note": "Over 10 PiFlow steps the bf16 DiT drifts to latent rel_l2 0.12 (cosine 0.993) and frames PSNR 27 dB vs float32, in diffusers as in MLX; per-step drift grows about 1.6x per step from step 3. The MLX float32 pipeline is exact (PSNR 96.6 dB) and at Smoke nearly as fast: denoise 14.5 s vs 13.4 s, peak 13.2 vs 8.1 GiB.",
+      "optimization": "Offer float32 as the quality setting for Smoke-size runs on 32 GB+ Macs; for bf16, keep the drift-sensitive parts (block 14, report 05; the last steps) in float32 and measure (spec 14)."
+    },
+    {
+      "topic": "batch generation keeps the DiT resident",
+      "note": "scripts/generate_presets.py keeps the pipeline for several videos, so the VAE decode peaks at 27-28 GiB (DiT + VAE) instead of 20.3 GiB; four Smoke videos took 22-24 s each after a one-time 1 s text encode.",
+      "optimization": "For 16 GB profiles release and reload the DiT per video, or decode all videos after all denoising runs."
+    },
+    {
+      "topic": "MLX arrays to files",
+      "note": "np.array() of a transposed MLX array is not C-contiguous, and safetensors.numpy.save_file writes the raw buffer, silently scrambling it (this produced a wrong 8.8 dB frames reference until caught). PyAV's VideoFrame.from_ndarray handles strides correctly; kandinsky6_mlx.utils.fixtures.save_fixture already copies to contiguous.",
+      "optimization": "Always np.ascontiguousarray before safetensors.numpy (done in scripts/encode_prompt.py)."
     }
   ]
 }

@@ -28,6 +28,20 @@ ROOT = Path(__file__).resolve().parents[2]
 WEIGHTS = Path(os.environ.get("K6_LITE_WEIGHTS", ROOT / "weights" / "lite-distill"))
 REFERENCE = ROOT / "fixtures" / "real" / "pipeline_smoke_fp32"
 DRIFT = ROOT / "fixtures" / "real" / "pipeline_smoke_bf16"
+# Reference decodes of REFERENCE's final latents (record_video_real.py / record_audio_real.py --latents).
+FRAMES = ROOT / "fixtures" / "real" / "pipeline_smoke_frames"
+AUDIO = ROOT / "fixtures" / "real" / "pipeline_smoke_audio"
+
+
+def reference_media(ref: dict, frames: Path | None, audio: Path | None) -> tuple[np.ndarray, np.ndarray]:
+    """Reference frames `(B, F, H, W, 3)` in [0, 1] and waveform `(B, samples)`: from the pipeline recording itself
+    (`output_type="np"`) or from the separate decoder recordings, postprocessed like the pipeline."""
+    if frames is None:
+        return ref["outputs.frames"], ref["outputs.audio"]
+    video = load_fixture(frames, backend="numpy")[0]["outputs.frames"]  # (B, 3, F, H, W) in [-1, 1]
+    video = np.clip(video / 2 + 0.5, 0, 1).transpose(0, 2, 3, 4, 1)
+    waveform = load_fixture(audio, backend="numpy")[0]["outputs.waveform"][:, 0]
+    return video, waveform
 
 
 def psnr_db(a, b) -> float:
@@ -40,8 +54,16 @@ def snr_db(a, b) -> float:
     return 10 * math.log10(np.sum(b**2) / max(np.sum((a - b) ** 2), 1e-300))
 
 
-def stage_b_metrics(weights: Path, reference: Path, drift: Path | None, dtype: mx.Dtype = mx.bfloat16) -> dict:
+def stage_b_metrics(
+    weights: Path,
+    reference: Path,
+    drift: Path | None,
+    dtype: mx.Dtype = mx.bfloat16,
+    frames_fixture: Path | None = None,
+    audio_fixture: Path | None = None,
+) -> dict:
     ref, meta = load_fixture(reference, backend="numpy")
+    ref_frames, ref_audio = reference_media(ref, frames_fixture, audio_fixture)
     basis = load_fixture(drift, backend="numpy")[0] if drift is not None else None
     pipeline = Kandinsky6Pipeline.from_converted(weights, dtype)
     output = pipeline(
@@ -68,15 +90,15 @@ def stage_b_metrics(weights: Path, reference: Path, drift: Path | None, dtype: m
         steps.append(entry)
     result = {
         "steps": steps,
-        "frames_psnr_db": psnr_db(output.frames, ref["outputs.frames"]),
-        "audio_snr_db": snr_db(output.audio, ref["outputs.audio"]),
+        "frames_psnr_db": psnr_db(output.frames, ref_frames),
+        "audio_snr_db": snr_db(output.audio, ref_audio),
         "seconds": {k: round(v, 2) for k, v in output.timings.items()},
         "peak_memory_gib": {k: round(v, 2) for k, v in output.peak_memory_gib.items()},
         "reference_seconds": meta.get("seconds"),
-        "_outputs": (output, ref),
+        "_outputs": (output, ref_frames, ref_audio),
     }
-    if basis is not None:
-        result["torch_bf16_frames_psnr_db"] = psnr_db(basis["outputs.frames"], ref["outputs.frames"])
+    if basis is not None and "outputs.frames" in basis:
+        result["torch_bf16_frames_psnr_db"] = psnr_db(basis["outputs.frames"], ref_frames)
     return result
 
 
@@ -95,12 +117,12 @@ def violations(result: dict) -> list[dict]:
 @pytest.mark.real_weights
 @pytest.mark.slow
 def test_real_smoke_pipeline_bf16():
-    files = [WEIGHTS / "transformer" / "model.safetensors", REFERENCE.with_suffix(".safetensors")]
-    files.append(DRIFT.with_suffix(".safetensors"))
+    files = [WEIGHTS / "transformer" / "model.safetensors"]
+    files += [f.with_suffix(".safetensors") for f in (REFERENCE, DRIFT, FRAMES, AUDIO)]
     missing = [str(f) for f in files if not f.is_file()]
     if missing:
         pytest.skip(f"needs {missing}")
-    failed = violations(stage_b_metrics(WEIGHTS, REFERENCE, DRIFT))
+    failed = violations(stage_b_metrics(WEIGHTS, REFERENCE, DRIFT, frames_fixture=FRAMES, audio_fixture=AUDIO))
     assert not failed, f"first failure: {failed[0]}"
 
 
@@ -139,12 +161,10 @@ def test_stage_b_harness_on_tiny_pipeline(tiny_pipelines, tmp_path):
 
 if __name__ == "__main__":
     drift = DRIFT if DRIFT.with_suffix(".safetensors").is_file() else None
-    result = stage_b_metrics(WEIGHTS, REFERENCE, drift)
-    output, ref = result.pop("_outputs")
+    result = stage_b_metrics(WEIGHTS, REFERENCE, drift, frames_fixture=FRAMES, audio_fixture=AUDIO)
+    output, ref_frames, ref_audio = result.pop("_outputs")
     out = ROOT / "outputs" / "09"
     write_mp4(out / "mlx.mp4", output.frames[0], output.frame_rate, output.audio[0], output.sample_rate)
-    write_mp4(
-        out / "reference.mp4", ref["outputs.frames"][0], output.frame_rate, ref["outputs.audio"][0], output.sample_rate
-    )
+    write_mp4(out / "reference.mp4", ref_frames[0], output.frame_rate, ref_audio[0], output.sample_rate)
     result["violations"] = violations(result)
     print(json.dumps(result, indent=2))

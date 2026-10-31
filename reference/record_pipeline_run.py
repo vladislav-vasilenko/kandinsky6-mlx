@@ -9,14 +9,23 @@ Text embeddings: a fixture with `inputs.encoder_hidden_states`, `inputs.pooled_p
 argument takes no mask, so right padding is removed first, as the study notebook does; the MLX pipeline's
 `load_text_embeds` does the same, and report 05 shows the result is unchanged by it.
 
-The transformer runs in `--dtype` (float32 for the reference, bfloat16 for the drift basis); the VAEs and the vocoder
-stay float32 like the released weights. The media components come from a diffusers snapshot (`--checkpoint`).
+The transformer runs in `--dtype` (float32 for the reference, bfloat16 for the drift basis) and comes from a diffusers
+snapshot (`--checkpoint`). The other components come from the same snapshot, or with `--converted` from the converted
+MLX directories with the convolutions moved back to the PyTorch layout (as in record_audio_real.py and
+record_video_real.py; the converter only permutes axes); the scheduler config then comes from `--scheduler-config`.
 
-    python reference/record_pipeline_run.py --checkpoint <snapshot> --text-embeds smoke_text \\
-        --dtype float32 --out pipeline_smoke_fp32
+`--output-type latent` stops before decoding and also writes `<out>_final` (`inputs.latents` `(B, T, H, W, 16)` and
+`inputs.audio_latents` `(B, L, 40)` after the last step), which record_video_real.py and record_audio_real.py decode
+separately with `--latents`. That keeps the float32 DiT and the float32 VAE decode (about 25 GB on a CPU) out of
+memory at the same time.
+
+    python reference/record_pipeline_run.py --checkpoint weights/lite-distill-diffusers --converted weights/lite-distill \\
+        --scheduler-config fixtures/configs/lite-distill-scheduler.json --text-embeds fixtures/real/smoke_text \\
+        --dtype float32 --output-type latent --out fixtures/real/pipeline_smoke_fp32
 """
 
 import argparse
+import json
 import math
 import sys
 import time
@@ -54,7 +63,14 @@ def load_text(path: Path) -> tuple[torch.Tensor, torch.Tensor]:
     return embeds, pooled
 
 
-def build_pipeline(checkpoint: Path, dtype: torch.dtype, device: str):
+def build_pipeline(
+    checkpoint: Path,
+    dtype: torch.dtype,
+    device: str,
+    converted: Path | None = None,
+    scheduler_config: Path | None = None,
+    with_vae: bool = True,
+):
     from diffusers import (
         AutoencoderKLHunyuanVideo,
         Kandinsky6TI2VAPipeline,
@@ -64,13 +80,26 @@ def build_pipeline(checkpoint: Path, dtype: torch.dtype, device: str):
     from diffusers.models.autoencoders.autoencoder_mmaudio import MMAudioVAE
     from diffusers.models.autoencoders.mmaudio_vocoder import MMAudioVocoder
 
+    from reference.record_audio_real import load_reference as load_converted_audio
+    from reference.record_video_real import load_reference as load_converted_vae
+
     root = find_root(checkpoint, "transformer")
+    if converted is not None:
+        vae = load_converted_vae(converted / "vae") if with_vae else None
+        audio_vae = load_converted_audio(converted / "audio_vae", "audio_vae", MMAudioVAE)
+        vocoder = load_converted_audio(converted / "vocoder", "vocoder", MMAudioVocoder)
+        scheduler = PiflowScheduler.from_config(json.loads(scheduler_config.read_text()))
+    else:
+        vae = AutoencoderKLHunyuanVideo.from_pretrained(root / "vae", torch_dtype=torch.float32) if with_vae else None
+        audio_vae = MMAudioVAE.from_pretrained(root / "audio_vae", torch_dtype=torch.float32)
+        vocoder = MMAudioVocoder.from_pretrained(root / "vocoder", torch_dtype=torch.float32)
+        scheduler = PiflowScheduler.from_pretrained(root / "scheduler")
     return Kandinsky6TI2VAPipeline(
         transformer=Kandinsky6Transformer3DModel.from_pretrained(root / "transformer", torch_dtype=dtype),
-        vae=AutoencoderKLHunyuanVideo.from_pretrained(root / "vae", torch_dtype=torch.float32),
-        audio_vae=MMAudioVAE.from_pretrained(root / "audio_vae", torch_dtype=torch.float32),
-        vocoder=MMAudioVocoder.from_pretrained(root / "vocoder", torch_dtype=torch.float32),
-        scheduler=PiflowScheduler.from_pretrained(root / "scheduler"),
+        vae=vae,
+        audio_vae=audio_vae,
+        vocoder=vocoder,
+        scheduler=scheduler,
         text_encoder=None,
         tokenizer=None,
         text_encoder_2=None,
@@ -89,11 +118,19 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--dtype", choices=sorted(DTYPES), default="float32")
     parser.add_argument("--device", default="cpu")
+    parser.add_argument("--converted", type=Path, help="converted root for vae/audio_vae/vocoder")
+    parser.add_argument("--scheduler-config", type=Path, help="scheduler_config.json (with --converted)")
+    parser.add_argument("--output-type", choices=("np", "latent"), default="np")
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args(argv)
+    if args.converted is not None and args.scheduler_config is None:
+        parser.error("--converted needs --scheduler-config")
 
     height, width, num_frames = PRESETS[args.preset]
-    pipe = build_pipeline(args.checkpoint, DTYPES[args.dtype], args.device)
+    latent_only = args.output_type == "latent"
+    pipe = build_pipeline(
+        args.checkpoint, DTYPES[args.dtype], args.device, args.converted, args.scheduler_config, not latent_only
+    )
     embeds, pooled = load_text(args.text_embeds)
     num_latent_frames = (num_frames - 1) // 4 + 1
     audio_length = math.ceil(
@@ -121,7 +158,7 @@ def main(argv: list[str] | None = None) -> int:
             num_frames=num_frames,
             num_inference_steps=args.steps,
             guidance_scale=1.0,
-            output_type="np",
+            output_type=args.output_type,
             return_dict=False,
             callback_on_step_end=record,
             callback_on_step_end_tensor_inputs=["latents", "audio_latents"],
@@ -132,9 +169,10 @@ def main(argv: list[str] | None = None) -> int:
         "inputs.audio_latents": audio_latents,
         "inputs.encoder_hidden_states": embeds,
         "inputs.pooled_projections": pooled,
-        "outputs.frames": np.asarray(video, np.float32),
-        "outputs.audio": np.asarray(audio, np.float32),
     }
+    if not latent_only:
+        tensors["outputs.frames"] = np.asarray(video, np.float32)
+        tensors["outputs.audio"] = np.asarray(audio, np.float32)
     for i, (v, a) in enumerate(steps):
         tensors[f"outputs.step.{i}.latents"] = v
         tensors[f"outputs.step.{i}.audio_latents"] = a
@@ -143,8 +181,9 @@ def main(argv: list[str] | None = None) -> int:
         tensors,
         {
             "fixture": args.out.name,
-            "reference": "diffusers.Kandinsky6TI2VAPipeline.__call__ (T2V, guidance_scale=1, output_type=np)",
+            "reference": f"diffusers.Kandinsky6TI2VAPipeline.__call__ (T2V, guidance_scale=1, output_type={args.output_type})",
             "checkpoint": str(args.checkpoint),
+            "converted": str(args.converted) if args.converted else None,
             "transformer_dtype": args.dtype,
             "device": args.device,
             "preset": args.preset,
@@ -154,6 +193,13 @@ def main(argv: list[str] | None = None) -> int:
             "versions": library_versions() | {"torch": torch.__version__},
         },
     )
+    if latent_only:
+        final = args.out.with_name(args.out.name + "_final")
+        save_fixture(
+            final,
+            {"inputs.latents": steps[-1][0], "inputs.audio_latents": steps[-1][1]},
+            {"fixture": final.name, "source": f"last step of {args.out.name}"},
+        )
     print(f"{len(steps)} steps in {seconds:.0f} s -> {args.out}")
     return 0
 
