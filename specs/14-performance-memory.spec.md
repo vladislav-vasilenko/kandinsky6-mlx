@@ -57,6 +57,17 @@ Outputs:
 - `docs/PERFORMANCE.md` with the tables, charts, method and caveats; a short summary with a chart in the README; the
   main findings in a "Performance" section of the Hugging Face model card (an outward upload: owner's approval first).
 
+Memory profiles 16, 24, 32 and 48 GB (owner's request). For each profile: the fastest settings that fit (about
+60-70% of the RAM for the pipeline, leaving the rest to macOS and apps; 16 GB keeps the ~10 GB target above), the
+resulting time and peak memory per stage, Smoke and Baseline. The settings that trade memory for speed are measured
+one by one so the table shows what extra memory buys: VAE spatial tiling on/off and the conv chunk budget; clearing the
+MLX cache between stages or keeping it (the first VAE decode in a process is ~2x slower); keeping the DiT and Qwen
+resident across videos vs releasing them; batched (B=2) vs sequential CFG; Qwen bf16 vs 8-bit; DiT bf16 vs 8-bit.
+Profiles are emulated on the development Mac with `mx.set_memory_limit` (and `torch.mps.set_per_process_memory_fraction`
+for the reference): this shows what fits and what saving memory costs, not the speed of a real 16-32 GB Mac, whose
+chip has fewer GPU cores and less bandwidth; the published tables say so, and runs on real machines are added when
+available.
+
 Rules: one heavy run at a time under the memory guard; every number states its cell and whether it is cold, warm or
 an estimate; numbers measured earlier in reports 09-13 are not reused in the published tables (they were taken
 without repeats and with recorder overhead), only cited as context.
@@ -92,6 +103,8 @@ Compare with the Kaggle 2Ã—T4 numbers recorded in the study repository (Smoke â‰
 - [ ] Publishable benchmark: the matrix above measured (cold and warm, time and memory per stage, MLX vs diffusers on
   MPS), raw results and charts committed, docs/PERFORMANCE.md and the README summary written, the HF card section
   prepared for the owner's approval.
+- [ ] Memory profiles 16, 24, 32, 48 GB: fastest fitting settings, time and peak memory per stage for each, and the
+  measured cost or gain of every memory-for-speed setting; emulation method and its limits stated.
 - [ ] Each optimization's speed/memory gain and parity effect recorded.
 - [ ] 16 GB profile: peak memory per stage under the limit at Smoke (and Baseline if reached), with the settings that achieve it and their parity or PSNR effect.
 - [ ] Pro feasibility verdict: memory estimate per quantization level and, if a machine allows, one Pro-distill Smoke run.
