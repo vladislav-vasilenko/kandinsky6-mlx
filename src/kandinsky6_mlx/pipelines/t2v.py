@@ -159,12 +159,14 @@ class Kandinsky6Pipeline:
         release_transformer: bool = False,
         vae_tiling: TilingConfig | None = None,
         progress: bool = False,
+        on_latents=None,
     ) -> PipelineOutput:
         """Generate one video (batch 1). `release_transformer` frees the DiT after denoising, before the decoders run
         (about 8 GB at bf16); the pipeline then cannot be called again. `vae_tiling` decodes in spatial tiles as the
         reference does after `vae.enable_tiling(...)` (the Baseline preset sets the reference defaults); without it
         only the reference's default temporal tiling is used. `progress` shows tqdm bars for the denoising steps and
-        the VAE tiles."""
+        the VAE tiles. `on_latents(latents)` receives the final video latents (diffusers layout, float32 NumPy) right
+        after denoising, before the decoders run, so a caller can keep them even if decoding fails."""
         if self.transformer is None:
             raise RuntimeError("the transformer was released by a previous call with release_transformer=True")
         if guidance_scale > 1.0:
@@ -228,6 +230,8 @@ class Kandinsky6Pipeline:
         start = time.perf_counter()
         final = video.transpose(0, 4, 1, 2, 3).astype(mx.float32)
         output.latents = np.array(final)
+        if on_latents is not None:
+            on_latents(output.latents)
         z = final / self.vae.scaling_factor
         with tqdm(
             total=self.vae.num_tiles(z.shape, vae_tiling), desc="video decode", unit="tile", disable=not progress

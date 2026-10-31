@@ -53,6 +53,19 @@ def main(argv: list[str] | None = None) -> int:
     if args.latents is not None:
         tensors = mx.load(str(args.latents.with_suffix(".safetensors")))
         noise = {"latents": tensors["inputs.latents"], "audio_latents": tensors.get("inputs.audio_latents")}
+
+    def save_latents(latents) -> None:
+        """Written right after denoising, so the latents survive a failed decode."""
+        args.save_latents.parent.mkdir(parents=True, exist_ok=True)
+        tensors = {"inputs.latents": mx.array(latents).transpose(0, 2, 3, 4, 1)}
+        mx.save_safetensors(str(args.save_latents.with_suffix(".safetensors")), tensors)
+        meta = {
+            "fixture": args.save_latents.name,
+            "layout": "(B, T, H/8, W/8, 16) like the transformer, not divided by scaling_factor",
+        }
+        args.save_latents.with_suffix(".json").write_text(json.dumps(meta | {"seed": args.seed}, indent=2) + "\n")
+        print(f"saved latents -> {args.save_latents}", flush=True)
+
     output = pipeline(
         load_text_embeds(args.text_embeds),
         **size,
@@ -61,21 +74,12 @@ def main(argv: list[str] | None = None) -> int:
         sample_audio=not args.no_audio,
         release_transformer=True,
         progress=True,
+        on_latents=save_latents if args.save_latents is not None else None,
         **noise,
     )
     audio = None if output.audio is None else output.audio[0]
     write_mp4(args.out, output.frames[0], output.frame_rate, audio, output.sample_rate)
-    if args.save_latents is not None:
-        args.save_latents.parent.mkdir(parents=True, exist_ok=True)
-        mx.save_safetensors(
-            str(args.save_latents.with_suffix(".safetensors")),
-            {"inputs.latents": mx.array(output.latents).transpose(0, 2, 3, 4, 1)},
-        )
-        meta = {
-            "fixture": args.save_latents.name,
-            "layout": "(B, T, H/8, W/8, 16) like the transformer, not divided by scaling_factor",
-        }
-        args.save_latents.with_suffix(".json").write_text(json.dumps(meta | {"seed": args.seed}, indent=2) + "\n")
+
     report = {
         "out": str(args.out),
         "size": {k: v for k, v in size.items() if k != "vae_tiling"},
