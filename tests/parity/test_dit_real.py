@@ -110,11 +110,13 @@ def test_real_lite_distill_bf16_blocks_and_outputs():
     assert not failed, f"first entry over the criterion: {failed[0]}"
 
 
-def test_stage_b_harness_on_a_tiny_recording(tmp_path):
+@pytest.mark.parametrize("split", [False, True], ids=["one-run", "skip-bf16-then-drift-only"])
+def test_stage_b_harness_on_a_tiny_recording(tmp_path, split):
     """The whole stage B path on a tiny model: torch recording at Smoke size, conversion, MLX replay.
 
     In float32 every block and the final outputs must match at `rel_max <= 1e-4`, which checks that the chained block
-    inputs, the argument casts and the metric layout of the recorder and of `stage_b_metrics` agree.
+    inputs, the argument casts and the metric layout of the recorder and of `stage_b_metrics` agree. `split` records
+    the float32 reference with --skip-bf16 and adds the drift with --drift-only, as the Kaggle + Mac route does.
     """
     torch = pytest.importorskip("torch")
     from diffusers import Kandinsky6Transformer3DModel as Reference
@@ -135,7 +137,12 @@ def test_stage_b_harness_on_a_tiny_recording(tmp_path):
     save_fixture(tmp_path / "text", text, {"fixture": "text"})
     out = tmp_path / "dit_smoke"
     args = ["--checkpoint", str(tmp_path / "ckpt"), "--text-embeds", str(tmp_path / "text"), "--out", str(out)]
-    assert record_dit_real.main(args) == 0
+    if split:
+        assert record_dit_real.main([*args, "--skip-bf16"]) == 0
+        assert "torch_bf16" not in load_fixture(out, backend="numpy")[1]
+        assert record_dit_real.main(["--checkpoint", str(tmp_path / "ckpt"), "--drift-only", "--out", str(out)]) == 0
+    else:
+        assert record_dit_real.main(args) == 0
 
     _, meta = load_fixture(out, backend="numpy")
     calls = meta["calls"]["ref"]

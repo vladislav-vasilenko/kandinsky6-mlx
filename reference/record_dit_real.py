@@ -13,35 +13,26 @@ Produces one fixture (`--out`, default `fixtures/real/dit_smoke`) with:
 - `meta["torch_bf16"]`: the tolerance basis. `per_block` replays every block in bf16 (diffusers `from_pretrained`
   with `torch_dtype=torch.bfloat16`, which keeps time embeddings and modulation in float32) on the float32 inputs and
   gives `rel_l2`/`cosine` against the float32 outputs; `chained` runs the whole bf16 model and compares every block
-  output and the final outputs; the final bf16 outputs are stored as `outputs.bf16.out.*`.
+  output; `final` compares the final outputs. `device` records where the bf16 runs ran.
 
-Text embeddings come from `--text-embeds` (a fixture with `inputs.encoder_hidden_states`, `inputs.pooled_projections`
-and optionally `inputs.encoder_attention_mask`) or are computed from `--prompt` with the checkpoint's Qwen2.5-VL and
-CLIP encoders (Qwen in bf16, CLIP in float32, embeddings stored in float32; their precision does not matter for DiT
-parity because both sides get the same arrays) and saved to `--save-text-embeds` for reuse by spec 09.
+Text embeddings come from `--text-embeds` (a fixture from `reference/encode_text.py`) or from `--prompt`, encoded here
+on the CPU (slow; prefer encode_text.py on a GPU) and saved to `--save-text-embeds`.
 
-Memory: the float32 model is ~12.5 GB and is freed before the bf16 model (~6.3 GB) is loaded; with `--prompt`, Qwen in
-bf16 (~15.5 GB) is loaded and freed first. A Kaggle CPU session (30 GB RAM) is enough.
+The float32 reference is recorded on the CPU (about 12.5 GB of RAM). bf16 on a CPU without native bf16 is extremely
+slow, so the drift can be split off: record with `--skip-bf16`, then add the drift to the same fixture later with
+`--drift-only --device mps` (Apple GPU) or `--device cuda`; it then compares a GPU bf16 run with the CPU float32
+reference, which is recorded in the report.
 
-Running on Kaggle (an outward action: prepare it, then run only with the owner's approval): the CPU kernel in
-`kaggle/record_dit/` clones this public repository at a pinned commit, installs the reference pins, takes the
-transformer from the output of `applehawk/k6-lite-diffusers-weights-media` and Qwen from
-`applehawk/k6-lite-diffusers-weights-text` (Lite-distill revision 4c487e8b), downloads the small `tokenizer/`,
-`text_encoder_2/` and `tokenizer_2/` folders of the same revision, and runs
-
-    python reference/record_dit_real.py --checkpoint /kaggle/input --text-checkpoint <text root> \\
-        --prompt "$(cat fixtures/real_inputs/smoke_prompt.txt)" \\
-        --save-text-embeds /kaggle/working/smoke_text --out /kaggle/working/dit_smoke
-
-The Smoke prompt is the study notebook's `orbit_woman` preset, `smoke` profile
-(`applehawk/kandinsky-6-lite-diffusers-generation`, `compile_prompt`). Afterwards download
-`dit_smoke.{safetensors,json}` and `smoke_text.{safetensors,json}` into `fixtures/real/` on the Mac.
+Running on Kaggle (an outward action: prepare it, then run only with the owner's approval): `kaggle/encode_text/`
+encodes the Smoke prompt on a GPU, and `kaggle/record_dit/` records the float32 reference on the CPU from those
+embeddings with `--skip-bf16`. The Smoke prompt is the study notebook's `orbit_woman` preset, `smoke` profile
+(`applehawk/kandinsky-6-lite-diffusers-generation`, `compile_prompt`), stored in `fixtures/real_inputs/smoke_prompt.txt`.
 """
 
 import argparse
 import copy
 import gc
-import inspect
+import json
 import sys
 from pathlib import Path
 
@@ -52,10 +43,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from kandinsky6_mlx.utils.fixtures import save_fixture
+from reference.encode_text import encode_prompt, find_component_root
 from reference.recorder import ActivationRecorder, flatten, library_versions, modules_of_classes, unflatten
 
 BLOCK_CLASSES = ("Kandinsky6TransformerEncoderBlock", "Kandinsky6FusedTransformerDecoderBlock")
-TEXT_COMPONENTS = ("text_encoder", "tokenizer", "text_encoder_2", "tokenizer_2")
 # Arguments of each block class a bf16 run casts to bf16: the streams and text states. Time embeddings (fused args[4],
 # encoder args[1]) and RoPE tables stay float32 in diffusers, and the mask is boolean.
 MODEL_DTYPE_ARGS = {"Kandinsky6TransformerEncoderBlock": [0], "Kandinsky6FusedTransformerDecoderBlock": [0, 1, 2, 3]}
@@ -74,41 +65,6 @@ def load_text_embeds(path: Path) -> dict[str, torch.Tensor]:
     tensors = load_file(str(path.with_suffix(".safetensors")))
     names = ("encoder_hidden_states", "pooled_projections", "encoder_attention_mask")
     return {name: tensors[f"inputs.{name}"] for name in names if f"inputs.{name}" in tensors}
-
-
-def find_component_root(root: Path, component: str) -> Path:
-    """The directory holding `component/config.json` under `root` (Kaggle mounts outputs at varying depths)."""
-    if (root / component / "config.json").is_file():
-        return root
-    for config in sorted(root.rglob(f"{component}/config.json")):
-        return config.parent.parent
-    raise FileNotFoundError(f"no {component}/config.json under {root}")
-
-
-def encode_prompt(text_checkpoint: Path, prompt: str) -> dict[str, torch.Tensor]:
-    """`Kandinsky6TI2VAPipeline.encode_prompt` with only the text components built, like the study notebook."""
-    from diffusers import Kandinsky6TI2VAPipeline
-    from transformers import CLIPTextModel, CLIPTokenizer, Qwen2_5_VLForConditionalGeneration, Qwen2_5_VLProcessor
-
-    root = find_component_root(text_checkpoint, "text_encoder")
-    others = inspect.signature(Kandinsky6TI2VAPipeline.__init__).parameters
-    pipe = Kandinsky6TI2VAPipeline(
-        **{name: None for name in others if name not in ("self", *TEXT_COMPONENTS)},
-        text_encoder=Qwen2_5_VLForConditionalGeneration.from_pretrained(
-            root / "text_encoder", dtype=torch.bfloat16, low_cpu_mem_usage=True
-        ).eval(),
-        tokenizer=Qwen2_5_VLProcessor.from_pretrained(root / "tokenizer"),
-        text_encoder_2=CLIPTextModel.from_pretrained(root / "text_encoder_2", dtype=torch.float32).eval(),
-        tokenizer_2=CLIPTokenizer.from_pretrained(root / "tokenizer_2"),
-    )
-    with torch.no_grad():
-        embeds, pooled, mask, *_ = pipe.encode_prompt(prompt, do_classifier_free_guidance=False, dtype=torch.float32)
-    del pipe
-    gc.collect()
-    text = {"encoder_hidden_states": embeds.float(), "pooled_projections": pooled.float()}
-    if mask is not None:
-        text["encoder_attention_mask"] = mask
-    return text
 
 
 def smoke_inputs(seed: int, text: dict[str, torch.Tensor]) -> dict:
@@ -172,41 +128,16 @@ def output_metrics(actual, reference) -> dict:
     return {"text": metrics(actual, reference)}
 
 
-def load_transformer(checkpoint: Path, dtype: torch.dtype):
+def load_transformer(checkpoint: Path, dtype: torch.dtype, device: str = "cpu"):
     from diffusers import Kandinsky6Transformer3DModel
 
     path = find_component_root(checkpoint, "transformer") / "transformer"
-    return Kandinsky6Transformer3DModel.from_pretrained(path, torch_dtype=dtype).eval()
+    return Kandinsky6Transformer3DModel.from_pretrained(path, torch_dtype=dtype).eval().to(device)
 
 
-def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--checkpoint", type=Path, required=True, help="diffusers snapshot (with transformer/)")
-    text = parser.add_mutually_exclusive_group(required=True)
-    text.add_argument("--text-embeds", type=Path, help="fixture with the cached text embeddings")
-    text.add_argument("--prompt", help="encode this prompt with the checkpoint's text encoders")
-    parser.add_argument(
-        "--text-checkpoint", type=Path, help="root with text_encoder*/tokenizer* (default: --checkpoint)"
-    )
-    parser.add_argument("--save-text-embeds", type=Path, help="where to save embeddings computed from --prompt")
-    parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--out", type=Path, default=Path("fixtures/real/dit_smoke"))
-    args = parser.parse_args(argv)
-
-    if args.prompt is not None:
-        text_inputs = encode_prompt(args.text_checkpoint or args.checkpoint, args.prompt)
-        if args.save_text_embeds:
-            save_fixture(
-                args.save_text_embeds,
-                {f"inputs.{k}": v for k, v in text_inputs.items()},
-                {"fixture": args.save_text_embeds.name, "prompt": args.prompt, "versions": library_versions()},
-            )
-    else:
-        text_inputs = load_text_embeds(args.text_embeds)
-    kwargs = smoke_inputs(args.seed, text_inputs)
-
-    # 1. Float32 reference: every block output and the final outputs.
-    model = load_transformer(args.checkpoint, torch.float32)
+def record_reference(checkpoint: Path, kwargs: dict) -> tuple[dict, list]:
+    """Float32 CPU reference: every block output and the final outputs, with chained block inputs."""
+    model = load_transformer(checkpoint, torch.float32)
     modules = modules_of_classes(model, BLOCK_CLASSES)
     tensors: dict = {}
     for key, value in kwargs.items():
@@ -218,19 +149,36 @@ def main(argv: list[str] | None = None) -> int:
     calls = chain_calls(recorder.calls, tensors)
     del model, recorder
     gc.collect()
+    return tensors, calls
 
-    # 2. Torch bf16 drift, the tolerance basis: each block on the float32 inputs, then the chained bf16 model.
-    model = load_transformer(args.checkpoint, torch.bfloat16)
+
+def bf16_drift(checkpoint: Path, tensors: dict, calls: list, device: str = "cpu") -> dict:
+    """The tolerance basis: torch bf16 (time embeddings and modulation float32, as diffusers loads it) vs the float32
+    recording, per block on the recorded float32 inputs, per block inside the chained bf16 forward, and final."""
+    model = load_transformer(checkpoint, torch.bfloat16, device)
     named = dict(model.named_modules())
+    modules = [call["module"] for call in calls]
+
+    def on_device(obj):
+        if isinstance(obj, torch.Tensor):
+            return obj.to(device)
+        if isinstance(obj, (tuple, list)):  # the fused block's (t_v, t_a)
+            return type(obj)(on_device(o) for o in obj)
+        return obj
+
     per_block = {}
     with torch.no_grad():
         for call in calls:
-            got = named[call["module"]](*block_inputs(call, tensors, torch.bfloat16))
+            args = tuple(on_device(a) for a in block_inputs(call, tensors, torch.bfloat16))
+            got = named[call["module"]](*args)
+            got = tuple(None if g is None else g.cpu() for g in got) if isinstance(got, tuple) else got.cpu()
             per_block[call["module"]] = output_metrics(got, unflatten(call["output"], tensors))
+        kwargs = {
+            k[len("inputs.ref.") :]: v for k, v in tensors.items() if k.startswith("inputs.ref.") and "@" not in k
+        }
         bf16_kwargs = {
-            k: v.to(torch.bfloat16) if v.is_floating_point() and k != "timestep" else v
+            k: (v.to(torch.bfloat16) if v.is_floating_point() and k != "timestep" else v).to(device)
             for k, v in kwargs.items()
-            if isinstance(v, torch.Tensor)
         }
         with ActivationRecorder(model, modules, tag="bf16") as recorder:
             bf16_output = model(**bf16_kwargs, return_dict=False)
@@ -240,29 +188,72 @@ def main(argv: list[str] | None = None) -> int:
         )
         for call, bf16_call in zip(calls, recorder.calls)
     }
-    names = ("video", "audio")
-    final = {n: metrics(a, r) for n, a, r in zip(names, bf16_output, output)}
-    flatten(tuple(o.float() for o in bf16_output), "outputs.bf16.out", tensors)
+    reference = [tensors[f"outputs.ref.out.{i}"] for i in range(len(bf16_output))]
+    final = {n: metrics(a.cpu(), r) for n, a, r in zip(("video", "audio"), bf16_output, reference)}
+    return {"per_block": per_block, "chained": chained, "final": final, "device": device}
 
-    save_fixture(
-        args.out,
-        tensors,
-        {
-            "fixture": args.out.name,
-            "checkpoint": str(args.checkpoint),
-            "reference": "diffusers.Kandinsky6Transformer3DModel.forward",
-            "dtype": "float32",
-            "seed": args.seed,
-            "inputs": {
-                "latents_bcthw": list(LATENT_SHAPE),
-                "audio": list(AUDIO_SHAPE),
-                "timestep": kwargs["timestep"].item(),
-            },
-            "versions": library_versions(),
-            "calls": {"ref": calls},
-            "torch_bf16": {"per_block": per_block, "chained": chained, "final": final},
-        },
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--checkpoint", type=Path, required=True, help="diffusers snapshot (with transformer/)")
+    text = parser.add_mutually_exclusive_group()
+    text.add_argument("--text-embeds", type=Path, help="fixture with the cached text embeddings")
+    text.add_argument("--prompt", help="encode this prompt with the checkpoint's text encoders")
+    parser.add_argument(
+        "--text-checkpoint", type=Path, help="root with text_encoder*/tokenizer* (default: --checkpoint)"
     )
+    parser.add_argument("--save-text-embeds", type=Path, help="where to save embeddings computed from --prompt")
+    parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--skip-bf16", action="store_true", help="record the float32 reference only")
+    parser.add_argument(
+        "--drift-only", action="store_true", help="add the bf16 drift to an existing recording at --out"
+    )
+    parser.add_argument("--device", default="cpu", help="device of the bf16 drift runs (cpu, cuda, mps)")
+    parser.add_argument("--out", type=Path, default=Path("fixtures/real/dit_smoke"))
+    args = parser.parse_args(argv)
+
+    if args.drift_only:
+        from safetensors.torch import load_file
+
+        tensors = load_file(str(args.out.with_suffix(".safetensors")))
+        meta_path = args.out.with_suffix(".json")
+        meta = json.loads(meta_path.read_text())
+        meta["torch_bf16"] = bf16_drift(args.checkpoint, tensors, meta["calls"]["ref"], args.device)
+        meta_path.write_text(json.dumps(meta, indent=2, sort_keys=True) + "\n")
+        print(f"added the bf16 drift ({args.device}) to {meta_path}")
+        return 0
+
+    if args.prompt is not None:
+        text_inputs = encode_prompt(args.text_checkpoint or args.checkpoint, args.prompt)
+        if args.save_text_embeds:
+            save_fixture(
+                args.save_text_embeds,
+                {f"inputs.{k}": v for k, v in text_inputs.items()},
+                {"fixture": args.save_text_embeds.name, "prompt": args.prompt, "versions": library_versions()},
+            )
+    elif args.text_embeds is not None:
+        text_inputs = load_text_embeds(args.text_embeds)
+    else:
+        parser.error("one of --text-embeds or --prompt is required")
+    kwargs = smoke_inputs(args.seed, text_inputs)
+    tensors, calls = record_reference(args.checkpoint, kwargs)
+    meta = {
+        "fixture": args.out.name,
+        "checkpoint": str(args.checkpoint),
+        "reference": "diffusers.Kandinsky6Transformer3DModel.forward",
+        "dtype": "float32",
+        "seed": args.seed,
+        "inputs": {
+            "latents_bcthw": list(LATENT_SHAPE),
+            "audio": list(AUDIO_SHAPE),
+            "timestep": kwargs["timestep"].item(),
+        },
+        "versions": library_versions() | {"torch": torch.__version__},
+        "calls": {"ref": calls},
+    }
+    if not args.skip_bf16:
+        meta["torch_bf16"] = bf16_drift(args.checkpoint, tensors, calls, args.device)
+    save_fixture(args.out, tensors, meta)
     print(f"recorded {len(calls)} block calls, {len(tensors)} tensors -> {args.out}")
     return 0
 
