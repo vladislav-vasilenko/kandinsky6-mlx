@@ -1,6 +1,6 @@
 {
   "spec": "05-dit-model",
-  "status": "PARTIAL",
+  "status": "PASS",
   "date": "2026-10-31",
   "environment": {
     "chip": "Apple M3 Max",
@@ -20,8 +20,8 @@
     "kaggle/record_dit/ (CPU kernel for the stage B recording) and tests/unit/test_kaggle_record_dit.py"
   ],
   "tests": {
-    "command": "uv run --group reference pytest -q",
-    "passed": 164,
+    "command": "uv run --extra text --group reference pytest -q",
+    "passed": 498,
     "failed": 0
   },
   "validation": [
@@ -144,14 +144,43 @@
       },
       "criterion": "loads strictly, keeps the 268 modulation + 8 time-embedding tensors in float32, finite outputs of the reference shapes",
       "pass": true
-    }
-  ],
-  "skipped": [
+    },
     {
-      "what": "stage B on the real Lite-distill weights (per-block and final bf16 parity)",
-      "reason": "needs the float32 reference recording fixtures/real/dit_smoke from reference/record_dit_real.py, which runs on Kaggle (Lite in float32 is ~12.5 GB RAM; 11-13 GiB free disk here) and is an outward action waiting for the owner's approval. The converted transformer comes from VVladTech/Kandinsky-6.0-Lite-distill-5s-MLX@e4d652b7."
+      "name": "stage B: real Lite-distill DiT, MLX bf16 vs the diffusers float32 reference at Smoke size (3024 video, 45 audio, 238 text tokens of the Smoke prompt; NumPy seed 42 latents; timestep 833.33); every block on the recorded float32 inputs, every block inside the chained forward, and the final outputs",
+      "metrics": {
+        "per_block_rel_l2_mlx_over_torch_bf16": {
+          "min": 0.56,
+          "max": 1.12,
+          "blocks": 68
+        },
+        "per_block_min_cosine": 0.999969,
+        "final": {
+          "video": {
+            "mlx_rel_l2": 0.0146,
+            "torch_bf16_rel_l2": 0.0203,
+            "mlx_cosine": 0.999894
+          },
+          "audio": {
+            "mlx_rel_l2": 0.0122,
+            "torch_bf16_rel_l2": 0.015,
+            "mlx_cosine": 0.999925
+          }
+        },
+        "chained_video_rel_l2_mlx": {
+          "block 0": 0.0028,
+          "block 13": 0.011,
+          "block 14": 0.04,
+          "block 30": 0.0525,
+          "block 31": 0.0316
+        },
+        "reference": "torch 2.15.0 CPU float32 on this Mac (11.6 s), diffusers transformer verified by SHA-256 b1b52668 (report 02)",
+        "tolerance_basis": "torch bf16 on Apple MPS (10 s)"
+      },
+      "criterion": "AGENTS.md bf16 criterion for every block and the final outputs: rel_l2 <= 2 x torch bf16 rel_l2 and cosine >= 0.999",
+      "pass": true
     }
   ],
+  "skipped": [],
   "deviations": [
     {
       "what": "the model casts floating inputs (latents, text embeddings, pooled embedding, audio latents) to its dtype; the timestep stays as given",
@@ -164,13 +193,21 @@
     {
       "what": "stage B inputs: text embeddings computed from the study notebook's Smoke prompt with the pipeline's own encode_prompt (padded to 1024 tokens with the boolean mask) instead of the notebook's cache",
       "why": "the notebook's output holds no cached embeddings, and its cache drops the padding; keeping the mask exercises the masked path the pipeline uses."
+    },
+    {
+      "what": "stage B text embeddings come from the MLX Qwen2.5-VL path (mlx-vlm, bf16, weights from the ComfyUI single-file copy) plus torch CLIP-L, trimmed to the 238 real tokens without a mask",
+      "why": "Qwen in torch on a Kaggle CPU did not finish in 80 minutes and the GPU kernel stalled; any real embeddings serve DiT parity because both sides get the same arrays, and trimming leaves outputs unchanged (rel_max 1.5e-6, see architecture notes). The padded masked path stays covered by the tiny fixtures."
+    },
+    {
+      "what": "the float32 reference was recorded on this Mac's CPU and the bf16 tolerance basis on Apple MPS, not on Kaggle",
+      "why": "the Kaggle runs stalled on bf16 CPU work; the Mac run needed seconds. The basis therefore compares MPS bf16 with CPU float32; it is of the same size as the CPU bf16 drift seen on the tiny model (7.6e-3)."
     }
   ],
   "follow_ups": [
-    "Run reference/record_dit_real.py on Kaggle (CPU, inputs: k6-lite-diffusers-weights-media and -text outputs plus this repository's source) after approval, copy dit_smoke and smoke_text to fixtures/real/, then run `uv run pytest tests/parity/test_dit_real.py -m real_weights` and update this report.",
     "fixtures/real/smoke_text from that run is the cached text-embedding input for spec 09.",
     "ComfyUI-Shared on this Mac holds the original Lite-distill diffusers transformer, Qwen2.5-VL-7B and CLIP-L in ComfyUI single-file form; possibly reusable in spec 11 instead of downloading.",
-    "Per-block mx.eval to bound memory and timing of a full forward are spec 14 topics."
+    "Per-block mx.eval to bound memory and timing of a full forward are spec 14 topics.",
+    "The Kaggle text kernel stalled after starting encode_text.py on 2x T4 with no output for 24 minutes; investigate only if a torch Qwen reference is needed (spec 11 stage B)."
   ],
   "architecture_notes": [
     {
@@ -192,6 +229,11 @@
       "topic": "lazy graph",
       "note": "The whole 32-block forward is built lazily and evaluated once; peak memory is set by the largest block activations (Baseline 11.6 GiB including 6.4 GB of weights + 2.2 GB float32 modulation).",
       "optimization": "Evaluate per block if memory gets tight (spec 14); mx.compile on a block function is the next experiment."
+    },
+    {
+      "topic": "bf16 drift jumps at block 14 of the video stream",
+      "note": "In the chained bf16 forward the video stream's error vs float32 rises smoothly to 1.1e-2 by block 13, jumps to 4.0e-2 at block 14 and ends at 3-5e-2; torch bf16 shows the same jump (1.15e-2 -> 3.97e-2), so it is a property of the model in bf16 (likely large activations or a sensitive modulation at that depth), not of the port. Per-block errors stay at 2-5e-3 everywhere.",
+      "optimization": "If bf16 quality matters (spec 14), keep block 14 (or its modulation/norm path) in float32 and measure; any quantization study should look at block 14 first."
     }
   ]
 }
