@@ -21,6 +21,46 @@ A 16 GB Mac leaves about 10-11 GB for MLX once macOS and apps take theirs, so th
 - DiT: 8-bit `Linear` weights if the above is not enough (drift reported as below).
 - Verify on the development Mac with `mx.set_memory_limit` at the profile budget; record whether a real 16 GB machine was available for a final run.
 
+## Publishable benchmark (added after spec 13, owner's request)
+
+The benchmark must answer, with numbers fit for the GitHub README and the Hugging Face card: is the MLX pipeline
+faster than the reference diffusers pipeline on the same Mac, how much memory each uses, how cold and warm runs differ,
+and what every mode and option costs.
+
+Implementations:
+- MLX: bf16 (default) and float32; each optimization of this spec on and off.
+- Reference: diffusers 0.42.1 on Apple MPS as the study notebook runs it (DiT bf16, VAEs and vocoder float32,
+  `vae.enable_tiling()` for Baseline). diffusers on CPU float32 for Smoke only, as context.
+
+Matrix (each cell runs the same inputs: the same text embeddings, NumPy noise and image on both sides):
+- Models: Lite-distill (PiFlow, 10 steps) and Lite-5s (FlowMatch, 50 steps, guidance 5; MLX sequential and batched CFG).
+- Modes: text-to-video and image-to-video; with and without audio; VAE tiling on and off where it applies; text
+  encoding (Qwen bf16 and 8-bit in MLX vs Qwen bf16 in torch on MPS, CLIP); the 16 GB profile (`mx.set_memory_limit`).
+- Sizes: Smoke for the full matrix. Baseline: Lite-distill on MLX cold + 3 warm runs, diffusers on MPS one run after a
+  short memory probe under the guard; Lite-5s with guidance one cold MLX run (about 2.2 h, overnight) and the diffusers
+  time extrapolated from its per-step time, marked as an estimate.
+
+Measurements per cell:
+- Cold: the first call in a fresh process, including weight loading and kernel compilation.
+- Warm: median and spread (min, max) over 3 repeated calls in the same process.
+- Time per stage: text encoding, loading, denoising (and per step), video decode, audio decode, total.
+- Memory, two ways so MLX and torch compare fairly: the framework's own peak (`mx.get_peak_memory`,
+  `torch.mps.driver_allocated_memory`) and the process's physical footprint sampled every 0.2 s by the OS
+  (`phys_footprint`); peak per stage and for the whole run.
+- Machine facts: chip, GPU cores, unified memory, macOS, library versions, power source.
+
+Outputs:
+- `scripts/benchmark.py` (matrix selection by flags, one process per cold run, results appended as JSON lines) and the
+  raw results in `benchmarks/results/<chip>/*.jsonl` plus a CSV summary.
+- Charts (matplotlib, PNG and SVG) in `docs/benchmarks/`: time per stage MLX vs diffusers per mode; cold vs warm;
+  peak memory per stage (framework and OS); Smoke vs Baseline; gain of each optimization; text encoding variants.
+- `docs/PERFORMANCE.md` with the tables, charts, method and caveats; a short summary with a chart in the README; the
+  main findings in a "Performance" section of the Hugging Face model card (an outward upload: owner's approval first).
+
+Rules: one heavy run at a time under the memory guard; every number states its cell and whether it is cold, warm or
+an estimate; numbers measured earlier in reports 09-13 are not reused in the published tables (they were taken
+without repeats and with recorder overhead), only cited as context.
+
 ## Read first
 
 - MLX docs: `mx.compile`, `mx.fast.*`, `nn.quantize`, memory APIs (`mx.get_peak_memory`, `mx.clear_cache`, `mx.set_wired_limit`).
@@ -49,6 +89,9 @@ Compare with the Kaggle 2Ã—T4 numbers recorded in the study repository (Smoke â‰
 ## Acceptance criteria
 
 - [ ] Benchmark table for at least one chip, Smoke and Baseline.
+- [ ] Publishable benchmark: the matrix above measured (cold and warm, time and memory per stage, MLX vs diffusers on
+  MPS), raw results and charts committed, docs/PERFORMANCE.md and the README summary written, the HF card section
+  prepared for the owner's approval.
 - [ ] Each optimization's speed/memory gain and parity effect recorded.
 - [ ] 16 GB profile: peak memory per stage under the limit at Smoke (and Baseline if reached), with the settings that achieve it and their parity or PSNR effect.
 - [ ] Pro feasibility verdict: memory estimate per quantization level and, if a machine allows, one Pro-distill Smoke run.
