@@ -68,30 +68,42 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--latents", type=Path, help="fixture with inputs.latents (B, T, H, W, C) from a Smoke run")
     parser.add_argument("--shape", type=int, nargs=5, default=SMOKE_LATENTS, help="(B, T, H, W, C) without --latents")
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--tiling", action="store_true", help="vae.enable_tiling() at the defaults (spec 10)")
+    parser.add_argument("--frames", type=int, help="use only the first N latent frames of --latents")
+    parser.add_argument("--device", default="cpu", help="cpu (the reference) or mps")
     parser.add_argument("--out", type=Path, default=Path("fixtures/real/video_smoke"))
     args = parser.parse_args(argv)
 
     vae = load_diffusers(args.checkpoint) if args.checkpoint else load_reference(args.weights / "vae")
+    vae = vae.to(args.device)
+    if args.tiling:
+        vae.enable_tiling()
     if args.latents is not None:
         from safetensors.torch import load_file
 
         latents = load_file(str(args.latents.with_suffix(".safetensors")))["inputs.latents"].float()
+        if args.frames:
+            latents = latents[:, : args.frames].contiguous()
         source = str(args.latents)
     else:
         latents = torch.from_numpy(np.random.default_rng(args.seed).standard_normal(args.shape).astype(np.float32))
         source = f"np.random.default_rng({args.seed}).standard_normal"
     started = time.time()
     with torch.no_grad():
-        frames = vae.decode(latents.permute(0, 4, 1, 2, 3) / vae.config.scaling_factor, return_dict=False)[0]
+        z = latents.permute(0, 4, 1, 2, 3) / vae.config.scaling_factor
+        frames = vae.decode(z.to(args.device), return_dict=False)[0].cpu()
     seconds = time.time() - started
     save_fixture(
         args.out,
         {"inputs.latents": latents, "outputs.frames": frames},
         {
             "fixture": args.out.name,
-            "reference": "diffusers.AutoencoderKLHunyuanVideo.decode (framewise decoding, no spatial tiling)",
+            "reference": "diffusers.AutoencoderKLHunyuanVideo.decode (framewise decoding, "
+            + ("enable_tiling() defaults)" if args.tiling else "no spatial tiling)"),
+            "device": args.device,
             "weights": str(args.checkpoint or args.weights),
             "latents": source,
+            "latent_frames": int(latents.shape[1]),
             "scaling_factor": vae.config.scaling_factor,
             "torch_cpu_seconds": round(seconds, 1),
             "versions": library_versions(),

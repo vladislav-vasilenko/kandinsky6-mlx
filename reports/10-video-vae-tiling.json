@@ -1,0 +1,99 @@
+{
+  "spec": "10-video-vae-tiling",
+  "status": "PASS",
+  "date": "2026-10-31",
+  "environment": {"chip": "Apple M3 Max (40-core GPU, 48 GB)", "macos": "27.0.1", "mlx": "0.32.4", "torch": "2.15.0", "diffusers": "0.42.1"},
+  "deliverables": [
+    "src/kandinsky6_mlx/models/video_vae/decoder.py (TilingConfig, blend, decode(z, tiling=..., callback=...), num_tiles)",
+    "src/kandinsky6_mlx/pipelines/t2v.py (vae_tiling, Baseline preset with the reference tiling, progress, on_latents, PipelineOutput.latents)",
+    "scripts/generate.py (--vae-tiling, --save-latents written right after denoising, progress bars)",
+    "reference/record_video_real.py (--tiling, --frames, --device)",
+    "tests/parity/test_video_vae_tiling.py",
+    "reports/10-video-vae-tiling.json"
+  ],
+  "tests": {"command": "uv run --extra text --group reference pytest -q", "passed": 521, "failed": 0},
+  "validation": [
+    {
+      "name": "tiny tiling parity: released VAE structure at a small width vs diffusers after enable_tiling(...), float32",
+      "metrics": {
+        "cases": ["spatial only (latent 7x10, 2 frames)", "temporal only (7 frames)", "spatial + temporal (7 frames, 7x10)", "default tiles, one spatial tile", "wide only (3x11)"],
+        "note": "latent sizes 7, 10 and 11 are not multiples of the stride 3, so every grid has partial edge tiles"
+      },
+      "criterion": "rel_max <= 1e-4 for every case; blend_v/h/t bit-exact; tiled differs from untiled (guard)",
+      "pass": true
+    },
+    {
+      "name": "stage B: real Lite-distill VAE, MLX float32 with the reference default tiling vs diffusers float32 on CPU after enable_tiling(), first 8 latent frames of real Baseline latents (480x864, from an MLX bf16 generation, seed 42)",
+      "metrics": {
+        "frames": {"shape": [1, 3, 29, 480, 864], "rel_max": 1.7e-05, "rel_l2": 1.2e-06, "cosine": 1.0, "psnr_db": 130.4},
+        "per_frame_psnr_db": {"min": 129.7, "max": 133.0},
+        "tiles": "3 temporal tiles (the last partial) x 15 spatial tiles",
+        "mlx_seconds": 50.1,
+        "mlx_peak_memory_gib": 12.46,
+        "torch_cpu_seconds": 419.3,
+        "torch_cpu_peak_rss_gib_one_temporal_tile": 40.6
+      },
+      "criterion": "PSNR >= 40 dB vs the reference tiled decode; peak memory recorded",
+      "pass": true
+    },
+    {
+      "name": "validation run: scripts/generate.py --preset baseline (480x864, 121 frames, 10 steps, seed 42, bf16 DiT, the study notebook's orbit_woman baseline prompt)",
+      "metrics": {
+        "seconds": {"load": 1.2, "denoise": 794.4, "video_decode": 225.0, "audio_decode": 1.6},
+        "per_step_seconds": 79.4,
+        "video_tiles": 165,
+        "peak_memory_gib": {"denoise": 11.55, "video_decode": 13.04, "audio_decode": 5.61},
+        "outputs": ["outputs/10/baseline.mp4 (5 s with sound)", "outputs/10/baseline_frames.png (frames 0, 30, 60, 90, 110, 120)"],
+        "visual": "follows the prompt (foreground column passes early, the camera reaches the rear three-quarter view); no tile seams visible"
+      },
+      "criterion": "Baseline decode peak memory <= 20 GB",
+      "pass": true
+    }
+  ],
+  "skipped": [],
+  "deviations": [
+    {
+      "what": "stage B compares the first 8 of 31 Baseline latent frames (29 of 121 output frames), not the whole clip",
+      "why": "the torch CPU float32 reference peaks at 40.6 GiB per temporal tile on this 48 GB Mac and needs about 4 minutes per temporal tile (about 44 minutes for all 11), with a real risk of filling the disk with swap as on earlier runs. The 8-frame input exercises every tiling path (a full 3 x 5 spatial grid with partial edge tiles, temporal blending, a partial last temporal tile); the MLX and torch decodes get the same input. The whole clip can be recorded later on a machine with more memory or with --device mps."
+    },
+    {
+      "what": "Baseline is 480x864, 121 frames, not 512x768 as in the spec's goal",
+      "why": "the pipeline's Baseline preset (spec 09) and the study notebook's Baseline profile use 480x864; 512x768 would need a different DiT run and is not used anywhere in the project"
+    },
+    {
+      "what": "Baseline latents for stage B come from an MLX generation, not a diffusers run",
+      "why": "a diffusers Baseline run would take hours on CPU; the decoder parity only needs realistic latents given identically to both decoders"
+    },
+    {
+      "what": "public API additions: decode(..., callback=...), num_tiles, PipelineOutput.latents, __call__(vae_tiling=, progress=, on_latents=)",
+      "why": "progress bars (owner's request), keeping the latents when decoding fails (a Baseline run was lost to a memory-guard stop), and stage B inputs; existing signatures and defaults are unchanged"
+    }
+  ],
+  "follow_ups": [
+    "Record the whole-clip Baseline reference (31 latent frames) on a larger machine or with --device mps, and add it to the stage B test.",
+    "16 GB profile (spec 14): the tiled Baseline decode peaks at 13 GB; lower the conv chunk budget and measure.",
+    "Baseline DiT speed (79 s/step, 13 min per video) is the dominant cost; spec 14."
+  ],
+  "architecture_notes": [
+    {
+      "topic": "decode memory no longer depends on video size",
+      "note": "With the reference tiling each tile is 17 frames x 256 x 256 output pixels, so the decode peaks at 12.5-13 GB for Baseline (121 x 480 x 864) versus 20.3 GB for the untiled-spatial Smoke decode (25 x 256 x 432). The remaining peak is one tile's activations at 128 channels plus mx.conv3d's chunked temporary buffers (1 GiB budget).",
+      "optimization": "For the 16 GB profile, lower HunyuanVideoCausalConv3d.chunk_bytes and measure; smaller tiles would change the output (per-tile GroupNorm), larger chunks would not."
+    },
+    {
+      "topic": "redundant work from overlaps",
+      "note": "Tiles of 256 px with stride 192 decode (256/192)^2 = 1.78x the pixels, and temporal tiles of 17 output frames with stride 12 another ~1.4x: about 2.5x the work of one pass. Baseline decodes 165 tiles in 225 s (1.36 s per tile).",
+      "optimization": "Parity forbids changing tile sizes; batching several spatial tiles of one temporal tile into one call (same shapes) could improve GPU utilization."
+    },
+    {
+      "topic": "torch CPU vs MLX for the tiled decode",
+      "note": "One temporal tile (15 spatial tiles) takes 238 s and 40.6 GiB RSS in torch float32 on the M3 Max CPU; MLX decodes three in 50 s at 12.5 GiB.",
+      "optimization": "None for the port; for references use MPS or bigger machines."
+    },
+    {
+      "topic": "Baseline time budget",
+      "note": "Denoising 794 s (79 s/step for 50 220 video tokens), video decode 225 s, audio 1.6 s: the DiT is 78% of a Baseline generation.",
+      "optimization": "Spec 14: attention and DiT block speed first."
+    }
+  ]
+}
