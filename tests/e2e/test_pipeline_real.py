@@ -94,6 +94,15 @@ def stage_b_metrics(
         audio_latents=ref["inputs.audio_latents"],
         image=meta.get("image"),
         image_noise=ref.get("inputs.image_noise"),
+        guidance_scale=meta.get("guidance_scale", 1.0),
+        negative_text_embeds=(
+            {
+                "encoder_hidden_states": mx.array(ref["inputs.negative_encoder_hidden_states"]),
+                "pooled_projections": mx.array(ref["inputs.negative_pooled_projections"]),
+            }
+            if "inputs.negative_encoder_hidden_states" in ref
+            else None
+        ),
         return_step_latents=True,
         release_transformer=True,
     )

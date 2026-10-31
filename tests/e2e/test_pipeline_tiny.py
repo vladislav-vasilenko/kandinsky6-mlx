@@ -108,7 +108,8 @@ def test_text_embeds_file_trims_padding(tmp_path):
     assert kept["encoder_hidden_states"].shape == (1, 6, 8) and "encoder_attention_mask" in kept
 
 
-def test_guidance_is_not_supported_yet(tiny_pipelines):
+def test_guidance_needs_negative_embeddings(tiny_pipelines):
+    """Since spec 13 guidance is supported; it needs the negative prompt's embeddings (was NotImplementedError)."""
     _, _, pipeline, _ = tiny_pipelines
-    with pytest.raises(NotImplementedError):
+    with pytest.raises(ValueError, match="negative_text_embeds"):
         pipeline({}, guidance_scale=5.0)

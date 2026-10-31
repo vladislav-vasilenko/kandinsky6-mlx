@@ -1,8 +1,9 @@
-"""Text-to-video+audio pipeline for distilled Kandinsky 6 checkpoints, in MLX, from cached text embeddings.
+"""Text/image-to-video+audio pipeline for Kandinsky 6 checkpoints, in MLX, from text embeddings.
 
-Mirrors `Kandinsky6TI2VAPipeline.__call__` (diffusers 0.42.1) for text-to-video without classifier-free guidance
-(`guidance_scale = 1`, the distilled checkpoints' setting): PiFlow denoising of video and audio latents with one DiT
-call per step and a separate scheduler for audio, then the video VAE and the audio VAE + vocoder.
+Mirrors `Kandinsky6TI2VAPipeline.__call__` (diffusers 0.42.1): denoising of video and audio latents with the scheduler
+named in `scheduler/scheduler_config.json` (PiFlow for the distilled checkpoints, FlowMatch Euler for the others) and
+a separate scheduler instance for audio, classifier-free guidance when `guidance_scale > 1`, optional first-frame image
+conditioning, then the video VAE and the audio VAE + vocoder.
 
 Initial noise comes from `np.random.default_rng(seed)` or is passed explicitly in the diffusers layouts (video
 `(B, 16, T, H/8, W/8)`, audio `(B, 40, L)`), so a diffusers run from the same arrays is directly comparable. NumPy
@@ -22,7 +23,46 @@ from kandinsky6_mlx.models.audio_vae.decoder import MMAudioVAE
 from kandinsky6_mlx.models.dit.model import Kandinsky6Transformer3DModel
 from kandinsky6_mlx.models.video_vae.decoder import AutoencoderKLHunyuanVideo, TilingConfig
 from kandinsky6_mlx.models.vocoder.bigvgan import MMAudioVocoder
+from kandinsky6_mlx.schedulers.flow_match_euler import FlowMatchEulerDiscreteScheduler
 from kandinsky6_mlx.schedulers.piflow import PiflowScheduler
+
+SCHEDULERS = {"PiflowScheduler": PiflowScheduler, "FlowMatchEulerDiscreteScheduler": FlowMatchEulerDiscreteScheduler}
+# diffusers' Kandinsky6TI2VAPipeline._DEFAULT_NEGATIVE_PROMPT (a test compares).
+DEFAULT_NEGATIVE_PROMPT = (
+    "Static, 2D cartoon, cartoon, 2d animation, paintings, images, "
+    "worst quality, low quality, ugly, deformed, walking backwards"
+)
+
+
+def make_scheduler(config: dict):
+    """The scheduler class named by `_class_name` (PiFlow when the config has none, as in older converted dirs)."""
+    name = config.get("_class_name", "PiflowScheduler")
+    if name not in SCHEDULERS:
+        raise NotImplementedError(f"scheduler {name!r}")
+    return SCHEDULERS[name].from_config(config)
+
+
+def pad_text(a: dict, b: dict) -> dict:
+    """Two text caches as one batch of 2: token states right-padded to a common length with a padding mask."""
+    la, lb = a["encoder_hidden_states"].shape[1], b["encoder_hidden_states"].shape[1]
+    length = max(la, lb)
+
+    def pad(text, n):
+        states = text["encoder_hidden_states"]
+        if n < length:
+            states = mx.concatenate([states, mx.zeros((1, length - n, states.shape[-1]), states.dtype)], axis=1)
+        mask = text.get("encoder_attention_mask")
+        mask = mx.ones((1, n), dtype=mx.bool_) if mask is None else mask.astype(mx.bool_)
+        mask = mx.concatenate([mask, mx.zeros((1, length - n), dtype=mx.bool_)], axis=1)
+        return states, mask
+
+    (sa, ma), (sb, mb) = pad(a, la), pad(b, lb)
+    return {
+        "encoder_hidden_states": mx.concatenate([sa, sb], axis=0),
+        "pooled_projections": mx.concatenate([a["pooled_projections"], b["pooled_projections"]], axis=0),
+        "encoder_attention_mask": mx.concatenate([ma, mb], axis=0),
+    }
+
 
 PRESETS = {
     "smoke": {"height": 256, "width": 432, "num_frames": 25},
@@ -183,8 +223,10 @@ class Kandinsky6Pipeline:
         width: int = 432,
         num_frames: int = 25,
         frame_rate: float = 24.0,
-        num_inference_steps: int = 10,
-        guidance_scale: float = 1.0,
+        num_inference_steps: int | None = None,
+        guidance_scale: float | None = None,
+        negative_text_embeds: dict[str, mx.array] | None = None,
+        cfg_batched: bool = False,
         seed: int | None = None,
         latents: np.ndarray | mx.array | None = None,
         audio_latents: np.ndarray | mx.array | None = None,
@@ -212,8 +254,14 @@ class Kandinsky6Pipeline:
         callback."""
         if self.transformer is None:
             raise RuntimeError("the transformer was released by a previous call with release_transformer=True")
-        if guidance_scale > 1.0:
-            raise NotImplementedError("classifier-free guidance is spec 13; distilled checkpoints use guidance_scale=1")
+        distilled = self.scheduler_config.get("_class_name", "PiflowScheduler") == "PiflowScheduler"
+        if num_inference_steps is None:
+            num_inference_steps = 10 if distilled else 50
+        if guidance_scale is None:
+            guidance_scale = 1.0 if distilled else 5.0
+        do_cfg = guidance_scale > 1.0
+        if do_cfg and negative_text_embeds is None:
+            raise ValueError("guidance_scale > 1 needs negative_text_embeds (e.g. of DEFAULT_NEGATIVE_PROMPT)")
         if sample_audio and (self.audio_vae is None or self.vocoder is None):
             raise ValueError("sample_audio=True needs the audio VAE and the vocoder")
         num_frames = self.round_num_frames(num_frames, self.vae_scale_factor_temporal)
@@ -247,11 +295,17 @@ class Kandinsky6Pipeline:
                 mx.arange(video.shape[3] // patch_w),
             )
         audio = mx.array(audio_latents).transpose(0, 2, 1).astype(dtype) if sample_audio else None
-        text = {k: (v.astype(dtype) if k != "encoder_attention_mask" else v) for k, v in text_embeds.items()}
 
-        scheduler = PiflowScheduler.from_config(self.scheduler_config)
+        def cast(embeds):
+            return {k: (v.astype(dtype) if k != "encoder_attention_mask" else v) for k, v in embeds.items()}
+
+        text = cast(text_embeds)
+        negative = cast(negative_text_embeds) if do_cfg else None
+        batched_text = pad_text(text, negative) if do_cfg and cfg_batched else None
+
+        scheduler = make_scheduler(self.scheduler_config)
         scheduler.set_timesteps(num_inference_steps)
-        audio_scheduler = PiflowScheduler.from_config(self.scheduler_config) if sample_audio else None
+        audio_scheduler = make_scheduler(self.scheduler_config) if sample_audio else None
         if audio_scheduler is not None:
             audio_scheduler.set_timesteps(num_inference_steps)
 
@@ -269,16 +323,37 @@ class Kandinsky6Pipeline:
                 video = mx.concatenate([video[:, :-1], first_frame[:, None]], axis=1)
                 mask = mx.concatenate([mask[:, :-1], mx.ones_like(mask[:, -1:])], axis=1)
             model_input = mx.concatenate([video, mx.zeros_like(video), mask], axis=-1)
-            noise_pred = self.transformer(
-                hidden_states=model_input,
-                encoder_hidden_states=text["encoder_hidden_states"],
-                pooled_projections=text["pooled_projections"],
-                timestep=timestep,
-                audio_hidden_states=audio,
-                encoder_attention_mask=text.get("encoder_attention_mask"),
-                visual_rope_pos=visual_rope_pos,
-                visual_token_type_ids=visual_token_type_ids,
-            )
+
+            def predict(embeds, hidden, audio_hidden, token_types, t):
+                return self.transformer(
+                    hidden_states=hidden,
+                    encoder_hidden_states=embeds["encoder_hidden_states"],
+                    pooled_projections=embeds["pooled_projections"],
+                    timestep=t,
+                    audio_hidden_states=audio_hidden,
+                    encoder_attention_mask=embeds.get("encoder_attention_mask"),
+                    visual_rope_pos=visual_rope_pos,
+                    visual_token_type_ids=token_types,
+                )
+
+            if not do_cfg:
+                noise_pred = predict(text, model_input, audio, visual_token_type_ids, timestep)
+            else:
+                if cfg_batched:  # one call with batch 2 (cond, uncond): faster, more memory
+                    two = lambda x: None if x is None else mx.concatenate([x, x], axis=0)
+                    both = predict(
+                        batched_text,
+                        two(model_input),
+                        two(audio),
+                        two(visual_token_type_ids),
+                        mx.concatenate([timestep, timestep]),
+                    )
+                    cond = tuple(None if x is None else x[:1] for x in both)
+                    uncond = tuple(None if x is None else x[1:] for x in both)
+                else:  # two calls, as diffusers runs them
+                    cond = predict(text, model_input, audio, visual_token_type_ids, timestep)
+                    uncond = predict(negative, model_input, audio, visual_token_type_ids, timestep)
+                noise_pred = tuple(None if c is None else u + guidance_scale * (c - u) for c, u in zip(cond, uncond))
             video = scheduler.step(noise_pred[0], timestep, video)
             if sample_audio:
                 audio = audio_scheduler.step(noise_pred[1], timestep, audio)

@@ -63,6 +63,14 @@ def load_text(path: Path) -> tuple[torch.Tensor, torch.Tensor]:
     return embeds, pooled
 
 
+def scheduler_class(name: str):
+    import diffusers
+
+    if name not in ("PiflowScheduler", "FlowMatchEulerDiscreteScheduler"):
+        raise NotImplementedError(name)
+    return getattr(diffusers, name)
+
+
 def build_pipeline(
     checkpoint: Path,
     dtype: torch.dtype,
@@ -75,7 +83,6 @@ def build_pipeline(
         AutoencoderKLHunyuanVideo,
         Kandinsky6TI2VAPipeline,
         Kandinsky6Transformer3DModel,
-        PiflowScheduler,
     )
     from diffusers.models.autoencoders.autoencoder_mmaudio import MMAudioVAE
     from diffusers.models.autoencoders.mmaudio_vocoder import MMAudioVocoder
@@ -88,12 +95,14 @@ def build_pipeline(
         vae = load_converted_vae(converted / "vae") if with_vae else None
         audio_vae = load_converted_audio(converted / "audio_vae", "audio_vae", MMAudioVAE)
         vocoder = load_converted_audio(converted / "vocoder", "vocoder", MMAudioVocoder)
-        scheduler = PiflowScheduler.from_config(json.loads(scheduler_config.read_text()))
+        config = json.loads(scheduler_config.read_text())
+        scheduler = scheduler_class(config.get("_class_name", "PiflowScheduler")).from_config(config)
     else:
         vae = AutoencoderKLHunyuanVideo.from_pretrained(root / "vae", torch_dtype=torch.float32) if with_vae else None
         audio_vae = MMAudioVAE.from_pretrained(root / "audio_vae", torch_dtype=torch.float32)
         vocoder = MMAudioVocoder.from_pretrained(root / "vocoder", torch_dtype=torch.float32)
-        scheduler = PiflowScheduler.from_pretrained(root / "scheduler")
+        config = json.loads((root / "scheduler" / "scheduler_config.json").read_text())
+        scheduler = scheduler_class(config.get("_class_name", "PiflowScheduler")).from_pretrained(root / "scheduler")
     return Kandinsky6TI2VAPipeline(
         transformer=Kandinsky6Transformer3DModel.from_pretrained(root / "transformer", torch_dtype=dtype),
         vae=vae,
@@ -115,6 +124,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--text-embeds", type=Path, required=True)
     parser.add_argument("--preset", choices=sorted(PRESETS), default="smoke")
     parser.add_argument("--steps", type=int, default=10)
+    parser.add_argument("--guidance", type=float, default=1.0, help="guidance_scale; > 1 needs --negative-text-embeds")
+    parser.add_argument("--negative-text-embeds", type=Path, help="embeddings of the negative prompt (spec 13)")
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--dtype", choices=sorted(DTYPES), default="float32")
     parser.add_argument("--device", default="cpu")
@@ -139,6 +150,11 @@ def main(argv: list[str] | None = None) -> int:
         not latent_only or args.image is not None,
     )
     embeds, pooled = load_text(args.text_embeds)
+    negative = negative_pooled = None
+    if args.guidance > 1.0:
+        if args.negative_text_embeds is None:
+            parser.error("--guidance > 1 needs --negative-text-embeds")
+        negative, negative_pooled = load_text(args.negative_text_embeds)
     num_latent_frames = (num_frames - 1) // 4 + 1
     audio_length = math.ceil(
         ((num_latent_frames - 1) * 4 + 1) / 24.0 * pipe.audio_sample_rate / pipe.audio_latent_hop_length
@@ -180,7 +196,9 @@ def main(argv: list[str] | None = None) -> int:
                 width=width,
                 num_frames=num_frames,
                 num_inference_steps=args.steps,
-                guidance_scale=1.0,
+                guidance_scale=args.guidance,
+                negative_prompt_embeds=None if negative is None else negative.to(args.device),
+                negative_pooled_prompt_embeds=None if negative_pooled is None else negative_pooled.to(args.device),
                 output_type=args.output_type,
                 return_dict=False,
                 callback_on_step_end=record,
@@ -198,6 +216,9 @@ def main(argv: list[str] | None = None) -> int:
     }
     if image_noise is not None:
         tensors["inputs.image_noise"] = image_noise
+    if negative is not None:
+        tensors["inputs.negative_encoder_hidden_states"] = negative
+        tensors["inputs.negative_pooled_projections"] = negative_pooled
     if not latent_only:
         tensors["outputs.frames"] = np.asarray(video, np.float32)
         tensors["outputs.audio"] = np.asarray(audio, np.float32)
@@ -209,7 +230,7 @@ def main(argv: list[str] | None = None) -> int:
         tensors,
         {
             "fixture": args.out.name,
-            "reference": f"diffusers.Kandinsky6TI2VAPipeline.__call__ (T2V, guidance_scale=1, output_type={args.output_type})",
+            "reference": f"diffusers.Kandinsky6TI2VAPipeline.__call__ (guidance_scale={args.guidance}, output_type={args.output_type})",
             "checkpoint": str(args.checkpoint),
             "converted": str(args.converted) if args.converted else None,
             "image": str(args.image) if args.image else None,
@@ -217,6 +238,8 @@ def main(argv: list[str] | None = None) -> int:
             "device": args.device,
             "preset": args.preset,
             "steps": args.steps,
+            "guidance_scale": args.guidance,
+            "scheduler": type(pipe.scheduler).__name__,
             "seed": f"np.random.default_rng({args.seed}): video then audio latents",
             "seconds": round(seconds, 1),
             "versions": library_versions() | {"torch": torch.__version__},

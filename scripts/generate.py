@@ -21,7 +21,7 @@ import mlx.core as mx
 
 from kandinsky6_mlx.models.video_vae.decoder import TilingConfig
 from kandinsky6_mlx.pipelines.export import write_mp4
-from kandinsky6_mlx.pipelines.t2v import PRESETS, Kandinsky6Pipeline, load_text_embeds
+from kandinsky6_mlx.pipelines.t2v import DEFAULT_NEGATIVE_PROMPT, PRESETS, Kandinsky6Pipeline, load_text_embeds
 
 try:  # scripts/ is on sys.path when run as a script
     from encode_prompt import add_text_arguments, load_encoders
@@ -44,7 +44,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--height", type=int)
     parser.add_argument("--width", type=int)
     parser.add_argument("--num-frames", type=int)
-    parser.add_argument("--steps", type=int, default=10)
+    parser.add_argument("--steps", type=int, help="default: 10 for distilled checkpoints, 50 otherwise")
+    parser.add_argument("--guidance", type=float, help="guidance_scale; default 1 (distilled) or 5")
+    parser.add_argument("--negative-prompt", help="default: diffusers' default negative prompt (with guidance)")
+    parser.add_argument("--negative-text-embeds", type=Path, help="cached negative embeddings (with --text-embeds)")
+    parser.add_argument("--cfg-batched", action="store_true", help="one batch-2 DiT call per step (more memory)")
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--latents", type=Path, help="fixture with inputs.latents / inputs.audio_latents")
     parser.add_argument("--dtype", choices=sorted(DTYPES), default="bfloat16", help="DiT compute dtype")
@@ -62,13 +66,27 @@ def main(argv: list[str] | None = None) -> int:
     if args.vae_tiling != "preset":
         size["vae_tiling"] = TilingConfig() if args.vae_tiling == "on" else None
     seconds = {}
+    distilled = (
+        json.loads((args.weights / "scheduler" / "scheduler_config.json").read_text()).get("_class_name")
+        in (None, "PiflowScheduler")
+        if (args.weights / "scheduler" / "scheduler_config.json").is_file()
+        else True
+    )
+    guidance = args.guidance if args.guidance is not None else (1.0 if distilled else 5.0)
+    negative_embeds = None
     if args.text_embeds is not None:
         text_embeds = load_text_embeds(args.text_embeds)
+        if guidance > 1.0:
+            if args.negative_text_embeds is None:
+                parser.error("guidance > 1 with --text-embeds needs --negative-text-embeds")
+            negative_embeds = load_text_embeds(args.negative_text_embeds)
     else:
         prompt = args.prompt if args.prompt is not None else args.prompt_file.read_text()
         start = time.perf_counter()
         encoders = load_encoders(args)
         text_embeds = encoders.encode_prompt(prompt)
+        if guidance > 1.0:
+            negative_embeds = encoders.encode_prompt(args.negative_prompt or DEFAULT_NEGATIVE_PROMPT)
         del encoders  # freed before the DiT is loaded
         mx.clear_cache()
         seconds["text"] = round(time.perf_counter() - start, 2)
@@ -96,6 +114,9 @@ def main(argv: list[str] | None = None) -> int:
         text_embeds,
         **size,
         num_inference_steps=args.steps,
+        guidance_scale=guidance,
+        negative_text_embeds=negative_embeds,
+        cfg_batched=args.cfg_batched,
         seed=args.seed,
         sample_audio=not args.no_audio,
         release_transformer=True,
@@ -111,7 +132,8 @@ def main(argv: list[str] | None = None) -> int:
         "out": str(args.out),
         "size": {k: v for k, v in size.items() if k != "vae_tiling"},
         "vae_tiling": size.get("vae_tiling") is not None,
-        "steps": args.steps,
+        "steps": args.steps or (10 if distilled else 50),
+        "guidance_scale": guidance,
         "seed": args.seed,
         "image": str(args.image) if args.image else None,
         "dtype": args.dtype,
