@@ -1,0 +1,108 @@
+{
+  "spec": "09-pipeline-t2v-mvp",
+  "status": "PARTIAL",
+  "date": "2026-10-31",
+  "environment": {"chip": "Apple M3 Max", "macos": "27.0.1", "mlx": "0.32.4", "torch": "2.15.0", "diffusers": "0.42.1"},
+  "deliverables": [
+    "src/kandinsky6_mlx/pipelines/t2v.py",
+    "src/kandinsky6_mlx/pipelines/export.py",
+    "scripts/generate.py",
+    "reference/record_pipeline_run.py",
+    "tests/e2e/conftest.py",
+    "tests/e2e/test_pipeline_tiny.py",
+    "tests/e2e/test_pipeline_real.py",
+    "reports/09-pipeline-t2v-mvp.json"
+  ],
+  "tests": {"command": "uv run --group reference pytest -q", "passed": 492, "failed": 0},
+  "validation": [
+    {
+      "name": "tiny e2e: tiny DiT + video VAE + audio VAE + vocoder + PiFlow, components saved and converted, MLX float32 vs the diffusers pipeline from the same NumPy noise and embeddings (32x32, 9 frames, 4 steps)",
+      "metrics": {
+        "per_step_rel_max": {"video": [6.1e-08, 1.2e-07, 1.2e-07, 1.2e-07], "audio": [5.9e-08, 6.0e-08, 1.2e-07, 1.1e-07]},
+        "frames_rel_max": 3.6e-06,
+        "audio_rel_max": 1.0e-06
+      },
+      "criterion": "frames rel_max <= 1e-3 (per-step latents and audio also checked at <= 1e-4 / 1e-3)",
+      "pass": true
+    },
+    {
+      "name": "latent shapes and frame rounding vs the reference formulas",
+      "metrics": {"smoke_video": [1, 16, 7, 32, 54], "smoke_audio_latents_released_hop": 45, "num_frames_rounding": {"23": 21, "24": 25, "26": 25}},
+      "criterion": "equal",
+      "pass": true
+    },
+    {
+      "name": "MP4 export: H.264 video + AAC audio via PyAV, read back",
+      "metrics": {"real_smoke": {"video_seconds": 1.042, "audio_seconds": 1.045}},
+      "criterion": "both streams present; all frames decode",
+      "pass": true
+    },
+    {
+      "name": "stage B harness on the tiny pipeline: record_pipeline_run.py (diffusers snapshot, padded text trimmed) then the MLX side",
+      "metrics": {},
+      "criterion": "per-step cosine > 0.99999, rel_l2 < 1e-4; frames PSNR and audio SNR > 60 dB",
+      "pass": true
+    },
+    {
+      "name": "real Lite-distill weights, full MLX pipeline at Smoke (256x432, 25 frames, 10 steps, bf16 DiT) with stand-in random text embeddings (200 tokens); timing and memory only, no parity claim",
+      "metrics": {
+        "seconds": {"load": 1.2, "denoise": 13.3, "video_decode_cold": "13.9-23.5", "video_decode_warm": 7.6, "audio_decode": 0.35},
+        "peak_memory_gib_with_dit_released": {"denoise": 8.1, "video_decode": 20.3, "audio_decode": 4.6},
+        "peak_memory_gib_with_dit_kept": {"video_decode": 27.2, "audio_decode": 11.5}
+      },
+      "criterion": "MP4 with audio produced",
+      "pass": true
+    }
+  ],
+  "skipped": [
+    {
+      "what": "stage B parity on real weights (per-step latent cosine/rel_l2 vs torch bf16 drift, frames PSNR >= 30 dB, audio SNR) and the human side-by-side check",
+      "reason": "needs the real Smoke text embeddings and the two diffusers recordings (float32 reference and bf16 drift basis) from reference/record_pipeline_run.py. The embeddings come from the spec 05 Kaggle kernel, which is still encoding the prompt with Qwen on CPU; the pipeline recordings need another Kaggle run (outward action, waits for approval)."
+    }
+  ],
+  "deviations": [
+    {
+      "what": "initial noise from np.random.default_rng(seed) (video, then audio latents) instead of diffusers' torch.Generator",
+      "why": "AGENTS.md determinism rule: parity runs pass the same arrays to both implementations. A given seed therefore does not reproduce a diffusers or ComfyUI run with the same seed."
+    },
+    {
+      "what": "cached text embeddings with a padding mask are trimmed to the valid tokens before the DiT",
+      "why": "diffusers' __call__ takes prompt_embeds without a mask, so a run from cached embeddings must drop the padding (the study notebook does the same); report 05 shows trimming leaves the model output unchanged (rel_max 1.5e-6 in float32)."
+    },
+    {
+      "what": "guidance_scale > 1 raises NotImplementedError; batch size 1 only; output is float frames in [0, 1] (output_type='np') plus the waveform, no PIL",
+      "why": "distilled checkpoints use guidance 1 (CFG is spec 13); the MVP needs one video"
+    },
+    {
+      "what": "release_transformer frees the DiT after denoising (scripts/generate.py sets it)",
+      "why": "the spec's run order (free the DiT before decoding); keeping it adds about 7 GB to both decode peaks"
+    }
+  ],
+  "follow_ups": [
+    "Stage B: once smoke_text exists, run reference/record_pipeline_run.py --dtype float32 and --dtype bfloat16 (Kaggle), copy pipeline_smoke_fp32/bf16 to fixtures/real/, run `uv run python -m tests.e2e.test_pipeline_real`, record the visual check, then rerun specs 07/08 stage B with the real latents.",
+    "Optional seed compatibility with diffusers/ComfyUI: generate the initial noise with torch's CPU generator (or reproduce its randn) so a seed means the same video.",
+    "Publish the HF repository together with this spec (owner's decision)."
+  ],
+  "architecture_notes": [
+    {
+      "topic": "Smoke budget on M3 Max",
+      "note": "Denoising 10 steps takes 13.3 s (1.33 s/step; the study repository's Kaggle 2xT4 run took about 13 s), the video decode 7.6 s warm and 14-24 s cold, the audio decode 0.35 s. The VAE is half of a Smoke generation when cold.",
+      "optimization": "VAE first: sub-pixel upsample convs and fused GroupNorm (report 08), and avoiding the cold start below."
+    },
+    {
+      "topic": "cold VAE decode",
+      "note": "The first decode in a process takes 16.4 s vs 7.6 s for the next ones: reading 1 GB of weights from disk, compiling Metal kernels for new shapes and getting about 20 GB of fresh memory from the OS. Clearing MLX's cache after the DiT returns its 8 GB to the OS, so the VAE cannot reuse those buffers.",
+      "optimization": "Keep the cache when the next stage is larger, prefetch VAE weights during the last denoising step, or decode tiles small enough that buffers are reused (spec 10/14)."
+    },
+    {
+      "topic": "stage memory",
+      "note": "Peaks with the DiT released: denoise 8.1 GiB, video decode 20.3 GiB, audio decode 4.6 GiB; with the DiT kept, 27.2 and 11.5 GiB. The VAE decode is now the pipeline's peak.",
+      "optimization": "For the 16 GB profile (spec 14) the VAE must drop below about 10 GB: spatial tiles and a smaller conv chunk budget."
+    },
+    {
+      "topic": "scheduler and glue",
+      "note": "Two PiFlow schedulers (video, audio) and the latent concatenation per step are negligible next to the 1.3 s DiT call.",
+      "optimization": "None."
+    }
+  ]
+}
