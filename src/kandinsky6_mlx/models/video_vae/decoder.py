@@ -16,7 +16,15 @@ from mlx import nn
 
 
 class HunyuanVideoCausalConv3d(nn.Module):
-    """Replicate padding (`kernel - 1` frames in front only, `kernel // 2` on each spatial side), then a 3D conv."""
+    """Replicate padding (`kernel - 1` frames in front only, `kernel // 2` on each spatial side), then a 3D conv.
+
+    `mx.conv3d` allocates a temporary buffer of about `output positions * kernel**3 * in_channels` elements (16 GiB for
+    one 128-channel conv over a 17-frame 256x432 tile), so large inputs are convolved in chunks of output frames, each
+    reading its `kernel - 1` frames of overlap. Every output frame is the same convolution, so the result is unchanged.
+    """
+
+    # Budget for the conv's temporary buffer per chunk.
+    chunk_bytes = 1 << 30
 
     def __init__(self, in_channels: int, out_channels: int, kernel_size: int = 3, stride: int = 1, bias: bool = True):
         super().__init__()
@@ -25,10 +33,21 @@ class HunyuanVideoCausalConv3d(nn.Module):
 
     def __call__(self, x: mx.array) -> mx.array:
         k = self.kernel_size
-        if k > 1:
-            pad = [(0, 0), (k - 1, 0), (k // 2, k // 2), (k // 2, k // 2), (0, 0)]
-            x = mx.pad(x, pad, mode="edge")
-        return self.conv(x)
+        if k == 1:
+            return self.conv(x)
+        pad = [(0, 0), (k - 1, 0), (k // 2, k // 2), (k // 2, k // 2), (0, 0)]
+        x = mx.pad(x, pad, mode="edge")
+        out_frames = x.shape[1] - (k - 1)
+        per_frame = (x.shape[2] - k + 1) * (x.shape[3] - k + 1) * k**3 * x.shape[4] * x.itemsize
+        chunk = max(1, self.chunk_bytes // per_frame)
+        if chunk >= out_frames:
+            return self.conv(x)
+        parts = []
+        for start in range(0, out_frames, chunk):
+            part = self.conv(x[:, start : start + chunk + k - 1])
+            mx.eval(part)
+            parts.append(part)
+        return mx.concatenate(parts, axis=1)
 
 
 class HunyuanVideoUpsampleCausal3D(nn.Module):

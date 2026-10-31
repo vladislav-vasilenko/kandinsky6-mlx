@@ -144,3 +144,15 @@ def test_framewise_off_matches_reference_without_tiling():
     with torch.no_grad():
         ref = reference.decode(torch.from_numpy(z), return_dict=False)[0].numpy()
     assert compare(model.decode(mx.array(z)), ref)["rel_max"] <= 1e-4
+
+
+def test_chunked_causal_conv_equals_one_pass(monkeypatch):
+    """Convolving in chunks of output frames (to bound mx.conv3d's temporary buffer) gives the same result."""
+    rng = np.random.default_rng(0)
+    conv = HunyuanVideoCausalConv3d(8, 8, 3)
+    x = mx.array(rng.standard_normal((1, 9, 5, 6, 8)).astype(np.float32))
+    whole = conv(x)
+    monkeypatch.setattr(HunyuanVideoCausalConv3d, "chunk_bytes", 1)  # one output frame per chunk
+    chunked = conv(x)
+    assert chunked.shape == whole.shape == (1, 9, 5, 6, 8)
+    assert compare(chunked, whole)["rel_max"] <= 1e-6
