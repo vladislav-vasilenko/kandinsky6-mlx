@@ -112,8 +112,11 @@ def test_real_video_decode_float32():
     assert metrics["frames"]["psnr_db"] >= 40, metrics["frames"]
 
 
-def test_stage_b_harness_on_tiny_weights(tmp_path):
-    """record_video_real.py on a tiny VAE saved and converted like the real one, then the MLX side (framewise path)."""
+@pytest.mark.parametrize("source", ["converted", "checkpoint"])
+def test_stage_b_harness_on_tiny_weights(tmp_path, source):
+    """record_video_real.py on a tiny VAE saved and converted like the real one, then the MLX side (framewise path).
+
+    `checkpoint` is the Kaggle path: the reference reads the diffusers files directly."""
     pytest.importorskip("torch")
     from diffusers import AutoencoderKLHunyuanVideo as Reference
 
@@ -124,7 +127,8 @@ def test_stage_b_harness_on_tiny_weights(tmp_path):
     build(Reference, tiny_configs.VIDEO_VAE).save_pretrained(tmp_path / "ckpt" / "vae")
     convert_component(tmp_path / "ckpt" / "vae", "vae", tmp_path / "converted" / "vae")
     out = tmp_path / "video_smoke"
-    args = ["--weights", str(tmp_path / "converted"), "--shape", "1", "7", "2", "3", "16", "--out", str(out)]
+    weights = ["--weights", str(tmp_path / "converted")] if source == "converted" else ["--checkpoint", str(tmp_path / "ckpt")]
+    args = [*weights, "--shape", "1", "7", "2", "3", "16", "--out", str(out)]
     assert record_video_real.main(args) == 0
     metrics = stage_b_metrics(tmp_path / "converted", out)
     assert metrics["shapes"]["frames"] == metrics["shapes"]["reference"] == [1, 3, 25, 16, 24]
