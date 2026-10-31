@@ -127,7 +127,11 @@ def test_stage_b_harness_on_tiny_weights(tmp_path, source):
     build(Reference, tiny_configs.VIDEO_VAE).save_pretrained(tmp_path / "ckpt" / "vae")
     convert_component(tmp_path / "ckpt" / "vae", "vae", tmp_path / "converted" / "vae")
     out = tmp_path / "video_smoke"
-    weights = ["--weights", str(tmp_path / "converted")] if source == "converted" else ["--checkpoint", str(tmp_path / "ckpt")]
+    weights = (
+        ["--weights", str(tmp_path / "converted")]
+        if source == "converted"
+        else ["--checkpoint", str(tmp_path / "ckpt")]
+    )
     args = [*weights, "--shape", "1", "7", "2", "3", "16", "--out", str(out)]
     assert record_video_real.main(args) == 0
     metrics = stage_b_metrics(tmp_path / "converted", out)
