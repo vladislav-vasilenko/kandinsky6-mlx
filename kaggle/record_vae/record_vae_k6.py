@@ -15,7 +15,7 @@ import time
 from pathlib import Path
 
 REPO = "https://github.com/vladislav-vasilenko/kandinsky6-mlx"
-COMMIT = "c363d7c2094f9fb742cf09e3c4420bb1849bbe04"
+COMMIT = "7fa2f5d8dac4d0413e5ef293253f8ebc8c3348d9"
 PINS = ["diffusers==0.42.1", "transformers==5.22.1", "accelerate==1.13.0"]
 SRC = Path("/tmp/kandinsky6-mlx")
 OUT = Path("/kaggle/working")
