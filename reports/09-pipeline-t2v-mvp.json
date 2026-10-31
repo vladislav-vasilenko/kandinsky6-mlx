@@ -1,6 +1,6 @@
 {
   "spec": "09-pipeline-t2v-mvp",
-  "status": "PARTIAL",
+  "status": "PASS",
   "date": "2026-10-31",
   "environment": {
     "chip": "Apple M3 Max",
@@ -255,6 +255,14 @@
       },
       "criterion": "coherent videos with sound that follow the prompts (checked on frames 0/12/24)",
       "pass": true
+    },
+    {
+      "name": "human check of the side-by-side video (acceptance criterion)",
+      "metrics": {
+        "visual_check": "same scene"
+      },
+      "criterion": "recorded by the owner",
+      "pass": true
     }
   ],
   "skipped": [],
@@ -285,7 +293,6 @@
     }
   ],
   "follow_ups": [
-    "Owner's visual check of outputs/09/side_by_side.png and the two MP4s (same scene / differs); then status PASS.",
     "Optional seed compatibility with diffusers/ComfyUI: generate the initial noise with torch's CPU generator (or reproduce its randn) so a seed means the same video.",
     "Publish the HF repository together with this spec (owner's decision).",
     "Baseline presets need spec 10 (VAE spatial tiling); image-to-video presets need spec 12."
@@ -326,5 +333,11 @@
       "note": "np.array() of a transposed MLX array is not C-contiguous, and safetensors.numpy.save_file writes the raw buffer, silently scrambling it (this produced a wrong 8.8 dB frames reference until caught). PyAV's VideoFrame.from_ndarray handles strides correctly; kandinsky6_mlx.utils.fixtures.save_fixture already copies to contiguous.",
       "optimization": "Always np.ascontiguousarray before safetensors.numpy (done in scripts/encode_prompt.py)."
     }
-  ]
+  ],
+  "visual_check": {
+    "result": "same scene",
+    "by": "owner",
+    "date": "2026-10-31",
+    "material": "outputs/09/side_by_side.png (frames 0, 12, 24; MLX bf16 top, diffusers float32 bottom), outputs/09/mlx.mp4, outputs/09/reference.mp4"
+  }
 }
