@@ -1,7 +1,12 @@
-"""Generate a video with sound from cached text embeddings with the MLX Kandinsky 6 pipeline.
+"""Generate a video with sound from a prompt (or cached text embeddings) with the MLX Kandinsky 6 pipeline.
+
+    uv run --extra text python scripts/generate.py --weights weights/lite-distill \\
+        --prompt "A red fox runs through fresh snow ... <AUDCAP>Crunching snow.<ENDAUDCAP>" --preset smoke --out fox.mp4
 
     uv run python scripts/generate.py --weights weights/lite-distill \\
         --text-embeds fixtures/real/smoke_text.safetensors --preset smoke --seed 42 --out outputs/09/smoke.mp4
+
+With `--prompt` the text encoders (`--text-root`, extra `text`) run first and are freed before the DiT is loaded.
 
 The seed drives NumPy noise, so it does not reproduce a diffusers or ComfyUI run with the same seed; pass
 `--latents` (a fixture with `inputs.latents` and `inputs.audio_latents` in the diffusers layouts) for that.
@@ -18,13 +23,22 @@ from kandinsky6_mlx.models.video_vae.decoder import TilingConfig
 from kandinsky6_mlx.pipelines.export import write_mp4
 from kandinsky6_mlx.pipelines.t2v import PRESETS, Kandinsky6Pipeline, load_text_embeds
 
+try:  # scripts/ is on sys.path when run as a script
+    from encode_prompt import add_text_arguments, load_encoders
+except ImportError:
+    from scripts.encode_prompt import add_text_arguments, load_encoders
+
 DTYPES = {"bfloat16": mx.bfloat16, "float32": mx.float32}
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--weights", type=Path, required=True, help="converted checkpoint directory")
-    parser.add_argument("--text-embeds", type=Path, required=True)
+    text = parser.add_mutually_exclusive_group(required=True)
+    text.add_argument("--prompt")
+    text.add_argument("--prompt-file", type=Path)
+    text.add_argument("--text-embeds", type=Path, help="cached embeddings (scripts/encode_prompt.py)")
+    add_text_arguments(parser)
     parser.add_argument("--preset", choices=sorted(PRESETS), default="smoke")
     parser.add_argument("--height", type=int)
     parser.add_argument("--width", type=int)
@@ -46,6 +60,17 @@ def main(argv: list[str] | None = None) -> int:
     }
     if args.vae_tiling != "preset":
         size["vae_tiling"] = TilingConfig() if args.vae_tiling == "on" else None
+    seconds = {}
+    if args.text_embeds is not None:
+        text_embeds = load_text_embeds(args.text_embeds)
+    else:
+        prompt = args.prompt if args.prompt is not None else args.prompt_file.read_text()
+        start = time.perf_counter()
+        encoders = load_encoders(args)
+        text_embeds = encoders.encode_prompt(prompt)
+        del encoders  # freed before the DiT is loaded
+        mx.clear_cache()
+        seconds["text"] = round(time.perf_counter() - start, 2)
     start = time.perf_counter()
     pipeline = Kandinsky6Pipeline.from_converted(args.weights, DTYPES[args.dtype], audio=not args.no_audio)
     load_seconds = time.perf_counter() - start
@@ -67,7 +92,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"saved latents -> {args.save_latents}", flush=True)
 
     output = pipeline(
-        load_text_embeds(args.text_embeds),
+        text_embeds,
         **size,
         num_inference_steps=args.steps,
         seed=args.seed,
@@ -87,7 +112,7 @@ def main(argv: list[str] | None = None) -> int:
         "steps": args.steps,
         "seed": args.seed,
         "dtype": args.dtype,
-        "seconds": {"load": round(load_seconds, 2)} | {k: round(v, 2) for k, v in output.timings.items()},
+        "seconds": seconds | {"load": round(load_seconds, 2)} | {k: round(v, 2) for k, v in output.timings.items()},
         "peak_memory_gib": {k: round(v, 2) for k, v in output.peak_memory_gib.items()},
     }
     print(json.dumps(report, indent=2))

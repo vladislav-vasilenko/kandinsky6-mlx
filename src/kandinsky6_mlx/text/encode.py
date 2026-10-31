@@ -69,3 +69,58 @@ def encode_qwen(encoder, tokenizer, prompt: str, max_sequence_length: int = MAX_
     ids, valid = qwen_token_ids(tokenizer, prompt, max_sequence_length)
     hidden = encoder(mx.array(ids[:, :valid]))
     return hidden[:, QWEN_CROP_START:].astype(mx.float32)
+
+
+def clip_pooled(clip, tokenizer, prompt: str) -> mx.array:
+    """`(1, 768)` CLIP-L `pooler_output` of the prompt, float32."""
+    _, pooled = clip(mx.array(clip_token_ids(tokenizer, prompt)["input_ids"]))
+    return pooled.astype(mx.float32)
+
+
+class TextEncoders:
+    """Qwen2.5-VL (via mlx-vlm) and CLIP-L with the checkpoint's tokenizers: `encode_prompt(prompt)` returns the text
+    cache of the pipeline. Needs the `text` extra (mlx-vlm, transformers tokenizers)."""
+
+    def __init__(self, qwen, qwen_tokenizer, clip, clip_tokenizer):
+        self.qwen, self.qwen_tokenizer = qwen, qwen_tokenizer
+        self.clip, self.clip_tokenizer = clip, clip_tokenizer
+
+    @classmethod
+    def from_files(
+        cls,
+        text_root,
+        qwen_weights=None,
+        dtype: mx.Dtype = mx.bfloat16,
+        qwen_bits: int | None = None,
+    ) -> "TextEncoders":
+        """`text_root` holds the checkpoint's `text_encoder/` (config and, unless `qwen_weights` is given, its shards),
+        `tokenizer/`, `text_encoder_2/` and `tokenizer_2/`. `qwen_weights`: safetensors file(s) with the same names,
+        e.g. a single-file copy. `qwen_bits` quantizes Qwen's linear layers (8, 6 or 4 bits, group size 64)."""
+        from pathlib import Path
+
+        from transformers import AutoTokenizer, CLIPTokenizer
+
+        from kandinsky6_mlx.text.clip import CLIPTextModel
+        from kandinsky6_mlx.text.qwen import QwenTextEncoder
+
+        root = Path(text_root)
+        if qwen_weights is None:
+            qwen_weights = sorted((root / "text_encoder").glob("*.safetensors"))
+            if not qwen_weights:
+                raise FileNotFoundError(f"no Qwen safetensors in {root / 'text_encoder'}; pass qwen_weights")
+        qwen = QwenTextEncoder.from_files(root / "text_encoder" / "config.json", qwen_weights, dtype, bits=qwen_bits)
+        return cls(
+            qwen,
+            AutoTokenizer.from_pretrained(root / "tokenizer"),
+            CLIPTextModel.from_pretrained(root / "text_encoder_2"),
+            CLIPTokenizer.from_pretrained(root / "tokenizer_2"),
+        )
+
+    def encode_prompt(self, prompt: str) -> dict[str, mx.array]:
+        """`{"encoder_hidden_states": (1, n, 3584), "pooled_projections": (1, 768)}`, float32, real tokens only."""
+        text = {
+            "encoder_hidden_states": encode_qwen(self.qwen, self.qwen_tokenizer, prompt),
+            "pooled_projections": clip_pooled(self.clip, self.clip_tokenizer, prompt),
+        }
+        mx.eval(text)
+        return text

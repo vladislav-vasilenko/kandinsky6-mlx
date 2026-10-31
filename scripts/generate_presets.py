@@ -5,10 +5,10 @@ style, room description, lighting, the profile's camera setup, the initial state
 and the audio cues inside `<AUDCAP>...<ENDAUDCAP>`. Negative prompts are not used: the distilled model runs without
 classifier-free guidance. Only text-to-video presets run here; image-to-video needs spec 12.
 
-All prompts are encoded first (Qwen2.5-VL in MLX, CLIP in torch), then the encoder is freed and the pipeline generates
+All prompts are encoded first (Qwen2.5-VL and CLIP-L in MLX), then the encoder is freed and the pipeline generates
 each video with NumPy noise from `--seed`.
 
-    uv run --extra text --group reference python scripts/generate_presets.py --presets presets.json \\
+    uv run --extra text python scripts/generate_presets.py --presets presets.json \\
         --qwen-weights ~/ComfyUI-Shared/models/text_encoders/qwen_2.5_vl_7b.safetensors \\
         --text-root weights/lite-distill-text --weights weights/lite-distill --profile smoke --out outputs/presets
 """
@@ -43,23 +43,14 @@ def compile_prompt(preset: dict, profile: str) -> str:
     return " ".join(parts) + f" <AUDCAP>{audio}<ENDAUDCAP>"
 
 
-def encode_all(prompts: dict[str, str], qwen_weights: list[Path], text_root: Path) -> dict[str, dict]:
-    from encode_prompt import clip_pooled  # scripts/ is on sys.path when run as a script
-    from transformers import AutoTokenizer
+def encode_all(prompts: dict[str, str], qwen_weights: list[Path] | None, text_root: Path) -> dict[str, dict]:
+    from kandinsky6_mlx.text.encode import TextEncoders
 
-    from kandinsky6_mlx.text.encode import encode_qwen
-    from kandinsky6_mlx.text.qwen import QwenTextEncoder
-
-    encoder = QwenTextEncoder.from_files(text_root / "text_encoder" / "config.json", qwen_weights)
-    tokenizer = AutoTokenizer.from_pretrained(text_root / "tokenizer")
-    embeds = {name: encode_qwen(encoder, tokenizer, prompt) for name, prompt in prompts.items()}
-    mx.eval(list(embeds.values()))
-    del encoder
+    encoders = TextEncoders.from_files(text_root, qwen_weights)
+    texts = {name: encoders.encode_prompt(prompt) for name, prompt in prompts.items()}
+    del encoders
     mx.clear_cache()
-    return {
-        name: {"encoder_hidden_states": embeds[name], "pooled_projections": mx.array(clip_pooled(text_root, prompt))}
-        for name, prompt in prompts.items()
-    }
+    return texts
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -67,8 +58,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--presets", type=Path, required=True, help="JSON of the notebook's PRESETS dict")
     parser.add_argument("--names", nargs="*", help="presets to run (default: every t2v preset)")
     parser.add_argument("--profile", choices=sorted(SECONDS), default="smoke")
-    parser.add_argument("--qwen-weights", type=Path, nargs="+", required=True)
-    parser.add_argument("--text-root", type=Path, required=True)
+    parser.add_argument("--qwen-weights", type=Path, nargs="+", help="Qwen safetensors (default: text_encoder/*)")
+    parser.add_argument("--text-root", type=Path, default=Path("weights/lite-distill-text"))
     parser.add_argument("--weights", type=Path, required=True, help="converted checkpoint directory")
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--steps", type=int, default=10)

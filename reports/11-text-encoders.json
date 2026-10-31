@@ -1,0 +1,283 @@
+{
+  "spec": "11-text-encoders",
+  "status": "PASS",
+  "date": "2026-10-31",
+  "environment": {
+    "chip": "Apple M3 Max (40-core GPU, 48 GB)",
+    "macos": "27.0.1",
+    "mlx": "0.32.4",
+    "mlx_vlm": "0.7.11",
+    "torch": "2.15.0",
+    "torchvision": "0.29.2",
+    "diffusers": "0.42.1",
+    "transformers": "5.22.1"
+  },
+  "deliverables": [
+    "src/kandinsky6_mlx/text/qwen.py (mlx-vlm Qwen2Model, optional nn.quantize)",
+    "src/kandinsky6_mlx/text/clip.py (CLIP-L text tower port)",
+    "src/kandinsky6_mlx/text/encode.py (TextEncoders.encode_prompt -> the pipeline's text cache)",
+    "scripts/generate.py (--prompt / --prompt-file, --qwen-bits)",
+    "scripts/encode_prompt.py and scripts/generate_presets.py (MLX CLIP; no torch needed)",
+    "reference/record_text_encoders.py (float32 Qwen layer by layer, torch bf16 drift on MPS, float32 CLIP)",
+    "tests/parity/test_text_encoders.py (replaces tests/parity/test_text_qwen.py)",
+    "pyproject.toml: torchvision in the reference group (the Qwen2.5-VL processor needs it)",
+    "reports/11-text-encoders.json"
+  ],
+  "tests": {
+    "command": "uv run --extra text --group reference pytest -q",
+    "passed": 531,
+    "failed": 0
+  },
+  "validation": [
+    {
+      "name": "stage A: token ids and masks vs the pipeline's tokenizers (Qwen2_5_VLProcessor with the template, CLIPTokenizer) for Latin, Cyrillic, a long truncated, the empty (negative) and a mixed-script prompt",
+      "metrics": {
+        "prompts": 5
+      },
+      "criterion": "identical",
+      "pass": true
+    },
+    {
+      "name": "stage A: tiny random models vs transformers 5.22.1",
+      "metrics": {
+        "mlx_qwen_vs_hidden_states[-1]": "rel_max <= 1e-5",
+        "streaming_reference_vs_pipeline_call_with_padding_and_mask": "rel_max <= 1e-5",
+        "clip_pooled_and_states_up_to_eos_with_padding_mask": "rel_max <= 1e-5"
+      },
+      "criterion": "rel_max <= 1e-4 (AGENTS.md, tiny model)",
+      "pass": true
+    },
+    {
+      "name": "stage B: MLX float32 Qwen vs the float32 reference (transformers modules layer by layer, SDPA), five prompts (367, 424, 160, 163, 130 real tokens)",
+      "metrics": {
+        "smoke": {
+          "tokens": 238,
+          "rel_l2": 5.406573831466655e-06,
+          "min_token_cosine": 1.0
+        },
+        "baseline": {
+          "tokens": 295,
+          "rel_l2": 6.59821238522055e-06,
+          "min_token_cosine": 1.0
+        },
+        "fox (en)": {
+          "tokens": 31,
+          "rel_l2": 6.9115766728026434e-06,
+          "min_token_cosine": 1.0
+        },
+        "fox (ru)": {
+          "tokens": 34,
+          "rel_l2": 6.990984369877124e-06,
+          "min_token_cosine": 1.0
+        },
+        "empty": {
+          "tokens": 1,
+          "rel_l2": 2.3350259096634584e-05,
+          "min_token_cosine": 1.0
+        }
+      },
+      "criterion": "rel_l2 <= 2.3e-4 and per-token cosine >= 0.9999 (derived: 10x the worst rel_l2 2.3e-5)",
+      "pass": true
+    },
+    {
+      "name": "stage B: MLX bf16 Qwen vs the float32 reference, with torch bf16 (SDPA, Apple MPS) as the drift basis",
+      "metrics": {
+        "mlx_bf16": {
+          "smoke": {
+            "tokens": 238,
+            "rel_l2": 0.015482564986969509,
+            "min_token_cosine": 0.998524
+          },
+          "baseline": {
+            "tokens": 295,
+            "rel_l2": 0.01588703879115092,
+            "min_token_cosine": 0.998972
+          },
+          "fox (en)": {
+            "tokens": 31,
+            "rel_l2": 0.015345088938098318,
+            "min_token_cosine": 0.999727
+          },
+          "fox (ru)": {
+            "tokens": 34,
+            "rel_l2": 0.016811697345526823,
+            "min_token_cosine": 0.999454
+          },
+          "empty": {
+            "tokens": 1,
+            "rel_l2": 0.026970765255339993,
+            "min_token_cosine": 0.999636
+          }
+        },
+        "torch_bf16": {
+          "smoke": {
+            "rel_l2": 0.016264054291809944,
+            "min_token_cosine": 0.9990526479503903
+          },
+          "baseline": {
+            "rel_l2": 0.014225797253599405,
+            "min_token_cosine": 0.9989169725563033
+          },
+          "fox (en)": {
+            "rel_l2": 0.02773758695822341,
+            "min_token_cosine": 0.9990379392821782
+          },
+          "fox (ru)": {
+            "rel_l2": 0.02242016023815853,
+            "min_token_cosine": 0.9984369580792489
+          },
+          "empty": {
+            "rel_l2": 0.023138563963596624,
+            "min_token_cosine": 0.9997324079308646
+          }
+        },
+        "rel_l2_ratio_mlx_over_torch": [
+          0.95,
+          1.12,
+          0.55,
+          0.75,
+          1.17
+        ],
+        "encode_5_prompts_seconds": 1.69,
+        "peak_memory_gib": 13.42
+      },
+      "criterion": "AGENTS.md: rel_l2 <= 2 x torch bf16 drift per prompt; per-token cosine >= 0.998 (spec: 0.999, see deviations)",
+      "pass": true
+    },
+    {
+      "name": "stage B: CLIP-L pooled vs transformers float32",
+      "metrics": {
+        "max_rel_l2": 3.9e-06
+      },
+      "criterion": "rel_l2 <= 1e-3",
+      "pass": true
+    },
+    {
+      "name": "quantized Qwen (nn.quantize, group 64) vs the float32 reference, and Smoke videos (seed 42, bf16 DiT) from their embeddings vs the bf16-embedding video",
+      "metrics": {
+        "embeddings": {
+          "float32": {
+            "max_rel_l2": 2.3350259096634584e-05,
+            "min_token_cosine": 1.0,
+            "peak_memory_gib": 28.4
+          },
+          "bfloat16": {
+            "max_rel_l2": 0.026970765255339993,
+            "min_token_cosine": 0.9985,
+            "peak_memory_gib": 13.42
+          },
+          "8bit": {
+            "max_rel_l2": 0.029307036852694802,
+            "min_token_cosine": 0.9959,
+            "peak_memory_gib": 9.06
+          },
+          "6bit": {
+            "max_rel_l2": 0.08600391654468482,
+            "min_token_cosine": 0.8405,
+            "peak_memory_gib": 7.73
+          },
+          "4bit": {
+            "max_rel_l2": 0.22413033872417082,
+            "min_token_cosine": 0.3446,
+            "peak_memory_gib": 5.83
+          }
+        },
+        "videos_frames_psnr_db_vs_bf16_embeddings": {
+          "smoke": {
+            "float32": 25.6,
+            "8bit": 26.6,
+            "6bit": 21.7,
+            "4bit": 20.6
+          },
+          "fox": {
+            "float32": 23.4,
+            "8bit": 23.3,
+            "6bit": 22.6,
+            "4bit": 23.6
+          }
+        },
+        "outputs": "outputs/11/{smoke,fox}_{float32,bfloat16,8bit,6bit,4bit}.mp4, outputs/11/quant_sheet.png"
+      },
+      "criterion": "supported if embedding rel_l2 <= 2 x the bf16 drift and video PSNR vs bf16 >= the float32-vs-bf16 PSNR minus 1 dB on every prompt (chosen below)",
+      "pass": true
+    },
+    {
+      "name": "the ComfyUI single-file Qwen (used for all runs) vs the checkpoint's text_encoder shards (revision 4c487e8b), without downloading them: safetensors headers by HTTP range requests, then bytes of every tensor",
+      "metrics": {
+        "tensors": 729,
+        "names_shapes_dtypes_equal": true,
+        "compared_whole": 368,
+        "compared_first_and_last_4_KiB": 361,
+        "byte_mismatches": 0,
+        "downloaded_mb": 4.5
+      },
+      "criterion": "identical where compared; a full byte comparison would need the 15.5 GB shards",
+      "pass": true
+    },
+    {
+      "name": "validation run: scripts/generate.py --prompt (Smoke, seed 42, a fox prompt), text encoders freed before the DiT loads",
+      "metrics": {
+        "seconds": {
+          "text_load_and_encode": 5.72,
+          "dit_load": 1.23,
+          "denoise": 13.12,
+          "video_decode": 7.52,
+          "audio_decode": 0.46
+        },
+        "peak_memory_gib": {
+          "denoise": 8.1,
+          "video_decode": 20.26,
+          "audio_decode": 4.26
+        },
+        "output": "outputs/11/smoke_prompt.mp4"
+      },
+      "criterion": "prompt-to-video works",
+      "pass": true
+    }
+  ],
+  "skipped": [],
+  "deviations": [
+    {
+      "what": "bf16 Qwen: per-token cosine >= 0.998 and the AGENTS.md drift criterion instead of the spec's per-token cosine >= 0.999",
+      "why": "torch bf16 itself (SDPA, as the pipeline loads Qwen) reaches only 0.99844 on its worst token vs float32; MLX bf16 reaches 0.99852 and its rel_l2 is 0.55-1.17x torch's. The float32 MLX path meets tight thresholds (rel_l2 <= 2.3e-5), so the port is exact and the gap is bf16 rounding of the model."
+    },
+    {
+      "what": "the float32 Qwen reference is computed layer by layer, not by one Qwen2_5_VLForConditionalGeneration call",
+      "why": "float32 7B needs about 30 GB; one layer at a time needs about 4 GB. A tiny-model test shows the streamed forward equals the pipeline's full call on padded input with its mask (rel_max <= 1e-5)."
+    },
+    {
+      "what": "the torch bf16 drift is recorded on Apple MPS with SDPA attention",
+      "why": "an earlier attempt with eager attention gave token cosines of 0.27-0.87: eager rounds the large Qwen attention logits to bf16 before the softmax. The pipeline loads Qwen with from_pretrained's default SDPA, so SDPA is the representative basis. torch bf16 on the CPU was not used as a basis (report 05/09: bf16 on this CPU is not representative)."
+    },
+    {
+      "what": "the text cache keeps only the real tokens (no padding, no mask)",
+      "why": "as decided in spec 09: right padding cannot change real-token states under causal attention, and report 05 shows the DiT output is unchanged; CLIP padding cannot reach the pooled position either"
+    },
+    {
+      "what": "Qwen weights in the tests and runs come from the ComfyUI single-file copy, not the checkpoint's text_encoder shards",
+      "why": "no 15.5 GB download; all 729 tensors have the shards' names, shapes and dtypes, the 368 small ones are byte-identical and the 361 large ones match in their first and last 4 KiB (validation). The shard route used by the HF card's quick start was not run."
+    }
+  ],
+  "follow_ups": [
+    "Support mlx-community Qwen2.5-VL-7B-Instruct conversions (language_model.model.* names; ready-made 8-bit files, ~8 GB instead of 15.5 GB) in QwenTextEncoder.from_files; testing needs one ~8 GB download (owner's approval).",
+    "Update the HF model card: prompt-to-video now works (scripts/generate.py --prompt); torch is no longer needed for CLIP; 8-bit Qwen option.",
+    "Measure quantized Qwen on more prompts and seeds before recommending it widely (two prompts, one seed here)."
+  ],
+  "architecture_notes": [
+    {
+      "topic": "text encoding cost",
+      "note": "Qwen bf16 encodes the 238-token Smoke prompt in under a second after a ~5 s load; the peak is 13.4 GB (weights 15.2 GB in bf16 are mostly the 152k x 3584 embedding and 28 layers). CLIP-L is negligible.",
+      "optimization": "8-bit Qwen: 9.1 GB peak with embeddings as close to float32 as bf16's. Encode, free, then load the DiT (done)."
+    },
+    {
+      "topic": "distilled sampling amplifies text differences",
+      "note": "Even float32 instead of bf16 embeddings (rel_l2 1.5e-2 between them) changes a Smoke video to 23-26 dB PSNR; 8-bit embeddings stay at that level (23.3-26.6 dB), 6-bit and 4-bit drop to 20.6-22.6 dB on one prompt, and 4-bit changes face details visibly.",
+      "optimization": "Judge text-encoder changes on embeddings (rel_l2, token cosine) and by eye, not by video PSNR alone."
+    },
+    {
+      "topic": "quantization recommendation",
+      "note": "8-bit Qwen: supported (embedding rel_l2 2.9e-2 = 1.09x bf16's, video PSNR at the float32-vs-bf16 level). 6-bit (rel_l2 8.6e-2, worst token cosine 0.84) and 4-bit (0.22, 0.34): not supported.",
+      "optimization": "The 16 GB profile (spec 14) can use 8-bit Qwen."
+    }
+  ]
+}

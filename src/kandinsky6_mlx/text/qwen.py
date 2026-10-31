@@ -10,6 +10,7 @@ import json
 from pathlib import Path
 
 import mlx.core as mx
+from mlx import nn
 from mlx_vlm.models.qwen2_5_vl.config import TextConfig
 from mlx_vlm.models.qwen2_5_vl.language import Qwen2Model
 
@@ -20,11 +21,17 @@ class QwenTextEncoder:
 
     @classmethod
     def from_files(
-        cls, config: str | Path, weights: str | Path | list[str | Path], dtype: mx.Dtype = mx.bfloat16
+        cls,
+        config: str | Path,
+        weights: str | Path | list[str | Path],
+        dtype: mx.Dtype = mx.bfloat16,
+        bits: int | None = None,
+        group_size: int = 64,
     ) -> "QwenTextEncoder":
         """`config`: a Qwen2.5-VL `config.json`; `weights`: safetensors file(s) with HF names (`model.layers.*`), e.g.
         the sharded `text_encoder/` of the checkpoint or a single-file copy such as ComfyUI's
-        `qwen_2.5_vl_7b.safetensors`. Only `model.*` (embeddings, decoder layers, final norm) is kept."""
+        `qwen_2.5_vl_7b.safetensors`. Only `model.*` (embeddings, decoder layers, final norm) is kept. With `bits`,
+        the linear layers and the embedding are quantized by `nn.quantize` after loading."""
         text_config = TextConfig.from_dict(json.loads(Path(config).read_text()))
         model = Qwen2Model(text_config)
         files = weights if isinstance(weights, list) else [weights]
@@ -34,6 +41,9 @@ class QwenTextEncoder:
                 if name.startswith("model."):
                     tensors.append((name[len("model.") :], value.astype(dtype)))
         model.load_weights(tensors, strict=True)
+        del tensors
+        if bits is not None:
+            nn.quantize(model, group_size=group_size, bits=bits)
         mx.eval(model.parameters())
         return cls(model)
 
