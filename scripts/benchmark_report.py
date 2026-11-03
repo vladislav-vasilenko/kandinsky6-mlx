@@ -138,7 +138,9 @@ def process_values(record: dict) -> dict | None:
         "framework": max((v for r in runs for v in r["framework_peak_gib"].values()), default=None),
         "step": statistics.median(steps) if steps else None,
         "step_spread": (min(steps), max(steps)) if steps else None,
-        "clean": record.get("power") in (None, "AC Power") and record.get("speed_limit") in (None, 100),
+        "clean": record.get("power") in (None, "AC Power")
+        and record.get("speed_limit") in (None, 100)
+        and record["max_swap_delta_mb"] <= 500,
         "swap": record["max_swap_delta_mb"],
     }
 

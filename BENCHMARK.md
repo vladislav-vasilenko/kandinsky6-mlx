@@ -195,8 +195,10 @@ separate samples: each process contributes one cold total and one warm value, th
 - Pairing: all cells of a round use the same noise seed, and seeds differ between rounds. MLX and diffusers are compared
   within a round.
 - No outlier removal. Every run stays in `results.jsonl`. Failed and stopped cells are reported, not retried silently.
-- Each record has the power source, macOS's CPU speed limit (below 100 means throttling) and the load average before the
-  run. Rounds on battery or throttled are flagged in the report and analysed with and without them.
+- Each record has the power source, macOS's CPU speed limit (below 100 means throttling), the swap growth and the load
+  average before the run. Rounds on battery, throttled, or with swap growing by more than 500 MB are flagged in the report
+  and analysed with and without them. (The swap condition was added during the run, after swap was seen in many Smoke cells
+  and before any test was computed.)
 - The first step of a run is excluded from per-step time, since it includes kernel compilation.
 
 **Primary endpoints.** Fixed in advance: the total time without loading and text encoding, MLX vs diffusers on MPS, cold
