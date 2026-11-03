@@ -144,6 +144,21 @@ for line in open(sys.argv[1]):
 PY
 ```
 
+## 7. Build the report
+
+Statistics, tables and charts, by the method below (it works on partial results too):
+
+```bash
+uv run --with matplotlib python scripts/benchmark_report.py $OUT --out docs/benchmarks
+```
+
+| File | Content |
+|---|---|
+| `docs/benchmarks/tables.md` | primary comparisons with intervals and p values; a table for each group of cells |
+| `docs/benchmarks/stats.json` | the same comparisons as data, the failed or stopped cells, and the machine |
+| `docs/benchmarks/summary.csv` | one row per cell: median, min, max of each measure |
+| `docs/benchmarks/*.png`, `*.svg` | effect sizes with intervals, time per stage, cold vs warm, memory per stage, memory vs speed, memory budgets, text encoding |
+
 ## What the numbers mean
 
 - **Cold**: the first run in a fresh process, including reading weights and compiling kernels. Each cell has its own

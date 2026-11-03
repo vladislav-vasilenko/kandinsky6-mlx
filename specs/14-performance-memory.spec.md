@@ -42,7 +42,11 @@ Matrix (each cell runs the same inputs: the same text embeddings, NumPy noise an
 
 Measurements per cell:
 - Cold: the first call in a fresh process, including weight loading and kernel compilation.
-- Warm: median and spread (min, max) over 3 repeated calls in the same process.
+- Warm: later calls in the same process, summarized per process.
+- Statistics (owner's request; full method in BENCHMARK.md): the process is the unit of analysis; 10 independent
+  processes for the 8 primary comparisons (an exact paired test cannot go below 2 / 2^n), 5 for other Smoke cells, 3 for
+  Baseline, single labelled runs where a run takes hours; rounds in random seeded order with paired noise seeds; effect
+  sizes with 95% intervals, exact sign-flip tests with the Holm correction; no outlier removal.
 - Time per stage: text encoding, loading, denoising (and per step), video decode, audio decode, total.
 - Memory, two ways so MLX and torch compare fairly: the framework's own peak (`mx.get_peak_memory`,
   `torch.mps.driver_allocated_memory`) and the process's physical footprint sampled every 0.2 s by the OS
