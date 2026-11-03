@@ -46,8 +46,8 @@ for line in (ROOT / "benchmarks/results/m3max-48gb-examples/results.jsonl").read
 
 def medians(names: list[str], label: str) -> dict:
     runs = [records[f"{n}-smoke-{label}"] for n in names]
-    stage = lambda s: statistics.median(r["runs"][0]["seconds"].get(s, 0.0) for r in runs)  # noqa: E731
-    total = lambda r, load: sum(v for k, v in r["runs"][0]["seconds"].items() if load or k != "load")  # noqa: E731
+    stage = lambda s: statistics.median(r["runs"][0]["seconds"].get(s, 0.0) for r in runs)
+    total = lambda r, load: sum(v for k, v in r["runs"][0]["seconds"].items() if load or k != "load")
     return {
         "load": stage("load"),
         "image": stage("image_encode"),
