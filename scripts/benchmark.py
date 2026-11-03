@@ -78,6 +78,7 @@ ROUNDS = {
     "baseline": 3,
     "profiles-baseline": 1,
     "baseline-cfg": 1,
+    "torch-memory": 3,
 }
 SEEDS = (42, 1, 2, 3, 4, 5, 6, 7, 8, 9)
 
@@ -239,7 +240,22 @@ def matrix() -> dict[str, list[dict]]:
         profiles_baseline.append(
             pipeline_cell("profiles-baseline", "baseline", "distill", f"baseline-{ram}gb", "mlx", repeat=0, **options)
         )
+    # Torch MPS's smallest footprint, to compare with the MLX cache-limit cells: an out-of-memory exit is a result here.
+    torch_memory = [
+        pipeline_cell(
+            "torch-memory",
+            "smoke",
+            "distill",
+            f"watermark-{ratio}",
+            "diffusers",
+            "mps",
+            mps_high_watermark=ratio,
+            repeat=1,
+        )
+        for ratio in (0.5, 0.35, 0.25)
+    ]
     return {
+        "torch-memory": torch_memory,
         "text": text,
         "smoke": smoke,
         "tradeoffs": tradeoffs,
@@ -819,7 +835,9 @@ def main(argv: list[str] | None = None) -> int:
         done = {
             (record["cell"]["id"], record["round"])
             for record in map(json.loads, filter(str.strip, results.read_text().splitlines()))
-            if not record["status"].startswith("exit")  # a crash is a bug to fix and measure again; a guard stop is a result
+            if not record["status"].startswith(
+                "exit"
+            )  # a crash is a bug to fix and measure again; a guard stop is a result
         }
     (args.out / "machine.json").write_text(json.dumps(machine(), indent=2) + "\n")
     rounds = max(cell_rounds(c, args.rounds) for c in cells)
