@@ -1,5 +1,5 @@
 ---
-id: 15-packaging-release
+id: 17-packaging-release
 title: CLI, documentation, converted weights and first release
 depends_on: [09-pipeline-t2v-mvp, 11-text-encoders]
 estimate: 1-2 days

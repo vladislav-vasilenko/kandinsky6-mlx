@@ -18,7 +18,9 @@ Each spec is one executor run. It states what to build, what to read first, whic
                                                             ├─ 12 I2V (needs 10)
                                                             ├─ 13 FlowMatch + CFG
                                                             └─ 14 performance and memory
-                                                               15 packaging and release
+                                                               15 VAE on ANE (experiment)
+                                                               16 DiT blocks on ANE (experiment)
+                                                               17 packaging and release
 ```
 
 | Spec | Result | Needs real weights | Estimate |
@@ -38,7 +40,9 @@ Each spec is one executor run. It states what to build, what to read first, whic
 | [12](12-i2v.spec.md) | VAE encoder and reference-frame conditioning | Stage B | 2 d |
 | [13](13-flowmatch-cfg.spec.md) | Non-distilled checkpoints: FlowMatch Euler and CFG | Stage B | 2 d |
 | [14](14-performance-memory.spec.md) | `mx.compile`, memory, quantization study | Yes | 2–4 d |
-| [15](15-packaging-release.spec.md) | CLI, model cards, weight upload | Yes | 1–2 d |
+| [15](15-ane-vae.spec.md) | Experiment: video VAE on Core ML / ANE, success by peak memory | Yes | 1 d probe, 3–5 d port |
+| [16](16-ane-dit.spec.md) | Experiment: DiT blocks on Core ML / ANE | Yes | 1 d probe |
+| [17](17-packaging-release.spec.md) | CLI, model cards, weight upload | Yes | 1–2 d |
 
 MVP (first video with sound on a Mac): specs 00–09, about 15–20 working days.
 

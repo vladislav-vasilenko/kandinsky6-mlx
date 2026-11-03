@@ -117,20 +117,7 @@ Compare with the Kaggle 2Ã—T4 numbers recorded in the study repository (Smoke â‰
 
 Custom Metal kernels (follow-up).
 
-## Follow-up: video VAE on Core ML / ANE (owner's plan, after this spec)
-
-Rewrite the video VAE decoder for Core ML and the Neural Engine. ANE's rank limit means 5D tensors must be flattened; a causal
-3x3x3 conv decomposes exactly into three 2D convs over its kernel slices, with time in the batch dimension.
-
-**Primary success metric: peak physical footprint of the video decode stage** (`ri_phys_footprint`, as in the benchmark), at the
-same size and with the same tiling as the MLX numbers it is compared with. Guards: frames PSNR >= 40 dB vs the float32 reference;
-decode time not worse than the MLX default (median from the `tradeoffs` cells). The reference points are the benchmark's: about
-36 GiB by default and about 6.5 GiB with MLX's cache limit 0, whose decode takes about twice as long; to be worth it, the port must
-beat the second on memory or match its memory at the first's speed.
-
-First step, before any rewrite: convert one resnet block of the last up block, and check with `MLComputePlan` what actually runs
-on ANE, and its speed, footprint and PSNR. Open questions to answer there: 16-bit float precision, GroupNorm over all frames of a
-tile, the causal attention mask, fixed input shapes for smaller edge tiles.
+Neural Engine experiments: the video VAE is spec 15, DiT blocks are spec 16.
 
 ## Stop conditions
 
