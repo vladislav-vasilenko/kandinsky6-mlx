@@ -371,6 +371,14 @@ def path(value) -> Path | None:
     return value if value.is_absolute() else ROOT / value
 
 
+def save_clip(cell: dict, frames, audio, sample_rate: int) -> None:
+    """Write the run's video to `cell["save_mp4"]`, if asked; not part of any timed stage."""
+    if cell.get("save_mp4"):
+        from kandinsky6_mlx.pipelines.export import write_mp4
+
+        write_mp4(path(cell["save_mp4"]), frames[0], 24.0, None if audio is None else audio[0], sample_rate)
+
+
 def run_mlx_pipeline(cell: dict, stages: Stages) -> list[dict]:
     import mlx.core as mx
 
@@ -418,6 +426,7 @@ def run_mlx_pipeline(cell: dict, stages: Stages) -> list[dict]:
             on_stage=stages,
         )
         stages.end()
+        save_clip(cell, output.frames, output.audio, output.sample_rate)
         runs.append(
             {
                 "run": stages.run,
@@ -573,9 +582,13 @@ def run_diffusers_pipeline(cell: dict, stages: Stages) -> list[dict]:
                     stages("audio_decode")
                     z = audio_out.to(pipe.audio_vae.dtype) / pipe.audio_vae.config.scaling_factor
                     mel = pipe.audio_vae.decode(z, return_dict=False)[0]
-                    pipe.vocoder(mel.to(pipe.vocoder.dtype), return_dict=False)[0].float().cpu()
+                    waveform = (
+                        pipe.vocoder(mel.to(pipe.vocoder.dtype), return_dict=False)[0][:, 0].float().cpu().numpy()
+                    )
                     framework["audio_decode"] = take_peak()
         stages.end()
+        if cell["decode"]:
+            save_clip(cell, frames, waveform if cell["audio"] else None, pipe.audio_sample_rate)
         runs.append(
             {
                 "run": stages.run,

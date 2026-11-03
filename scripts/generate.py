@@ -53,6 +53,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--latents", type=Path, help="fixture with inputs.latents / inputs.audio_latents")
     parser.add_argument("--dtype", choices=sorted(DTYPES), default="bfloat16", help="DiT compute dtype")
     parser.add_argument("--no-audio", action="store_true")
+    parser.add_argument(
+        "--cache-limit-gib", type=float, help="limit MLX's buffer cache: less memory, slower VAE (see the model card)"
+    )
     parser.add_argument("--vae-tiling", choices=("preset", "on", "off"), default="preset", help="spatial VAE tiles")
     parser.add_argument(
         "--save-latents", type=Path, help="also save the final video latents as inputs.latents (B, T, H, W, 16)"
@@ -60,6 +63,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args(argv)
 
+    if args.cache_limit_gib is not None:
+        mx.set_cache_limit(int(args.cache_limit_gib * 2**30))
     size = PRESETS[args.preset] | {
         k: v for k, v in (("height", args.height), ("width", args.width), ("num_frames", args.num_frames)) if v
     }
