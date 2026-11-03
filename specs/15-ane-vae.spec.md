@@ -1,6 +1,6 @@
 ---
 id: 15-ane-vae
-title: Experiment: the video VAE decoder on Core ML and the Neural Engine
+title: "Experiment: the video VAE decoder on Core ML and the Neural Engine"
 depends_on: [08-video-vae-decoder, 10-video-vae-tiling, 14-performance-memory]
 estimate: 1 day for the probe; 3-5 days if it passes
 real_weights: required

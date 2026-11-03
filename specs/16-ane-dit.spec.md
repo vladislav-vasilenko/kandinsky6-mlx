@@ -1,6 +1,6 @@
 ---
 id: 16-ane-dit
-title: Experiment: DiT blocks on Core ML and the Neural Engine
+title: "Experiment: DiT blocks on Core ML and the Neural Engine"
 depends_on: [05-dit-model, 14-performance-memory]
 estimate: 1 day for the probe
 real_weights: required
