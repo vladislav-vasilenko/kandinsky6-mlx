@@ -64,6 +64,14 @@ Implementation notes:
 - [ ] Each shipped workflow ran in a real ComfyUI on real weights at Smoke; frames match the CLI for the same seed (PSNR >= 40 dB); peak footprint and time recorded next to the CLI's.
 - [ ] ComfyUI version and installation steps documented in the README.
 
+## Follow-ups
+
+Copy these into `follow_ups` of `reports/17-packaging-release.json`.
+
+- After the release, ask upstream whether they want the port: open one issue in `Blaizzy/mlx-video` or `Blaizzy/mlx-vlm` (same owner), with links to the package, the parity reports and the benchmark, asking whether and where to accept it and in what structure. Read their contribution rules first. Checked 2026-11-04: mlx-video fits best (video and audio generation, LTX-2, Wan) but its last commit is 2026-05-13 and PRs from the summer are still open; mlx-vlm is active and has image generation, with no video generator among its models.
+- If they decline or do not answer, keep the separate package and offer only a link in their list of supported models.
+- The issue and any PR are outward actions: prepare the text, then wait for the owner's approval.
+
 ## Out of scope
 
 ComfyUI's own samplers, `MODEL` and `LATENT` types and KSampler compatibility, LoRA, Pro. Publishing the pack in a ComfyUI registry is an outward action and needs the owner's approval.
