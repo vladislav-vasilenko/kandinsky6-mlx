@@ -11,3 +11,4 @@ dist/
 fixtures/real/
 weights/
 outputs/
+benchmarks/results/*/logs/

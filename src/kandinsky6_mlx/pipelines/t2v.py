@@ -81,6 +81,7 @@ class PipelineOutput:
     peak_memory_gib: dict = field(default_factory=dict)  # per stage
     step_latents: list = field(default_factory=list)  # (video, audio) after each step, if requested
     latents: np.ndarray | None = None  # final video latents, diffusers layout (B, 16, T, H/8, W/8), float32
+    step_seconds: list = field(default_factory=list)  # wall time of each denoising step
 
 
 def load_text_embeds(path: str | Path, trim_padding: bool = True) -> dict[str, mx.array]:
@@ -238,6 +239,8 @@ class Kandinsky6Pipeline:
         on_latents=None,
         image=None,
         image_noise: np.ndarray | mx.array | None = None,
+        on_stage=None,
+        clear_cache: bool = True,
     ) -> PipelineOutput:
         """Generate one video (batch 1). `release_transformer` frees the DiT after denoising, before the decoders run
         (about 8 GB at bf16); the pipeline then cannot be called again. `vae_tiling` decodes in spatial tiles as the
@@ -251,9 +254,14 @@ class Kandinsky6Pipeline:
         visual token type 1, and reuses the first frame's rotary position; the tail is dropped before decoding.
         `image_noise` is the standard-normal sample of the encoder's latent distribution (drawn from the seed, after
         the video and audio noise, when not given). Step latents then include the tail frame, like the reference's
-        callback."""
+        callback.
+
+        `on_stage(name)` is called when a stage starts (`image_encode`, `denoise`, `video_decode`, `audio_decode`).
+        `clear_cache=False` keeps MLX's buffer cache between stages: faster decoders, a higher peak."""
         if self.transformer is None:
             raise RuntimeError("the transformer was released by a previous call with release_transformer=True")
+        if clear_cache:
+            mx.clear_cache()  # buffers left by a previous call's decoders would push the DiT over the GPU working set
         distilled = self.scheduler_config.get("_class_name", "PiflowScheduler") == "PiflowScheduler"
         if num_inference_steps is None:
             num_inference_steps = 10 if distilled else 50
@@ -275,7 +283,11 @@ class Kandinsky6Pipeline:
         if image is not None:
             if image_noise is None:
                 image_noise = rng.standard_normal(self.image_noise_shape(height, width)).astype(np.float32)
+            if on_stage is not None:
+                on_stage("image_encode")
+            image_start = time.perf_counter()
             first_frame = self.encode_image(image, height, width, image_noise)
+            image_seconds = time.perf_counter() - image_start
 
         dtype = self.transformer.dtype
         # Transformer layouts: video (B, T, H, W, C), audio (B, L, C), in the transformer's dtype.
@@ -310,11 +322,16 @@ class Kandinsky6Pipeline:
             audio_scheduler.set_timesteps(num_inference_steps)
 
         output = PipelineOutput(np.zeros(0), None, self.audio_sample_rate, frame_rate)
+        if first_frame is not None:
+            output.timings["image_encode"] = image_seconds
+        if on_stage is not None:
+            on_stage("denoise")
         mx.reset_peak_memory()
         start = time.perf_counter()
         from tqdm.auto import tqdm
 
         for t in tqdm(np.array(scheduler.timesteps), desc="denoise", unit="step", disable=not progress):
+            step_start = time.perf_counter()
             timestep = mx.array(np.array([t], dtype=np.float32))
             # Visual conditioning channels: [latent | conditioning latent (always zero) | mask]; with an image the tail
             # frame is reset to the reference latents and its mask is 1.
@@ -358,6 +375,7 @@ class Kandinsky6Pipeline:
             if sample_audio:
                 audio = audio_scheduler.step(noise_pred[1], timestep, audio)
             mx.eval([x for x in (video, audio) if x is not None])
+            output.step_seconds.append(time.perf_counter() - step_start)
             if return_step_latents:
                 step_audio = None if audio is None else np.array(audio.astype(mx.float32))
                 output.step_latents.append((np.array(video.astype(mx.float32)), step_audio))
@@ -369,7 +387,10 @@ class Kandinsky6Pipeline:
 
         if first_frame is not None:
             video = video[:, :-1]  # drop the conditioning tail frame
-        mx.clear_cache()
+        if on_stage is not None:
+            on_stage("video_decode")
+        if clear_cache:
+            mx.clear_cache()
         mx.reset_peak_memory()
         start = time.perf_counter()
         final = video.transpose(0, 4, 1, 2, 3).astype(mx.float32)
@@ -387,7 +408,10 @@ class Kandinsky6Pipeline:
         output.peak_memory_gib["video_decode"] = mx.get_peak_memory() / 2**30
 
         if sample_audio:
-            mx.clear_cache()
+            if on_stage is not None:
+                on_stage("audio_decode")
+            if clear_cache:
+                mx.clear_cache()
             mx.reset_peak_memory()
             start = time.perf_counter()
             z = audio.transpose(0, 2, 1).astype(mx.float32) / self.audio_vae.scaling_factor
