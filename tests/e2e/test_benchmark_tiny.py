@@ -86,6 +86,21 @@ def test_i2v_cell(tiny_pipelines, tmp_path):
     assert means[0] == pytest.approx(means[1], rel=1e-4)
 
 
+def test_load_policy_cells_give_the_same_frames(tiny_pipelines, tmp_path):
+    """Media after denoising (Torch) and all weights at once (MLX) change memory and load time, not the output."""
+    torch, _, _, root = tiny_pipelines
+    means = []
+    for impl, options in (("diffusers", {"defer_media": True}), ("diffusers", {}), ("mlx", {"eager_media": True})):
+        cell = tiny_cell(root, tmp_path, torch, impl, tiling=False, **options)
+        log = tmp_path / f"{impl}.log"
+        record = benchmark.run_cell(cell, log)
+        assert record["status"] == "ok", log.read_text()[-2500:]
+        if options.get("defer_media"):
+            assert "load_media" in record["runs"][0]["seconds"] and "load_media" in record["runs"][1]["seconds"]
+        means += [run["frames_mean"] for run in record["runs"]]
+    assert means == pytest.approx([means[0]] * len(means), rel=1e-4)
+
+
 def test_matrix_ids_are_unique_and_files_exist():
     cells = [cell for group in benchmark.matrix().values() for cell in group]
     ids = [cell["id"] for cell in cells]

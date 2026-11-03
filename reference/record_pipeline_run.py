@@ -78,6 +78,7 @@ def build_pipeline(
     converted: Path | None = None,
     scheduler_config: Path | None = None,
     with_vae: bool = True,
+    media: dict | None = None,
 ):
     from diffusers import (
         AutoencoderKLHunyuanVideo,
@@ -92,9 +93,11 @@ def build_pipeline(
 
     root = find_root(checkpoint, "transformer")
     if converted is not None:
-        vae = load_converted_vae(converted / "vae") if with_vae else None
-        audio_vae = load_converted_audio(converted / "audio_vae", "audio_vae", MMAudioVAE)
-        vocoder = load_converted_audio(converted / "vocoder", "vocoder", MMAudioVocoder)
+        vae = audio_vae = vocoder = None
+        if media is None:
+            vae = load_converted_vae(converted / "vae") if with_vae else None
+            audio_vae = load_converted_audio(converted / "audio_vae", "audio_vae", MMAudioVAE)
+            vocoder = load_converted_audio(converted / "vocoder", "vocoder", MMAudioVocoder)
         config = json.loads(scheduler_config.read_text())
         scheduler = scheduler_class(config.get("_class_name", "PiflowScheduler")).from_config(config)
     else:
@@ -103,6 +106,18 @@ def build_pipeline(
         vocoder = MMAudioVocoder.from_pretrained(root / "vocoder", torch_dtype=torch.float32)
         config = json.loads((root / "scheduler" / "scheduler_config.json").read_text())
         scheduler = scheduler_class(config.get("_class_name", "PiflowScheduler")).from_pretrained(root / "scheduler")
+    if media is not None:  # the caller's media components, e.g. weightless ones to be replaced after denoising
+        return Kandinsky6TI2VAPipeline(
+            transformer=Kandinsky6Transformer3DModel.from_pretrained(root / "transformer", torch_dtype=dtype).to(
+                device
+            ),
+            scheduler=scheduler,
+            text_encoder=None,
+            tokenizer=None,
+            text_encoder_2=None,
+            tokenizer_2=None,
+            **media,
+        )
     return Kandinsky6TI2VAPipeline(
         transformer=Kandinsky6Transformer3DModel.from_pretrained(root / "transformer", torch_dtype=dtype),
         vae=vae,

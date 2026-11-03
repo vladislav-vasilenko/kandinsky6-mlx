@@ -114,7 +114,7 @@ def process_values(record: dict) -> dict | None:
         return None
 
     def total(run):
-        return sum(v for k, v in run["seconds"].items() if k != "load")
+        return sum(v for k, v in run["seconds"].items() if k not in ("load", "load_media"))
 
     warm = runs[1:]
     steps = []
@@ -124,7 +124,7 @@ def process_values(record: dict) -> dict | None:
         "round": record["round"],
         "cold": total(runs[0]),
         "warm": statistics.median(total(r) for r in warm) if warm else None,
-        "load": runs[0]["seconds"].get("load"),
+        "load": runs[0]["seconds"].get("load", 0.0) + runs[0]["seconds"].get("load_media", 0.0),
         "cold_stages": dict(runs[0]["seconds"]),
         "warm_stages": {
             stage: statistics.median(r["seconds"].get(stage, 0.0) for r in warm)

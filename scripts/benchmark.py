@@ -79,6 +79,7 @@ ROUNDS = {
     "profiles-baseline": 1,
     "baseline-cfg": 1,
     "torch-memory": 3,
+    "load-policy": 3,
 }
 SEEDS = (42, 1, 2, 3, 4, 5, 6, 7, 8, 9)
 
@@ -254,7 +255,22 @@ def matrix() -> dict[str, list[dict]]:
         )
         for ratio in (0.5, 0.35, 0.25)
     ]
+    # Same loading policy on both sides: media after denoising (the study notebook's order) and everything at once.
+    load_policy = [
+        pipeline_cell(
+            "load-policy",
+            "smoke",
+            "distill",
+            "diffusers-mps-bf16-media-after-denoise",
+            "diffusers",
+            "mps",
+            defer_media=True,
+            repeat=1,
+        ),
+        pipeline_cell("load-policy", "smoke", "distill", "mlx-bf16-eager-media", "mlx", eager_media=True, repeat=1),
+    ]
     return {
+        "load-policy": load_policy,
         "torch-memory": torch_memory,
         "text": text,
         "smoke": smoke,
@@ -419,6 +435,10 @@ def run_mlx_pipeline(cell: dict, stages: Stages) -> list[dict]:
             mx.reset_peak_memory()
             pipeline = Kandinsky6Pipeline.from_converted(path(cell["weights"]), dtype, audio=cell["audio"])
             mx.eval(pipeline.transformer.parameters())
+            if cell.get("eager_media"):
+                mx.eval(pipeline.vae.parameters())
+                if pipeline.audio_vae is not None:
+                    mx.eval(pipeline.audio_vae.parameters(), pipeline.vocoder.parameters())
             framework["load"] = mx.get_peak_memory() / GIB
         length = pipeline.latent_shapes(cell["height"], cell["width"], cell["num_frames"], 24.0)[1][2]
         latents, audio_latents, image_noise = noise_arrays(cell, length)
@@ -483,6 +503,39 @@ def run_diffusers_pipeline(cell: dict, stages: Stages) -> list[dict]:
 
     stages.begin_run("cold")
     stages("load")
+    defer_media = bool(cell.get("defer_media"))
+    real_media = {}
+
+    def media_modules(weightless: bool) -> dict:
+        """The media components: real, or weightless on the meta device so the pipeline can run denoising without them."""
+        import json as json_module
+
+        from diffusers import AutoencoderKLHunyuanVideo
+        from diffusers.models.autoencoders.autoencoder_mmaudio import MMAudioVAE
+        from diffusers.models.autoencoders.mmaudio_vocoder import MMAudioVocoder
+
+        from reference.record_audio_real import load_reference as load_audio
+        from reference.record_video_real import load_reference as load_vae
+
+        weights = path(cell["weights"])
+        if weightless:
+            from accelerate import init_empty_weights
+
+            with init_empty_weights():
+                return {
+                    name: cls.from_config(json_module.loads((weights / name / "config.json").read_text()))
+                    for name, cls in (
+                        ("vae", AutoencoderKLHunyuanVideo),
+                        ("audio_vae", MMAudioVAE),
+                        ("vocoder", MMAudioVocoder),
+                    )
+                }
+        return {
+            "vae": load_vae(weights / "vae").to(device),
+            "audio_vae": load_audio(weights / "audio_vae", "audio_vae", MMAudioVAE).to(device),
+            "vocoder": load_audio(weights / "vocoder", "vocoder", MMAudioVocoder).to(device),
+        }
+
     pipe = build_pipeline(
         path(cell["checkpoint"]),
         dtype,
@@ -490,8 +543,12 @@ def run_diffusers_pipeline(cell: dict, stages: Stages) -> list[dict]:
         path(cell["weights"]),
         path(cell["scheduler_config"]),
         cell["decode"] or cell["image"] is not None,
+        media=media_modules(True) if defer_media else None,
     )
-    if cell["tiling"] and pipe.vae is not None:
+    if defer_media:
+        # The pipeline infers its device from its first module, which here can be a weightless one.
+        type(pipe)._execution_device = property(lambda _self: torch.device(device))
+    if cell["tiling"] and pipe.vae is not None and not defer_media:
         pipe.vae.enable_tiling()
     from diffusers.models.autoencoders import vae as vae_module
 
@@ -586,6 +643,13 @@ def run_diffusers_pipeline(cell: dict, stages: Stages) -> list[dict]:
                 if mps:
                     torch.mps.empty_cache()
             frames_mean = None
+            if defer_media:
+                stages("load_media")
+                real_media = media_modules(False)
+                pipe.register_modules(**real_media)
+                if cell["tiling"]:
+                    pipe.vae.enable_tiling()
+                framework["load_media"] = take_peak()
             if cell["decode"]:
                 stages("video_decode")
                 z = video_latents.to(pipe.vae.dtype) / pipe.vae.config.scaling_factor
@@ -605,6 +669,12 @@ def run_diffusers_pipeline(cell: dict, stages: Stages) -> list[dict]:
         stages.end()
         if cell["decode"]:
             save_clip(cell, frames, waveform if cell["audio"] else None, pipe.audio_sample_rate)
+        if defer_media:
+            pipe.register_modules(**media_modules(True))
+            real_media = {}
+            gc.collect()
+            if mps:
+                torch.mps.empty_cache()
         runs.append(
             {
                 "run": stages.run,
