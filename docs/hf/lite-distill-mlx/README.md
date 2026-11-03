@@ -24,7 +24,7 @@ This is an independent community port, not an official release. All credit for t
 [Kandinsky Lab](https://kandinskylab.ai/models/video/); see the [technical report](https://arxiv.org/abs/2610.05608).
 
 **Apple M3 Max, 48 GB: about 28 s for a 1 s clip with sound at 432×256, against 37 s for the standard weights in
-diffusers on Torch MPS, nearly all of that gap from loading. A 5 s clip at 864×480 takes about 17 minutes in MLX.** See
+diffusers on Torch MPS, most of that gap from loading, where the two are not yet comparable like for like. A 5 s clip at 864×480 takes about 17 minutes in MLX.** See
 [Speed and memory](#speed-and-memory) for the breakdown and for how much of this is preliminary.
 
 Works: text-to-video and image-to-video with audio, prompt to MP4 in one command, 432×256 and 864×480.
@@ -161,7 +161,8 @@ footprint as macOS accounts it, GPU buffers included.
 | Image-to-video, 2 images | Torch MPS (diffusers) | 9.4 | 18.9 | 10.7 | 0.3 | **39.6** | 30.2 | 37.8 |
 | Image-to-video, 2 images | MLX | 1.3 | 15.4 | 12.8 | 0.5 | **30.3** | 29.0 | 35.8 |
 
-- **Where MLX gains:** loading (about 8 s) and denoising (about 3 s, 18%).
+- **Where MLX gains:** denoising (about 3 s, 18%) and loading (about 8 s, though MLX defers its decoders' weights to
+  decoding, so that part of the gap is not comparable like for like).
 - **Where Torch MPS gains:** video decoding (about 2 s) and audio. So without loading the totals are within a few percent.
 - Image encoding (under 0.5 s on both sides) is included in the totals and not shown as a column.
 
@@ -175,8 +176,10 @@ Peak physical footprint per stage, GiB, median over the 5 text-to-video clips at
 | Denoising | 11.2 | 8.6 | 2.6 |
 | Video decoding (the run's peak) | 38.9 | 35.8 | 3.1 |
 
-- **Loading and denoising** show the clearer difference, with MLX lower by roughly 2.5–4 GiB. Part of it may come from how
-  each framework holds weights and caches; the cause has not been analysed.
+- **Loading and denoising are not a framework difference.** In this benchmark Torch holds the video VAE, audio VAE and
+  vocoder in memory from the start (2.5 GiB of weights, encoders included), while MLX loads them lazily, when decoding starts,
+  and only their decoders (1.7 GiB). The 2.6 GiB gap in denoising matches those 2.5 GiB. The same deferral moves part of the
+  loading time into MLX's decoding stage. A direct step-by-step measurement is queued and will replace this explanation.
 - **The peak in video decoding says little about what is needed:** each framework keeps freed buffers in a cache up to its
   limit, about 37 GiB of GPU working set on this Mac. MLX generates in 8.4 GiB with a cache limit (next section).
 - **Defaults:** MLX runs as is. Torch MPS at its default `PYTORCH_MPS_HIGH_WATERMARK_RATIO=1.7` passed 43 GiB and was stopped by

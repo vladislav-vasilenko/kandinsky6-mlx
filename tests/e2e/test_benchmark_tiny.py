@@ -91,3 +91,18 @@ def test_matrix_ids_are_unique_and_files_exist():
     ids = [cell["id"] for cell in cells]
     assert len(ids) == len(set(ids))
     assert benchmark.phys_footprint(benchmark.os.getpid()) > 0
+
+
+def test_memory_probe_on_the_tiny_pipeline(tiny_pipelines, tmp_path):
+    import subprocess
+    import sys
+
+    _, _, _, root = tiny_pipelines
+    out = tmp_path / "probe.jsonl"
+    command = [sys.executable, str(ROOT / "scripts/memory_probe.py"), "--weights", str(root / "converted")]
+    command += ["--checkpoint", str(root / "ckpt"), "--device", "cpu", "--out", str(out)]
+    done = subprocess.run(command, capture_output=True, text=True, check=False)
+    assert done.returncode == 0, done.stderr[-2000:]
+    records = [json.loads(line) for line in out.read_text().splitlines()]
+    assert [r["framework"] for r in records] == ["mlx", "torch"]
+    assert all(step["footprint_gib"] > 0 for r in records for step in r["steps"])
