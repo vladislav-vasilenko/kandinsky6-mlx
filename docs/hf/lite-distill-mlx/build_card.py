@@ -75,6 +75,24 @@ def perf_rows(names: list[str], title: str) -> str:
     return "\n".join(rows)
 
 
+def memory_rows() -> str:
+    """Median over the text-to-video clips of the peak OS footprint in each stage."""
+
+    def stage(label: str, name: str) -> float:
+        values = [records[f"{clip}-smoke-{label}"]["runs"][0]["footprint_peak_gib"][name] for clip in T2V]
+        return statistics.median(values)
+
+    rows = []
+    for name, title in (
+        ("load", "Loading"),
+        ("denoise", "Denoising"),
+        ("video_decode", "Video decoding (the run's peak)"),
+    ):
+        torch_mps, mlx = stage("torch_mps", name), stage("mlx", name)
+        rows.append(f"| {title} | {torch_mps:.1f} | {mlx:.1f} | {torch_mps - mlx:.1f} |")
+    return "\n".join(rows)
+
+
 text_rows = {}
 results = ROOT / "benchmarks/results/m3max-48gb/results.jsonl"
 for line in results.read_text().splitlines():
@@ -105,6 +123,7 @@ replacements = {
     "{{PAIR_I2V_TRAM}}": pair("i2v_tram", "i2v_input_tram.webp"),
     "{{BASELINE_VIDEO}}": video("orbit_woman_baseline_seed42_mlx", "MLX: 5 s at 864x480"),
     "{{FRAME_SHEET}}": f"{BASE}/torch_mps_vs_mlx_frame12.webp",
+    "{{MEMORY_STAGES}}": memory_rows(),
     "{{PERF_T2V}}": perf_rows(T2V, "Text-to-video, 5 prompts"),
     "{{PERF_I2V}}": perf_rows(I2V, "Image-to-video, 2 images"),
     "{{TEXT_MLX}}": text_row("text/mlx-bf16", "MLX, Qwen bf16 + CLIP"),

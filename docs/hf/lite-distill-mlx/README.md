@@ -163,8 +163,25 @@ footprint as macOS accounts it, GPU buffers included.
 
 - **Where MLX gains:** loading (about 8 s) and denoising (about 3 s, 18%).
 - **Where Torch MPS gains:** video decoding (about 2 s) and audio. So without loading the totals are within a few percent.
-- **Memory:** close at the defaults, because each framework keeps freed buffers in a cache up to its limit. Image encoding
-  (under 0.5 s on both sides) is included in the totals and not shown as a column.
+- Image encoding (under 0.5 s on both sides) is included in the totals and not shown as a column.
+
+### Memory: Torch MPS vs MLX
+
+Peak physical footprint per stage, GiB, median over the 5 text-to-video clips at 432×256.
+
+| Stage | Torch MPS | MLX | Difference |
+| --- | ---: | ---: | ---: |
+| Loading | 10.5 | 6.4 | 4.1 |
+| Denoising | 11.2 | 8.6 | 2.6 |
+| Video decoding (the run's peak) | 38.9 | 35.8 | 3.1 |
+
+- **Loading and denoising** show the clearer difference, with MLX lower by roughly 2.5–4 GiB. Part of it may come from how
+  each framework holds weights and caches; the cause has not been analysed.
+- **The peak in video decoding says little about what is needed:** each framework keeps freed buffers in a cache up to its
+  limit, about 37 GiB of GPU working set on this Mac. MLX generates in 8.4 GiB with a cache limit (next section).
+- **Defaults:** MLX runs as is. Torch MPS at its default `PYTORCH_MPS_HIGH_WATERMARK_RATIO=1.7` passed 43 GiB and was stopped by
+  the benchmark's memory guard before swap could fill the disk; the numbers here use 1.0.
+- **Not measured yet:** Torch MPS with a lower watermark, so its minimum is unknown and no minimum-memory comparison is claimed.
 
 ### What memory buys in MLX
 
