@@ -171,7 +171,7 @@ def matrix() -> dict[str, list[dict]]:
         pipeline_cell("smoke", "smoke", "distill", "mlx-bf16-no-audio", "mlx", audio=False),
         pipeline_cell("smoke", "smoke", "distill", "diffusers-mps-bf16-no-audio", "diffusers", "mps", audio=False),
         pipeline_cell("smoke", "smoke", "distill", "mlx-bf16-untiled", "mlx", tiling=False),
-        # Expected not to fit 48 GB: recorded as such when the guard stops them.
+        # Torch's default watermark does not fit 48 GB: recorded as such when the guard stops it.
         pipeline_cell(
             "smoke",
             "smoke",
@@ -475,7 +475,7 @@ def run_diffusers_pipeline(cell: dict, stages: Stages) -> list[dict]:
         path(cell["scheduler_config"]),
         cell["decode"] or cell["image"] is not None,
     )
-    if cell["tiling"]:
+    if cell["tiling"] and pipe.vae is not None:
         pipe.vae.enable_tiling()
     from diffusers.models.autoencoders import vae as vae_module
 
@@ -819,6 +819,7 @@ def main(argv: list[str] | None = None) -> int:
         done = {
             (record["cell"]["id"], record["round"])
             for record in map(json.loads, filter(str.strip, results.read_text().splitlines()))
+            if not record["status"].startswith("exit")  # a crash is a bug to fix and measure again; a guard stop is a result
         }
     (args.out / "machine.json").write_text(json.dumps(machine(), indent=2) + "\n")
     rounds = max(cell_rounds(c, args.rounds) for c in cells)
