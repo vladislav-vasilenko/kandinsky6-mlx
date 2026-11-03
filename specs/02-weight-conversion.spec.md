@@ -79,7 +79,7 @@ Stage B report: tensor counts per component, dropped keys (expect 667 in `audio_
 
 ## Out of scope
 
-Quantization (spec 14). Text encoders (spec 11). Public release of weights (spec 15).
+Quantization (spec 14). Text encoders (spec 11). Public release of weights (spec 17).
 
 ## Stop conditions
 
