@@ -101,18 +101,26 @@ and the benchmark's memory guard stopped it. The speed tables use 1.0, whose pea
 > **Status.** Speed at 432×256 is final apart from a few repeated rounds; it comes from independent processes in a random
 > order, paired by seed. Still to come: Torch MPS's minimum memory. Method and commands: [BENCHMARK.md](https://github.com/vladislav-vasilenko/kandinsky6-mlx/blob/main/BENCHMARK.md).
 
-### Time: Torch MPS / MLX
+### Time: Torch MPS vs MLX
 
-Total time without loading, as a ratio: above 1 means MLX is faster. 432×256, 25 frames. Geometric mean of 9 paired processes,
-with a 95% confidence interval and an exact sign-flip test, Holm-corrected over the 8 tests. A claim needs p < 0.05, an interval
-excluding 1, and at least 5%.
+Total time without loading, in seconds: 432×256, 25 frames, 9 paired processes. **Cold** is the first generation in a fresh process;
+**warm** is a later one in the same process.
 
-| Model and mode | Cold | Warm | Result |
-| --- | ---: | ---: | --- |
-| Lite-5s, 50 steps + CFG, text-to-video | 1.14 (1.12–1.15) | 1.12 (1.08–1.16) | **MLX faster**, p = 0.031 |
-| Lite-5s, 50 steps + CFG, image-to-video | 1.14 (1.10–1.17) | 1.11 (1.06–1.16) | **MLX faster**, p = 0.031 |
-| Lite-distill, 10 steps, text-to-video | 1.01 (0.92–1.10) | 0.96 (0.88–1.04) | no demonstrated difference |
-| Lite-distill, 10 steps, image-to-video | 1.00 (0.93–1.08) | 0.96 (0.87–1.05) | no demonstrated difference |
+| Model and mode | Run | Torch MPS, s | MLX, s | Torch time / MLX time (95% CI) | Result |
+| --- | --- | ---: | ---: | ---: | --- |
+| Lite-5s, 50 steps + CFG, text-to-video | cold | 168.9 | 147.0 | 1.14 (1.12–1.15) | **MLX about 12% faster** |
+| | warm | 168.8 | 146.5 | 1.12 (1.08–1.16) | **MLX about 11% faster** |
+| Lite-5s, 50 steps + CFG, image-to-video | cold | 192.2 | 167.2 | 1.14 (1.10–1.17) | **MLX about 12% faster** |
+| | warm | 193.0 | 174.4 | 1.11 (1.06–1.16) | **MLX about 10% faster** |
+| Lite-distill, 10 steps, text-to-video | cold | 28.1 | 26.6 | 1.01 (0.92–1.10) | no demonstrated difference |
+| | warm | 26.6 | 27.4 | 0.96 (0.88–1.04) | no demonstrated difference |
+| Lite-distill, 10 steps, image-to-video | cold | 30.0 | 28.7 | 1.00 (0.93–1.08) | no demonstrated difference |
+| | warm | 29.8 | 29.0 | 0.96 (0.87–1.05) | no demonstrated difference |
+
+Seconds are medians. The ratio above 1 means MLX is faster; it is the geometric mean of the paired runs, so unlike the medians it
+includes MLX's occasional slow video decodes (below). Each ratio is tested with an exact sign-flip test, Holm-corrected over the 8
+tests: p = 0.031 for the four MLX results, and p above 0.05 for the others. A claim needs p < 0.05, an interval excluding 1, and at
+least a 5% difference.
 
 ### Where the time goes
 
