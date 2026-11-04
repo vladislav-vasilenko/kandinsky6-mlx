@@ -23,9 +23,10 @@ Video with synchronized audio on Apple Silicon: weights of
 This is an independent community port, not an official release. All credit for the model goes to
 [Kandinsky Lab](https://kandinskylab.ai/models/video/); see the [technical report](https://arxiv.org/abs/2610.05608).
 
-**Apple M3 Max, 48 GB: about 28 s for a 1 s clip with sound at 432×256, against 37 s for the standard weights in
-diffusers on Torch MPS, most of that gap from loading, where the two are not yet comparable like for like. A 5 s clip at 864×480 takes about 17 minutes in MLX.** See
-[Speed and memory](#speed-and-memory) for the breakdown and for how much of this is preliminary.
+**Apple M3 Max, 48 GB, compared with the standard weights in diffusers on Torch MPS: with 50 guided steps (Lite-5s) MLX takes
+about 10–12% less time, a tested difference. With the 10 steps of this distilled model there is no demonstrated difference at
+432×256 (about 27 s for a 1 s clip with sound, without loading). A 5 s clip at 864×480 took 935 s against 1024 s (3 runs, not
+tested).** See [Speed and memory](#speed-and-memory).
 
 Works: text-to-video and image-to-video with audio, prompt to MP4 in one command, 432×256 and 864×480.
 All components are compared with diffusers on real weights: see [Verification](#verification).
@@ -139,32 +140,45 @@ at this size will come with the full benchmark.
 ## Speed and memory
 
 **Apple M3 Max, 40-core GPU, 48 GB, macOS 27.0.1, AC power · MLX 0.32.4 · PyTorch 2.15.0, diffusers 0.42.1.**
-Both sides use the same inputs and the configuration of the study notebook: VAE tiling on, the DiT freed before decoding.
-Torch MPS runs with `PYTORCH_MPS_HIGH_WATERMARK_RATIO=1.0`; at its default of 1.7 it went past 50 GiB on this 48 GB Mac
-and into swap.
+Both sides use the same inputs, VAE tiling on and the DiT freed before decoding.
+Torch MPS runs with `PYTORCH_MPS_HIGH_WATERMARK_RATIO=1.0`; at its default of 1.7 it passed 43 GiB on this 48 GB Mac
+and the benchmark's memory guard stopped it.
 
-> **Preliminary.** These tables are single cold runs of the clips above, one process per clip, summarized by the median
-> over clips. A full benchmark is in progress (10 independent processes per comparison, cold and warm runs, confidence
-> intervals, exact tests); its method and commands are in
-> [BENCHMARK.md](https://github.com/vladislav-vasilenko/kandinsky6-mlx/blob/main/BENCHMARK.md), and its results will
-> replace these numbers. No difference here is yet a tested claim.
+> **Status.** Speed at 432×256 is final apart from a few repeated rounds; it comes from independent processes in a random
+> order, paired by seed. Still to come: step-by-step memory, Torch MPS's minimum, and both sides under the same weight-loading
+> policy. Method and commands: [BENCHMARK.md](https://github.com/vladislav-vasilenko/kandinsky6-mlx/blob/main/BENCHMARK.md).
 
-### 432×256, 25 frames, 10 steps
+### Time: Torch MPS / MLX
 
-Seconds per stage, cold (first run in a fresh process, OS file cache warm). Memory is the process's peak physical
-footprint as macOS accounts it, GPU buffers included.
+Total time without loading, as a ratio: above 1 means MLX is faster. 432×256, 25 frames. Geometric mean of 9 paired processes,
+with a 95% confidence interval and an exact sign-flip test, Holm-corrected over the 8 tests. A claim needs p < 0.05, an interval
+excluding 1, and at least 5%.
 
-| Mode | Implementation | Load | Denoise | Video decode | Audio | Total | Total without load | Memory, GiB |
-| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| Text-to-video, 5 prompts | Torch MPS (diffusers) | 9.8 | 16.3 | 11.0 | 0.3 | **37.4** | 27.6 | 38.9 |
-| Text-to-video, 5 prompts | MLX | 1.3 | 13.4 | 12.8 | 0.5 | **28.0** | 26.7 | 35.8 |
-| Image-to-video, 2 images | Torch MPS (diffusers) | 9.4 | 18.9 | 10.7 | 0.3 | **39.6** | 30.2 | 37.8 |
-| Image-to-video, 2 images | MLX | 1.3 | 15.4 | 12.8 | 0.5 | **30.3** | 29.0 | 35.8 |
+| Model and mode | Cold | Warm | Result |
+| --- | ---: | ---: | --- |
+| Lite-5s, 50 steps + CFG, text-to-video | 1.14 (1.12–1.15) | 1.12 (1.08–1.16) | **MLX faster**, p = 0.031 |
+| Lite-5s, 50 steps + CFG, image-to-video | 1.14 (1.10–1.17) | 1.11 (1.06–1.16) | **MLX faster**, p = 0.031 |
+| Lite-distill, 10 steps, text-to-video | 1.01 (0.92–1.10) | 0.96 (0.88–1.04) | no demonstrated difference |
+| Lite-distill, 10 steps, image-to-video | 1.00 (0.93–1.08) | 0.96 (0.87–1.05) | no demonstrated difference |
 
-- **Where MLX gains:** denoising (about 3 s, 18%) and loading (about 8 s, though MLX defers its decoders' weights to
-  decoding, so that part of the gap is not comparable like for like).
-- **Where Torch MPS gains:** video decoding (about 2 s) and audio. So without loading the totals are within a few percent.
-- Image encoding (under 0.5 s on both sides) is included in the totals and not shown as a column.
+### Where the time goes
+
+Median seconds per stage, warm, text-to-video.
+
+| Model | Implementation | Denoise | Seconds per step | Video decode | Audio | Runs |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| Lite-distill | MLX | 13.4 | 1.34 | 13.6 | 0.4 | 10 |
+| Lite-distill | Torch MPS | 15.9 | 1.57 | 10.5 | 0.2 | 9 |
+| Lite-5s | MLX | 133.3 | 2.67 | 12.8 | 0.4 | 10 |
+| Lite-5s | Torch MPS | 156.1 | 3.12 | 12.4 | 0.2 | 9 |
+
+- **Denoising is where MLX gains:** a Torch MPS step takes 17–20% longer. With 50 steps this decides the total; with 10 steps
+  Torch MPS's faster and steadier video decoding cancels it.
+- **MLX's video decoding is uneven at 432×256:** usually about 12.7 s, sometimes 20–35 s. The cause is not established yet.
+- **Loading:** about 1.3 s in MLX against 10–12 s in Torch MPS, but not like for like: MLX defers its decoders' weights to
+  decoding. It is left out of the totals above.
+- **Caveats:** this is one Mac. Swap grew in many rounds on both sides, and too few rounds were free of it (2–6) to test them
+  on their own. An outside event filled the disk during the run; the 14 rounds it stopped are being repeated.
 
 ### Memory: Torch MPS vs MLX
 
@@ -181,23 +195,37 @@ Peak physical footprint per stage, GiB, median over the 5 text-to-video clips at
   and only their decoders (1.7 GiB). The 2.6 GiB gap in denoising matches those 2.5 GiB. The same deferral moves part of the
   loading time into MLX's decoding stage. A direct step-by-step measurement is queued and will replace this explanation.
 - **The peak in video decoding says little about what is needed:** each framework keeps freed buffers in a cache up to its
-  limit, about 37 GiB of GPU working set on this Mac. MLX generates in 8.4 GiB with a cache limit (next section).
+  limit, about 37 GiB of GPU working set on this Mac. MLX generates in 8.9 GiB with a cache limit (next section).
 - **Defaults:** MLX runs as is. Torch MPS at its default `PYTORCH_MPS_HIGH_WATERMARK_RATIO=1.7` passed 43 GiB and was stopped by
   the benchmark's memory guard before swap could fill the disk; the numbers here use 1.0.
-- **Not measured yet:** Torch MPS with a lower watermark, so its minimum is unknown and no minimum-memory comparison is claimed.
+- **Torch MPS's peak is 6–8% higher (tested over 9 pairs), but this is not a verdict on memory:** those peaks are mostly cache
+  ceilings. Torch MPS with a lower watermark is not measured yet, so no minimum-memory comparison is claimed.
 
 ### What memory buys in MLX
 
-MLX's buffer cache is what fills the memory above, and `--cache-limit-gib` limits it. Single runs, text-to-video at 432×256:
+MLX's buffer cache is what fills the memory above, and `--cache-limit-gib` limits it. Text-to-video at 432×256, medians over 5
+processes (cold, without loading):
 
-| Cache limit | Video decode, s | Total without load, s | Memory, GiB |
-| --- | ---: | ---: | ---: |
-| None (default) | 12.6 | 26.4 | 35.8 |
-| 4 GiB | 18.6 | 32.5 | 12.9 |
-| 0 | 25.3 | 39.8 | 8.4 |
+| Cache limit | Total, s | Memory, GiB |
+| --- | ---: | ---: |
+| None (default) | 26.2 | 35.9 |
+| 16 GiB | 30.4 | 22.7 |
+| 8 GiB | 30.7 | 15.8 |
+| 4 GiB | 31.2 | 13.0 |
+| 1 GiB | 33.1 | 9.8 |
+| 0 | 38.8 | 8.9 |
 
-So the pipeline's generation stages fit in about 8.4 GiB at the cost of about 50% more time. Prompt encoding needs more: see
-below. Machines with less memory have not been tested, and a smaller Mac's chip will also be slower.
+### Settings for less memory
+
+Cache and memory limits meant for smaller Macs. **They ran on this M3 Max, so the times do not predict a smaller chip, and no
+smaller Mac has been tested.** Prompt encoding is not included: see below.
+
+| Memory of the target Mac | Cache limit, GiB | Memory limit, GiB | 432×256, s (5 runs) | Memory, GiB | 864×480, s (1 run) | Memory, GiB |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| 48 GB | 16 | 32 | 30.3 | 23.1 | 1023 | 24.9 |
+| 32 GB | 8 | 22 | 30.6 | 15.8 | 1051 | 16.5 |
+| 24 GB | 4 | 16 | 31.1 | 11.7 | 1083 | 12.8 |
+| 16 GB | 1 | 10 | 32.9 | 8.7 | 1111 | 11.0 |
 
 ### Prompt encoding
 
@@ -213,10 +241,15 @@ cold). The encoders are freed before the DiT loads.
 Torch pads the prompt to 1153 tokens as the diffusers pipeline does; MLX runs the real tokens only, with the same result
 for them.
 
-### 864×480, 121 frames, 10 steps (MLX, one run)
+### 864×480, 121 frames, 10 steps
 
-Denoising 794 s (79 s per step), video decoding 225 s in 165 tiles, audio 1.6 s, about 17 minutes in total. The OS footprint
-at this size will come with the full benchmark.
+Cold, 3 processes each, without loading. All three runs agree, but 3 cannot reach the test's threshold, so this is not a tested
+claim. MLX's default cache is used; see the table above for limits.
+
+| Implementation | Denoise, s | Seconds per step | Video decode, s | Audio, s | Total, s | Memory, GiB |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| MLX | 718 | 72.0 | 215 | 1.7 | 935 | 36.5 |
+| Torch MPS | 798 | 80.0 | 225 | 1.3 | 1024 | 38.5 |
 
 ## Quick start
 
