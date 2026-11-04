@@ -109,9 +109,9 @@ and will be regenerated with it.
 
 {{PROMPT_TRAM_5S}}
 
-#### Fox in the snow, MLX
+#### Fox in the snow, Torch MPS vs MLX
 
-{{VIDEO_FOX_5S}}
+{{PAIR_FOX_5S}}
 
 {{PROMPT_FOX_5S}}
 

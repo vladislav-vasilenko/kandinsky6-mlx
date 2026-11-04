@@ -123,7 +123,7 @@ replacements = {
     "{{PAIR_I2V_TRAM}}": pair("i2v_tram", "i2v_input_tram.webp"),
     "{{PAIR_TRAM_5S}}": pair("strange_tram", preset="baseline"),
     "{{PROMPT_TRAM_5S}}": prompt_block("strange_tram_baseline"),
-    "{{VIDEO_FOX_5S}}": video("fox_baseline_seed42_mlx", "MLX: fox, 5 s at 864x480"),
+    "{{PAIR_FOX_5S}}": pair("fox", preset="baseline"),
     "{{PROMPT_FOX_5S}}": prompt_block("fox_baseline"),
     "{{BASELINE_VIDEO}}": video("orbit_woman_baseline_seed42_mlx", "MLX: 5 s at 864x480"),
     "{{FRAME_SHEET}}": f"{BASE}/torch_mps_vs_mlx_frame12.webp",

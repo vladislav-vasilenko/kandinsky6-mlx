@@ -163,9 +163,12 @@ Surreal retrofuturist dark comedy, 1970s science-fiction cinema, tactile practic
 
 </details>
 
-#### Fox in the snow, MLX
+#### Fox in the snow, Torch MPS vs MLX
 
-<video controls playsinline preload="metadata" width="100%" poster="https://huggingface.co/VVladTech/Kandinsky-6.0-Lite-distill-5s-MLX/resolve/main/examples/fox_baseline_seed42_mlx-poster.webp" aria-label="MLX: fox, 5 s at 864x480"><source src="https://huggingface.co/VVladTech/Kandinsky-6.0-Lite-distill-5s-MLX/resolve/main/examples/fox_baseline_seed42_mlx.mp4" type="video/mp4"><a href="https://huggingface.co/VVladTech/Kandinsky-6.0-Lite-distill-5s-MLX/resolve/main/examples/fox_baseline_seed42_mlx.mp4">MLX: fox, 5 s at 864x480 MP4</a></video>
+<table width="100%">
+<thead><tr><th width="50%">Torch MPS (diffusers)</th><th width="50%">MLX</th></tr></thead>
+<tbody><tr><td width="50%"><video controls playsinline preload="metadata" width="100%" poster="https://huggingface.co/VVladTech/Kandinsky-6.0-Lite-distill-5s-MLX/resolve/main/examples/fox_baseline_seed42_torch_mps-poster.webp" aria-label="Torch MPS (diffusers): fox"><source src="https://huggingface.co/VVladTech/Kandinsky-6.0-Lite-distill-5s-MLX/resolve/main/examples/fox_baseline_seed42_torch_mps.mp4" type="video/mp4"><a href="https://huggingface.co/VVladTech/Kandinsky-6.0-Lite-distill-5s-MLX/resolve/main/examples/fox_baseline_seed42_torch_mps.mp4">Torch MPS (diffusers): fox MP4</a></video></td><td width="50%"><video controls playsinline preload="metadata" width="100%" poster="https://huggingface.co/VVladTech/Kandinsky-6.0-Lite-distill-5s-MLX/resolve/main/examples/fox_baseline_seed42_mlx-poster.webp" aria-label="MLX: fox"><source src="https://huggingface.co/VVladTech/Kandinsky-6.0-Lite-distill-5s-MLX/resolve/main/examples/fox_baseline_seed42_mlx.mp4" type="video/mp4"><a href="https://huggingface.co/VVladTech/Kandinsky-6.0-Lite-distill-5s-MLX/resolve/main/examples/fox_baseline_seed42_mlx.mp4">MLX: fox MP4</a></video></td></tr></tbody>
+</table>
 
 <details>
 <summary>Prompt</summary>
