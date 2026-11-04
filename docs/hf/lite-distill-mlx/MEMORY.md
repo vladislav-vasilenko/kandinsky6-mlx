@@ -136,9 +136,24 @@ fresh process per run. **The weights did not change and need no new download:** 
 - **Speed:** denoising time unchanged within these few runs.
 - **Quality:** frames are closer on 4 seeds of 6 and further on 2, with a median change of +3.3 dB. The spread, from −5.7 to +15.3 dB, is mostly
   how bf16 rounding grows over the steps, so this shows **no clear loss, not an improvement**. Six pairs cannot rule out a small loss.
-  Audio moves both ways too, including a drop on two seeds that has yet to be checked by ear.
-- **Agreed before the results:** rel_l2 within 2× Torch bf16's drift, frames within 1 dB of Torch bf16 on each seed, a median loss of 2 dB at
-  most, and cosine above the tests' minimums. All were met at the final step. Checks of every step and by eye and ear are still running.
+  Audio moves both ways too.
+- **Agreed before the results:** rel_l2 within 2× Torch bf16's drift at every step (at most 1.37×), frames within 1 dB of Torch bf16 on each seed, a median
+  loss of 2 dB at most, cosine above the tests' minimums, and a check by eye and ear. All were met, and the real-weight bf16 tests pass with unchanged thresholds.
+
+### What the new rule changes in the sound
+
+On Lite-5s, seed 42, nothing differs to the eye, but a sound at the end of the clip is much weaker. It is in the float32 reference, and **Torch bf16 loses it in the
+same way**, so the port now does what the bf16 reference does:
+
+| Variant | RMS in the last 0.2 s | Peak | Peak at | SNR to float32, dB |
+| --- | ---: | ---: | ---: | ---: |
+| Float32 reference | 0.0652 | 0.135 | 1.02 s | – |
+| MLX, earlier rule | 0.0695 | 0.142 | 1.03 s | 2.91 |
+| MLX, diffusers' rule | 0.0387 | 0.082 | 0.90 s | −0.80 |
+| Torch MPS, bf16 | 0.0377 | 0.080 | 0.90 s | −0.36 |
+
+This is one seed; on others the earlier rule is not closer. **If fidelity matters, especially for audio, use float32:** see the
+[speed page](SPEED.md#float32-when-fidelity-matters).
 
 ## What the rest of the footprint is
 

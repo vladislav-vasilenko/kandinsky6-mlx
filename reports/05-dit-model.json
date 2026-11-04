@@ -249,9 +249,15 @@
         "denoise_seconds": {
           "lite-distill": "13.3-13.4 vs 13.3-13.7",
           "lite-5s": "134-136 vs 133-134"
-        }
+        },
+        "max_step_rel_l2_over_torch_bf16_diffusers": {
+          "video": 1.04,
+          "audio": 1.37
+        },
+        "real_weight_bf16_tests_with_the_new_default": "all passed, thresholds unchanged",
+        "owner_check": "video: no visible difference on Lite-5s seed 42. Audio: the owner heard a peak at the end only with the earlier rule; it is in the float32 reference, and Torch bf16 loses it just as the diffusers rule does (last 0.2 s RMS: float32 0.0652, earlier rule 0.0695, diffusers rule 0.0387, Torch bf16 0.0377)"
       },
-      "criterion": "final-step rel_l2 <= 2x torch bf16; frames PSNR >= torch bf16 - 1 dB per seed; median PSNR loss <= 2 dB; cosine not below the tests' minimums; owner's side-by-side check. Per-step rel_l2 and the owner's check are queued. The spread (-5.7 to +15.3 dB) is mostly rounding chaos: this shows no clear loss, not an improvement.",
+      "criterion": "final-step rel_l2 <= 2x torch bf16; frames PSNR >= torch bf16 - 1 dB per seed; median PSNR loss <= 2 dB; cosine not below the tests' minimums; owner's side-by-side check. Per-step rel_l2 and the owner's check were then done; both pass, the audio difference being what Torch bf16 does too. The spread (-5.7 to +15.3 dB) is mostly rounding chaos: this shows no clear loss, not an improvement.",
       "pass": true
     }
   ],

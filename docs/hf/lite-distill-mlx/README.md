@@ -262,6 +262,7 @@ Peak physical footprint at 432×256; total time without loading.
   time is unchanged, with no clear loss in quality over 6 seeds and no new download: [comparison](https://huggingface.co/VVladTech/Kandinsky-6.0-Lite-distill-5s-MLX/blob/main/MEMORY.md#the-float32-rule-why-the-dit-took-1-gib-more-in-mlx).
   The numbers on this card were measured with the earlier rule, and the ones that depend on memory are being measured again.
 - Part of Torch's footprint may come from this benchmark's own loader: see the same page.
+- **bf16 can change details and sounds, on Torch MPS too.** If fidelity matters, especially for audio, `--dtype float32` matches the float32 reference, for 3–13% more time at 432×256 and about 13.7 GiB instead of 7–9 GiB in denoising: [speed page](https://huggingface.co/VVladTech/Kandinsky-6.0-Lite-distill-5s-MLX/blob/main/SPEED.md#float32-when-fidelity-matters).
 - In MLX, limit the cache with `--cache-limit-gib`.
 
 ### Settings for less memory

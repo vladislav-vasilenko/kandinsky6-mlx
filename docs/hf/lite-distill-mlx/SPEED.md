@@ -47,6 +47,18 @@ At 864×480, cold, 3 clean benchmark processes each:
 | MLX | 718 | 72.0 | 215 | 1.7 | 935 | 36.5 |
 | Torch MPS | 798 | 80.0 | 225 | 1.3 | 1024 | 38.5 |
 
+## Float32 when fidelity matters
+
+In bf16, rounding grows over the steps and can change details and sounds, on Torch MPS too. `--dtype float32` matches the float32 reference (frames at 96 dB or more),
+and costs little time at this size. MLX, 432×256, cold, without loading, with the default cache:
+
+| Model and steps | bf16, s | float32, s | Extra time | Denoising memory, bf16, GiB | Denoising memory, float32, GiB |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Lite-distill, 10 | 26.6 | 27.5 | 3% | 8.7 | 13.7 |
+| Lite-5s, 50 + CFG | 147.0 | 166.4 | 13% | 8.7 | 13.6 |
+
+Float32 has 3–4 runs, against 10 for bf16, and was not tested for significance; swap grew in some of its rounds. Bf16 here uses the earlier float32 rule, and the current one is about 1 GiB lower. Both peak at about 35.9 GiB overall, which is the cache's ceiling. Float32 with a cache limit or at 864×480 has not been measured, and it will not fit the lowest memory settings.
+
 ## Each published clip
 
 One cold run per clip with seed 42, in seconds, with loading **included in the total**. These are examples, not statistics.
