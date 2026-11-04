@@ -99,7 +99,7 @@ Torch MPS runs with `PYTORCH_MPS_HIGH_WATERMARK_RATIO=1.0`; at its default of 1.
 and the benchmark's memory guard stopped it. The speed tables use 1.0, whose peak is mostly cache: see [Memory](#memory).
 
 > **Status.** Speed at 432×256 is final apart from a few repeated rounds; it comes from independent processes in a random
-> order, paired by seed. Still to come: Torch MPS's minimum memory. Method and commands: [BENCHMARK.md](https://github.com/vladislav-vasilenko/kandinsky6-mlx/blob/main/BENCHMARK.md).
+> order, paired by seed. Memory has its own page, linked below. Method and commands: [BENCHMARK.md](https://github.com/vladislav-vasilenko/kandinsky6-mlx/blob/main/BENCHMARK.md).
 
 ### Time: Torch MPS vs MLX
 
@@ -150,7 +150,8 @@ Peak physical footprint at 432×256; total time without loading.
 | --- | --- | ---: | ---: | ---: |
 | Torch MPS | watermark 1.0 | 38.9 | 28.1 | 9 |
 | Torch MPS | watermark 0.35 | 14.9 | 27.7 | 3 |
-| Torch MPS | watermark 0.25 | out of memory | – | 3 |
+| Torch MPS | watermark 0.3, media after denoising | 13.4 | 28.4 + 2 to load media | 3 (2 timed) |
+| Torch MPS | watermark 0.25 | out of memory | – | 6 |
 | MLX | default | 35.9 | 26.2 | 5 |
 | MLX | cache limit 8 GiB | 15.8 | 30.7 | 5 |
 | MLX | cache limit 1 GiB | 9.8 | 33.1 | 5 |
@@ -158,10 +159,12 @@ Peak physical footprint at 432×256; total time without loading.
 
 - **Default peaks are mostly cache, on both sides.** For Torch MPS, lowering the watermark costs almost no time; set
   `PYTORCH_MPS_HIGH_WATERMARK_RATIO` lower than our 1.0 if you run it.
-- **Around 15 GiB Torch MPS is about 10% faster at this size.** MLX has been measured lower, down to 8.9 GiB, but Torch MPS's
-  minimum is not established, so no minimum-memory winner is claimed.
+- **Around 13–15 GiB Torch MPS is about 10% faster at this size.** Below that only MLX has been measured, at 9.8 and 8.9 GiB. Torch MPS
+  ran out of memory at every limit of 9.36 GiB and below; limits between 9.36 and 11.2 GiB have not been tried.
 - **The gap in loading and denoising came from the loading order,** not the frameworks: with the same order the difference is
   1–2 GiB, and in Torch's favour when media components load after denoising.
+- **MLX's DiT takes 1 GiB more than Torch's,** because this port keeps all modulation layers in float32, while diffusers' name matching
+  keeps only 4 tensors there. Part of Torch's footprint may in turn come from this benchmark's own loader. Details on the same page.
 - In MLX, limit the cache with `--cache-limit-gib`.
 
 ### Settings for less memory
@@ -260,7 +263,7 @@ Every component is compared with the PyTorch reference (`diffusers==0.42.1`) on 
 | Whole pipeline, float32 DiT | 10 steps vs diffusers from the same noise, 4 seeds | latents rel_l2 ≤ 7.2e-5, frames ≥ 96.6 dB, audio ≥ 84.2 dB |
 | Whole pipeline, bf16 DiT | vs the float32 reference, relative to Torch bf16 | rel_l2 within 1.49× of Torch bf16's drift; frames 27–46 dB, Torch 27–37 dB |
 | Image to video | 4 cases, float32 and bf16 | float32: rel_l2 ≤ 1.1e-5, frames ≥ 110 dB; bf16: step cosine ≥ 0.9996, frames 42–50 dB |
-| DiT, bf16 | every block and final outputs | 0.56–1.12× Torch bf16's error, cosine ≥ 0.99997 per block |
+| DiT, bf16 | every block and final outputs, with modulation in float32 where Torch bf16 uses bf16 | 0.56–1.12× Torch bf16's error, cosine ≥ 0.99997 per block |
 | Video VAE decoder, float32 | 25 frames | 121.7 dB |
 | Tiled VAE decoding | first 29 of 121 frames at 864×480 | 130.4 dB. The whole clip's reference needs 40 GB and has not been recorded |
 | VAE encoder and image preprocessing | fixed images | preprocessing bit-identical to diffusers; encoder rel_l2 ≤ 1e-3 |

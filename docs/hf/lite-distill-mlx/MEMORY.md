@@ -12,12 +12,13 @@ not included.
 1. **Both default peaks are mostly cache.** Torch MPS at `PYTORCH_MPS_HIGH_WATERMARK_RATIO=1.0` peaks at 38.9 GiB; at 0.35 the same
    run peaks at 14.9 GiB in the same time. So its 38.9 GiB says nothing about what it needs. MLX's cache does buy speed in video
    decoding, so limiting it costs time.
-2. **Around 15 GiB, Torch MPS is about 10% faster at this size:** 27.7 s against 30.7 s. MLX's faster denoising is outweighed by its
+2. **Around 13–15 GiB, Torch MPS is about 10% faster at this size:** 28 s against 31 s. MLX's faster denoising is outweighed by its
    slower decoding once the cache is limited.
-3. **MLX has been measured lower, down to 8.9 GiB.** Torch MPS's minimum is not established: it failed with the 0.25 limit and
-   nothing between 0.25 and 0.35 has been tried. Torch's denoising alone can be smaller than MLX's (see below), so no
-   minimum-memory winner is claimed.
+3. **Below that, only MLX has been measured.** It ran at 9.8 and 8.9 GiB, at the cost of time. Torch MPS's lowest reliable run was
+   13.4 GiB, and it ran out of memory at every limit of 9.36 GiB and below. Limits between 9.36 and 11.2 GiB (watermark 0.26–0.29)
+   have not been tried, so its exact floor is open.
 4. **The earlier gap in loading and denoising came from the loading order,** not from the frameworks.
+5. **MLX's DiT takes 1 GiB more than Torch's because the port keeps more tensors in float32 than diffusers does.** See below.
 
 These are small samples (n = 3 to 10) on one Mac and one size, with no significance tests. Treat small differences as ties.
 
@@ -29,7 +30,10 @@ These are small samples (n = 3 to 10) on one Mac and one size, with no significa
 | Torch MPS | watermark 1.0 | 38.9 | 28.1 | 11.7 | 9 |
 | Torch MPS | watermark 0.5 | 20.5 | 27.6 | 11.3 | 3 |
 | Torch MPS | watermark 0.35 | 14.9 | 27.7 | 11.4 | 3 |
-| Torch MPS | watermark 0.25 | out of memory | – | – | 3 |
+| Torch MPS | watermark 0.3 | 13.0 in 1 run; out of memory in 2 | 28.2 | 11.9 | 3 |
+| Torch MPS | watermark 0.3, media after denoising | 13.4 | 28.4 + 2 to load media | 12.0 | 3 (2 timed) |
+| Torch MPS | watermark 0.25, with either loading order | out of memory | – | – | 6 |
+| Torch MPS | watermark 0.2, media after denoising | out of memory | – | – | 3 |
 | MLX | no cache limit (default) | 35.9 | 26.2 | 12.5 | 5 |
 | MLX | cache 16 GiB | 22.7 | 30.4 | 16.8 | 5 |
 | MLX | cache 8 GiB | 15.8 | 30.7 | 17.0 | 5 |
@@ -37,9 +41,10 @@ These are small samples (n = 3 to 10) on one Mac and one size, with no significa
 | MLX | cache 1 GiB | 9.8 | 33.1 | 19.5 | 5 |
 | MLX | cache 0 | 8.9 | 38.8 | 24.8 | 5 |
 
-At watermark 0.25 the limit was 9.36 GiB; with 8.18 GiB allocated, a 1.22 GiB allocation failed. That run had all its components
-loaded from the start, so this is not necessarily Torch MPS's floor. The default watermark run was stopped by the benchmark's
-memory guard, to protect the Mac from swap.
+Limits are 9.36 GiB at watermark 0.25 and 11.23 GiB at 0.3. Video decoding asked for more than that: for example 8.38 GiB allocated
+plus a 1.06 GiB request at 0.25. The default watermark run was stopped by the benchmark's memory guard, to protect the Mac from swap.
+One timed run of watermark 0.3 with media after denoising is left out: a leftover process of ours was still using the GPU, and its
+steps took 10 s instead of 1.6 s. Its memory reading is kept, as it is in line with the other two.
 
 ## The weight-loading order
 
@@ -80,17 +85,68 @@ With everything loaded, the gap of 2.36 GiB adds up as follows:
 | MPS driver memory above Torch's allocations | +0.82 |
 | The rest of the footprint: Torch 2.05, MLX 0.35 | +1.70 |
 
+## Why the DiT takes 1 GiB more in MLX
+
+diffusers keeps `_keep_in_fp32_modules = ["time_embeddings", "modulation"]` in float32, but it compares each dot-separated part of a
+parameter's name exactly (`models/model_loading_utils.py:238, :448`). So `visual_modulation`, `va_modulation` and the like do not match,
+and only 4 tensors stay in float32. The port matches by substring and keeps 276. This is not a conversion error: the converted file
+has the checkpoint's dtypes. Measured parameters:
+
+| Variant | bf16, GiB | float32, GiB |
+| --- | ---: | ---: |
+| Torch MPS, bf16 | 5.914 | 0.010 |
+| MLX, bf16 | 4.894 | 2.052 |
+| MLX, dtypes as stored | 5.943 in total | |
+
+All of these are DiT tensors; the VAEs and the vocoder are F32 on both sides. Sizes are as stored in the checkpoint.
+
+| Block of the original | Module | Tensors | In the file | Torch bf16 | MLX | Added by MLX |
+| --- | --- | ---: | ---: | --- | --- | ---: |
+| `visual_transformer_blocks` (32), `video_dec_block` | `visual_modulation` | 64 | 505 MiB, BF16 | bf16 | float32 | +505 MiB |
+| `visual_transformer_blocks` (32), `audio_dec_block` | `visual_modulation` | 64 | 252 MiB, BF16 | bf16 | float32 | +252 MiB |
+| `visual_transformer_blocks` (32) | `va_modulation` | 64 | 140 MiB, BF16 | bf16 | float32 | +140 MiB |
+| `visual_transformer_blocks` (32) | `av_modulation` | 64 | 112 MiB, BF16 | bf16 | float32 | +112 MiB |
+| `video_text_transformer_blocks` (2) | `text_modulation` | 4 | 21 MiB, BF16 | bf16 | float32 | +21 MiB |
+| `audio_text_transformer_blocks` (2) | `text_modulation` | 4 | 10 MiB, BF16 | bf16 | float32 | +10 MiB |
+| `video_time_embeddings` | whole module | 4 | 4.5 MiB, F32 | bf16 | float32 | 0 |
+| `audio_time_embeddings` | whole module | 4 | 2.8 MiB, F32 | bf16 | float32 | 0 |
+| `out_layer` | `modulation` | 2 | 3.5 MiB, BF16 | float32 | float32 | same as Torch |
+| `audio_out_layer` | `modulation` | 2 | 1.8 MiB, BF16 | float32 | float32 | same as Torch |
+
+These layers compute each block's `scale`, `shift` and `gate` coefficients, and they are heavy because of their large outputs: 16128 × 512
+weights per block in `video_dec_block`, which is part of the DiT, not of the VAE. In Torch bf16 the coefficients are computed in bf16
+and applied in float32; MLX computes them entirely in float32. Which is closer to the float32 reference has not been measured, and
+neither matches the other exactly. Report: [05-dit-model.json](https://github.com/vladislav-vasilenko/kandinsky6-mlx/blob/main/reports/05-dit-model.json).
+
+## What the rest of the footprint is
+
+From macOS's `footprint` tool, with everything loaded and after releasing the DiT. GiB, one run of each.
+
+| Category | Torch, all loaded | Torch, DiT released | MLX, all loaded | MLX, DiT released |
+| --- | ---: | ---: | ---: | ---: |
+| GPU memory (`IOAccelerator`) | 9.26 | 5.03 | 8.74 | 1.67 |
+| of which allocated by the framework | 8.44 | 2.52 | 8.60 | 1.66 |
+| `Malloc Large` (CPU) | 1.49 | 1.49 | under 0.05 | under 0.05 |
+| Other | 0.53 | 0.53 | 0.23 | 0.23 |
+
+- **About 1.5 GiB of Torch's footprint is CPU memory that stays allocated.** It appears while loading the VAE and audio VAE, not the
+  DiT. Asking the allocator to return free memory does not reduce it, and it survives releasing the DiT, so it is held, not just
+  cached. The DiT goes through `from_pretrained`; those components go through this benchmark's own loader, so **part of Torch's
+  footprint may come from our loader rather than from Torch.** What holds it has not been identified.
+- **After the DiT is released, Torch's driver keeps about 2.5 GiB above what is allocated,** even after `torch.mps.empty_cache()`.
+- **MLX returns its memory:** GPU memory falls to what is allocated. The reading right after clearing the cache was 0.6 GiB higher
+  (footprint 3.19 GiB) and fell by the next one (1.90 GiB). Whether that is from time passing or from the call in between is not known.
+
 ## Not explained yet
 
-- Why the DiT takes 6.95 GiB in MLX when its file is 5.94 GiB. Torch allocates 5.93 GiB.
-- What the 2 GiB of Torch's footprint outside the MPS driver is. Leftover CPU copies from loading are a guess, not a measurement.
-- Why Torch stays at 7.09 GiB after releasing the DiT, with 2.52 GiB allocated.
+- What holds the 1.5 GiB of `Malloc Large` in Torch, and whether a different loader removes it.
+- Why Torch's driver keeps 2.5 GiB after `empty_cache()`.
 - Why MLX's video decoding slows from about 12.5 s to about 17 s as soon as the cache is limited.
 
 ## Limits
 
 - One Mac, one size. Nothing here was measured at 864×480 for Torch's watermarks, or on a Mac with less memory.
-- Lower-watermark and load-order cells have 3 runs. Swap grew by up to 2.4 GB in the Torch cell with media components after
+- Lower-watermark and load-order cells have 3 runs or fewer. Swap grew by up to 2.4 GB in the Torch cell with media components after
   denoising, and by up to 1.8 GB in the default cells of both implementations.
 
 Method and commands: [BENCHMARK.md](https://github.com/vladislav-vasilenko/kandinsky6-mlx/blob/main/BENCHMARK.md).
