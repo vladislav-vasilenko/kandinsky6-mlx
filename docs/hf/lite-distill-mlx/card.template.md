@@ -96,11 +96,10 @@ at this size will come with the full benchmark.
 **Apple M3 Max, 40-core GPU, 48 GB, macOS 27.0.1, AC power · MLX 0.32.4 · PyTorch 2.15.0, diffusers 0.42.1.**
 Both sides use the same inputs, VAE tiling on and the DiT freed before decoding.
 Torch MPS runs with `PYTORCH_MPS_HIGH_WATERMARK_RATIO=1.0`; at its default of 1.7 it passed 43 GiB on this 48 GB Mac
-and the benchmark's memory guard stopped it.
+and the benchmark's memory guard stopped it. The speed tables use 1.0, whose peak is mostly cache: see [Memory](#memory).
 
 > **Status.** Speed at 432×256 is final apart from a few repeated rounds; it comes from independent processes in a random
-> order, paired by seed. Still to come: step-by-step memory, Torch MPS's minimum, and both sides under the same weight-loading
-> policy. Method and commands: [BENCHMARK.md](https://github.com/vladislav-vasilenko/kandinsky6-mlx/blob/main/BENCHMARK.md).
+> order, paired by seed. Still to come: Torch MPS's minimum memory. Method and commands: [BENCHMARK.md](https://github.com/vladislav-vasilenko/kandinsky6-mlx/blob/main/BENCHMARK.md).
 
 ### Time: Torch MPS / MLX
 
@@ -134,38 +133,28 @@ Median seconds per stage, warm, text-to-video.
 - **Caveats:** this is one Mac. Swap grew in many rounds on both sides, and too few rounds were free of it (2–6) to test them
   on their own. An outside event filled the disk during the run; the 14 rounds it stopped are being repeated.
 
-### Memory: Torch MPS vs MLX
+### Memory
 
-Peak physical footprint per stage, GiB, median over the 5 text-to-video clips at 432×256.
+**Full tables, causes and open questions: [memory benchmark](https://huggingface.co/VVladTech/Kandinsky-6.0-Lite-distill-5s-MLX/blob/main/MEMORY.md).**
+Peak physical footprint at 432×256; total time without loading.
 
-| Stage | Torch MPS | MLX | Difference |
-| --- | ---: | ---: | ---: |
-{{MEMORY_STAGES}}
+| Implementation | Setting | Peak, GiB | Total, s | Runs |
+| --- | --- | ---: | ---: | ---: |
+| Torch MPS | watermark 1.0 | 38.9 | 28.1 | 9 |
+| Torch MPS | watermark 0.35 | 14.9 | 27.7 | 3 |
+| Torch MPS | watermark 0.25 | out of memory | – | 3 |
+| MLX | default | 35.9 | 26.2 | 5 |
+| MLX | cache limit 8 GiB | 15.8 | 30.7 | 5 |
+| MLX | cache limit 1 GiB | 9.8 | 33.1 | 5 |
+| MLX | cache limit 0 | 8.9 | 38.8 | 5 |
 
-- **Loading and denoising are not a framework difference.** In this benchmark Torch holds the video VAE, audio VAE and
-  vocoder in memory from the start (2.5 GiB of weights, encoders included), while MLX loads them lazily, when decoding starts,
-  and only their decoders (1.7 GiB). The 2.6 GiB gap in denoising matches those 2.5 GiB. The same deferral moves part of the
-  loading time into MLX's decoding stage. A direct step-by-step measurement is queued and will replace this explanation.
-- **The peak in video decoding says little about what is needed:** each framework keeps freed buffers in a cache up to its
-  limit, about 37 GiB of GPU working set on this Mac. MLX generates in 8.9 GiB with a cache limit (next section).
-- **Defaults:** MLX runs as is. Torch MPS at its default `PYTORCH_MPS_HIGH_WATERMARK_RATIO=1.7` passed 43 GiB and was stopped by
-  the benchmark's memory guard before swap could fill the disk; the numbers here use 1.0.
-- **Torch MPS's peak is 6–8% higher (tested over 9 pairs), but this is not a verdict on memory:** those peaks are mostly cache
-  ceilings. Torch MPS with a lower watermark is not measured yet, so no minimum-memory comparison is claimed.
-
-### What memory buys in MLX
-
-MLX's buffer cache is what fills the memory above, and `--cache-limit-gib` limits it. Text-to-video at 432×256, medians over 5
-processes (cold, without loading):
-
-| Cache limit | Total, s | Memory, GiB |
-| --- | ---: | ---: |
-| None (default) | 26.2 | 35.9 |
-| 16 GiB | 30.4 | 22.7 |
-| 8 GiB | 30.7 | 15.8 |
-| 4 GiB | 31.2 | 13.0 |
-| 1 GiB | 33.1 | 9.8 |
-| 0 | 38.8 | 8.9 |
+- **Default peaks are mostly cache, on both sides.** For Torch MPS, lowering the watermark costs almost no time; set
+  `PYTORCH_MPS_HIGH_WATERMARK_RATIO` lower than our 1.0 if you run it.
+- **Around 15 GiB Torch MPS is about 10% faster at this size.** MLX has been measured lower, down to 8.9 GiB, but Torch MPS's
+  minimum is not established, so no minimum-memory winner is claimed.
+- **The gap in loading and denoising came from the loading order,** not the frameworks: with the same order the difference is
+  1–2 GiB, and in Torch's favour when media components load after denoising.
+- In MLX, limit the cache with `--cache-limit-gib`.
 
 ### Settings for less memory
 
