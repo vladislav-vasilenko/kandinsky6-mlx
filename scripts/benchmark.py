@@ -866,6 +866,20 @@ def summary_line(record: dict) -> str:
     )
 
 
+def measured(records: list[dict], retry_stopped_between: list[str] | None = None) -> set[tuple[str, int]]:
+    """Rounds not to run again. A crash is a bug to fix and measure again; a guard stop is a result, unless it falls in
+    a given time window, for a stop that was caused by something outside the benchmark. A later record supersedes."""
+    done = set()
+    for record in records:
+        key = (record["cell"]["id"], record["round"])
+        status = record["status"]
+        retry = status.startswith("exit")
+        if retry_stopped_between and status.startswith("guard"):
+            retry = retry_stopped_between[0] <= record.get("date", "") <= retry_stopped_between[1]
+        (done.discard if retry else done.add)(key)
+    return done
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--worker", help=argparse.SUPPRESS)
@@ -878,6 +892,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--rounds", type=int, help="independent processes per cell (default: by group)")
     parser.add_argument("--cooldown", type=int, default=COOLDOWN_SECONDS, help="seconds of idle between cells")
     parser.add_argument("--rerun", action="store_true", help="run cells already in the results again")
+    parser.add_argument(
+        "--retry-stopped-between",
+        nargs=2,
+        metavar=("START", "END"),
+        help="run again the guard stops recorded in this window ('YYYY-MM-DD HH:MM'), caused by something else on the Mac",
+    )
     args = parser.parse_args(argv)
     if args.worker:
         worker(json.loads(args.worker))
@@ -902,13 +922,8 @@ def main(argv: list[str] | None = None) -> int:
     results = args.out / "results.jsonl"
     done = set()
     if results.is_file() and not args.rerun:
-        done = {
-            (record["cell"]["id"], record["round"])
-            for record in map(json.loads, filter(str.strip, results.read_text().splitlines()))
-            if not record["status"].startswith(
-                "exit"
-            )  # a crash is a bug to fix and measure again; a guard stop is a result
-        }
+        records = map(json.loads, filter(str.strip, results.read_text().splitlines()))
+        done = measured(list(records), args.retry_stopped_between)
     (args.out / "machine.json").write_text(json.dumps(machine(), indent=2) + "\n")
     rounds = max(cell_rounds(c, args.rounds) for c in cells)
     failed = 0

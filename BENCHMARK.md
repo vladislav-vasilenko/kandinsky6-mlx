@@ -199,6 +199,9 @@ separate samples: each process contributes one cold total and one warm value, th
   average before the run. Rounds on battery, throttled, or with swap growing by more than 500 MB are flagged in the report
   and analysed with and without them. (The swap condition was added during the run, after swap was seen in many Smoke cells
   and before any test was computed.)
+- Guard stops are results and are not run again, with one exception, on the M3 Max run: from 22:19 to 22:25 on 2026-11-03
+  something outside the benchmark filled the disk, and the guard stopped 14 Smoke rounds. Those rounds ran again at the end,
+  with their original seeds but outside their random order (`--retry-stopped-between`). The first records stay in the results.
 - The first step of a run is excluded from per-step time, since it includes kernel compilation.
 
 **Primary endpoints.** Fixed in advance: the total time without loading and text encoding, MLX vs diffusers on MPS, cold

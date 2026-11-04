@@ -251,7 +251,7 @@ def write_tables(rows: list[dict], stats: dict, sensitivity: dict, path: Path) -
     out = ["## Primary comparisons: time", "", *effects(stats["time"]), "", "## Primary comparisons: OS footprint", ""]
     out += [*effects(stats["memory"]), ""]
     if sensitivity != stats:
-        out += ["## Sensitivity: rounds on AC power without throttling only", "", *effects(sensitivity["time"]), ""]
+        out += ["## Sensitivity: rounds on AC power, without throttling or swap growth", "", *effects(sensitivity["time"]), ""]
     for title, prefix in (
         ("Smoke cells", "smoke/"),
         ("Text encoding", "text/"),

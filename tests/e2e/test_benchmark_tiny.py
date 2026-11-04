@@ -101,6 +101,23 @@ def test_load_policy_cells_give_the_same_frames(tiny_pipelines, tmp_path):
     assert means == pytest.approx([means[0]] * len(means), rel=1e-4)
 
 
+def test_measured_retries_only_what_it_should():
+    def record(cell, round_, status, date):
+        return {"cell": {"id": cell}, "round": round_, "status": status, "date": date}
+
+    records = [
+        record("a", 0, "ok", "2026-11-03 22:00:00"),
+        record("a", 1, "exit 1", "2026-11-03 22:20:00"),
+        record("b", 0, "guard: disk 0 GB", "2026-11-03 22:20:00"),
+        record("c", 0, "guard: footprint 43 GiB", "2026-11-03 21:00:00"),
+    ]
+    assert benchmark.measured(records) == {("a", 0), ("b", 0), ("c", 0)}
+    window = ["2026-11-03 22:15", "2026-11-03 22:30"]
+    assert benchmark.measured(records, window) == {("a", 0), ("c", 0)}
+    retried = record("b", 0, "ok", "2026-11-04 12:00:00")
+    assert ("b", 0) in benchmark.measured([*records, retried], window)  # done once its retry is in the results
+
+
 def test_matrix_ids_are_unique_and_files_exist():
     cells = [cell for group in benchmark.matrix().values() for cell in group]
     ids = [cell["id"] for cell in cells]
