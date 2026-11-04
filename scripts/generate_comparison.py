@@ -25,6 +25,8 @@ CLIPS = {
     "strange_tram": ("strange_tram", None),
     "mechanical_bloom": ("mechanical_bloom", None),
     "room_assembly": ("room_assembly", None),
+    "race_driver": ("race_driver", None),
+    "skydive_pov": ("skydive_pov", None),
     "i2v_woman": ("orbit_woman", "fixtures/real_inputs/i2v_input.png"),
     "i2v_tram": ("strange_tram", "fixtures/real_inputs/i2v_input_tram.png"),
 }
