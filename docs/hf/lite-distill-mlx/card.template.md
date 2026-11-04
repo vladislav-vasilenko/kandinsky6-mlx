@@ -31,8 +31,8 @@ Apple M3 Max with 48 GB:
 | Question | Result | Evidence |
 | --- | --- | --- |
 | Same output? | In float32, yes: frames at 96 dB or more against diffusers. In bf16, it drifts as much as Torch bf16 does | [Verification](#verification) |
-| Faster with 50 steps (Lite-5s)? | **Yes, about 10–12%,** at 432×256 | tested, 9 pairs |
-| Faster with 10 steps (this model)? | **No demonstrated difference** at 432×256: MLX denoises faster and decodes slower | tested, 9 pairs |
+| Faster with 50 steps (Lite-5s)? | **Yes, about 10–12%,** at 432×256 | tested, 10 pairs |
+| Faster with 10 steps (this model)? | **No demonstrated difference** at 432×256: MLX denoises faster and decodes slower | tested, 10 pairs |
 | Faster at 864×480? | 935 s against 1024 s, this model | 3 runs each, not tested |
 | Faster prompt encoding? | 0.45 s against 1.5 s, warm | 5 runs each |
 | Works without tuning? | MLX yes. Torch MPS's default passed 43 GiB here and was stopped; it needs a lower `PYTORCH_MPS_HIGH_WATERMARK_RATIO` | 1 run |
@@ -134,23 +134,23 @@ and the benchmark's memory guard stopped it. The speed tables use 1.0, whose pea
 
 ### Time: Torch MPS vs MLX
 
-Total time without loading, in seconds: 432×256, 25 frames, 9 paired processes. **Cold** is the first generation in a fresh process;
+Total time without loading, in seconds: 432×256, 25 frames, 10 paired processes. **Cold** is the first generation in a fresh process;
 **warm** is a later one in the same process.
 
 | Model and mode | Run | Torch MPS, s | MLX, s | Torch time / MLX time (95% CI) | Result |
 | --- | --- | ---: | ---: | ---: | --- |
-| Lite-5s, 50 steps + CFG, text-to-video | cold | 168.9 | 147.0 | 1.14 (1.12–1.15) | **MLX about 12% faster** |
-| | warm | 168.8 | 146.5 | 1.12 (1.08–1.16) | **MLX about 11% faster** |
-| Lite-5s, 50 steps + CFG, image-to-video | cold | 192.2 | 167.2 | 1.14 (1.10–1.17) | **MLX about 12% faster** |
-| | warm | 193.0 | 174.4 | 1.11 (1.06–1.16) | **MLX about 10% faster** |
-| Lite-distill, 10 steps, text-to-video | cold | 28.1 | 26.6 | 1.01 (0.92–1.10) | no demonstrated difference |
-| | warm | 26.6 | 27.4 | 0.96 (0.88–1.04) | no demonstrated difference |
-| Lite-distill, 10 steps, image-to-video | cold | 30.0 | 28.7 | 1.00 (0.93–1.08) | no demonstrated difference |
-| | warm | 29.8 | 29.0 | 0.96 (0.87–1.05) | no demonstrated difference |
+| Lite-5s, 50 steps + CFG, text-to-video | cold | 168.9 | 147.0 | 1.13 (1.12–1.15) | **MLX about 12% faster** |
+| | warm | 167.6 | 146.5 | 1.11 (1.07–1.15) | **MLX about 10% faster** |
+| Lite-5s, 50 steps + CFG, image-to-video | cold | 192.0 | 168.0 | 1.13 (1.11–1.16) | **MLX about 12% faster** |
+| | warm | 192.6 | 171.2 | 1.12 (1.07–1.16) | **MLX about 10% faster** |
+| Lite-distill, 10 steps, text-to-video | cold | 28.0 | 26.6 | 0.99 (0.92–1.08) | no demonstrated difference |
+| | warm | 26.6 | 27.4 | 0.95 (0.88–1.02) | no demonstrated difference |
+| Lite-distill, 10 steps, image-to-video | cold | 30.0 | 28.7 | 1.01 (0.94–1.09) | no demonstrated difference |
+| | warm | 29.8 | 28.8 | 0.97 (0.89–1.06) | no demonstrated difference |
 
 Seconds are medians. The ratio above 1 means MLX is faster; it is the geometric mean of the paired runs, so unlike the medians it
 includes MLX's occasional slow video decodes (below). Each ratio is tested with an exact sign-flip test, Holm-corrected over the 8
-tests: p = 0.031 for the four MLX results, and p above 0.05 for the others. A claim needs p < 0.05, an interval excluding 1, and at
+tests: p = 0.016 for the four MLX results, and p above 0.05 for the others. A claim needs p < 0.05, an interval excluding 1, and at
 least a 5% difference.
 
 **How long each clip took, stage by stage, and why 5 s at 864×480 takes so much longer: [speed benchmark](https://huggingface.co/VVladTech/Kandinsky-6.0-Lite-distill-5s-MLX/blob/main/SPEED.md).**
@@ -163,7 +163,7 @@ Peak physical footprint at 432×256; total time without loading.
 
 | Implementation | Setting | Peak, GiB | Total, s | Runs |
 | --- | --- | ---: | ---: | ---: |
-| Torch MPS | watermark 1.0 | 38.9 | 28.1 | 9 |
+| Torch MPS | watermark 1.0 | 38.9 | 28.0 | 10 |
 | Torch MPS | watermark 0.35 | 14.9 | 27.7 | 3 |
 | Torch MPS | watermark 0.3, media after denoising | 13.4 | 28.4 + 2 to load media | 3 (2 timed) |
 | Torch MPS | watermark 0.25 | out of memory | – | 6 |

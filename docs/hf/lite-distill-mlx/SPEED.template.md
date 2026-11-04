@@ -9,7 +9,7 @@ see the [memory page](MEMORY.md).
 
 ## Main findings
 
-1. **With 50 steps (Lite-5s) MLX takes about 10–12% less time** at 432×256. Tested over 9 pairs.
+1. **With 50 steps (Lite-5s) MLX takes about 10–12% less time** at 432×256. Tested over 10 pairs.
 2. **With 10 steps (Lite-distill) there is no demonstrated difference** at 432×256. MLX's faster denoising and Torch's faster decoding cancel out.
 3. **At 864×480 with 10 steps, MLX took 935 s against 1024 s.** Three clean runs each, all in agreement, but too few for the test.
 4. **A Torch MPS denoising step takes 17–20% longer,** in every configuration at 432×256 and 11% longer at 864×480.
@@ -21,8 +21,8 @@ Cold, median, without loading.
 
 | Clip | Model and steps | MLX, s | Torch MPS, s | Runs |
 | --- | --- | ---: | ---: | ---: |
-| 1 s, 432×256, 25 frames | Lite-distill, 10 | 26.6 | 28.1 | 10 / 9 |
-| 1 s, 432×256, 25 frames | Lite-5s, 50 + CFG | 147.0 | 168.9 | 10 / 9 |
+| 1 s, 432×256, 25 frames | Lite-distill, 10 | 26.6 | 28.0 | 10 / 10 |
+| 1 s, 432×256, 25 frames | Lite-5s, 50 + CFG | 147.0 | 168.9 | 10 / 10 |
 | 5 s, 864×480, 121 frames | Lite-distill, 10 | 935 | 1024 | 3 / 3 |
 | 5 s, 864×480, 121 frames | Lite-5s, 50 + CFG | 7592 (2 h 7 min) | not measured | 1 / – |
 
@@ -77,9 +77,9 @@ Median seconds per stage, warm, text-to-video.
 | Model | Implementation | Denoise | Seconds per step | Video decode | Audio | Runs |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
 | Lite-distill | MLX | 13.4 | 1.34 | 13.6 | 0.4 | 10 |
-| Lite-distill | Torch MPS | 15.9 | 1.57 | 10.5 | 0.2 | 9 |
+| Lite-distill | Torch MPS | 15.9 | 1.57 | 10.5 | 0.2 | 10 |
 | Lite-5s | MLX | 133.3 | 2.67 | 12.8 | 0.4 | 10 |
-| Lite-5s | Torch MPS | 156.1 | 3.12 | 12.4 | 0.2 | 9 |
+| Lite-5s | Torch MPS | 155.5 | 3.11 | 11.8 | 0.2 | 10 |
 
 - **Denoising is where MLX gains:** a Torch MPS step takes 17–20% longer. With 50 steps this decides the total; with 10 steps
   Torch MPS's faster and steadier video decoding cancels it.
@@ -87,4 +87,4 @@ Median seconds per stage, warm, text-to-video.
 - **Loading:** about 1.3 s in MLX against 10–12 s in Torch MPS, but not like for like: MLX defers its decoders' weights to
   decoding. It is left out of the totals above.
 - **Caveats:** this is one Mac. Swap grew in many rounds on both sides, and too few rounds were free of it (2–6) to test them
-  on their own. An outside event filled the disk during the run; the 14 rounds it stopped are being repeated.
+  on their own. An outside event filled the disk during the run; the 14 rounds it stopped were repeated at the end of the run, with their original seeds but outside their random order.

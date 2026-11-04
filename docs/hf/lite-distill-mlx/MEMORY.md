@@ -28,7 +28,7 @@ These are small samples (n = 3 to 10) on one Mac and one size, with no significa
 | Implementation | Setting | Peak, GiB | Total, s | Video decode, s | Runs |
 | --- | --- | ---: | ---: | ---: | ---: |
 | Torch MPS | watermark 1.7 (default) | stopped above 43 | – | – | 1 |
-| Torch MPS | watermark 1.0 | 38.9 | 28.1 | 11.7 | 9 |
+| Torch MPS | watermark 1.0 | 38.9 | 28.0 | 11.7 | 10 |
 | Torch MPS | watermark 0.5 | 20.5 | 27.6 | 11.3 | 3 |
 | Torch MPS | watermark 0.35 | 14.9 | 27.7 | 11.4 | 3 |
 | Torch MPS | watermark 0.3 | 13.0 in 1 run; out of memory in 2 | 28.2 | 11.9 | 3 |
@@ -51,7 +51,7 @@ steps took 10 s instead of 1.6 s. Its memory reading is kept, as it is in line w
 
 In the main benchmark, Torch holds the video VAE, audio VAE and vocoder from the start, encoders included. MLX loads only their
 decoders, lazily, when decoding starts. To compare like for like, each side also ran the other's order. Medians over 3 runs, except
-for the first row of each pair (Torch 9, MLX 10).
+for the first row of each pair (10 each).
 
 | Implementation | Media components | Memory in denoising, GiB | Denoising, s |
 | --- | --- | ---: | ---: |
