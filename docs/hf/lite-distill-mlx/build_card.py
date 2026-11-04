@@ -22,12 +22,12 @@ def video(stem: str, label: str) -> str:
     )
 
 
-def pair(name: str, input_image: str | None = None) -> str:
+def pair(name: str, input_image: str | None = None, preset: str = "smoke") -> str:
     columns = []
     if input_image:
         columns.append(("Input image", f'<img src="{BASE}/{input_image}" alt="Input image" width="100%">'))
     for label, suffix in (("Torch MPS (diffusers)", "torch_mps"), ("MLX", "mlx")):
-        columns.append((label, video(f"{name}_smoke_seed42_{suffix}", f"{label}: {name}")))
+        columns.append((label, video(f"{name}_{preset}_seed42_{suffix}", f"{label}: {name}")))
     width = 100 // len(columns)
     head = "".join(f'<th width="{width}%">{label}</th>' for label, _ in columns)
     body = "".join(f'<td width="{width}%">{cell}</td>' for _, cell in columns)
@@ -121,6 +121,10 @@ replacements = {
     "{{PROMPT_ROOM}}": prompt_block("room_assembly"),
     "{{PAIR_I2V_WOMAN}}": pair("i2v_woman", "i2v_input_woman.webp"),
     "{{PAIR_I2V_TRAM}}": pair("i2v_tram", "i2v_input_tram.webp"),
+    "{{PAIR_TRAM_5S}}": pair("strange_tram", preset="baseline"),
+    "{{PROMPT_TRAM_5S}}": prompt_block("strange_tram_baseline"),
+    "{{VIDEO_FOX_5S}}": video("fox_baseline_seed42_mlx", "MLX: fox, 5 s at 864x480"),
+    "{{PROMPT_FOX_5S}}": prompt_block("fox_baseline"),
     "{{BASELINE_VIDEO}}": video("orbit_woman_baseline_seed42_mlx", "MLX: 5 s at 864x480"),
     "{{FRAME_SHEET}}": f"{BASE}/torch_mps_vs_mlx_frame12.webp",
     "{{MEMORY_STAGES}}": memory_rows(),

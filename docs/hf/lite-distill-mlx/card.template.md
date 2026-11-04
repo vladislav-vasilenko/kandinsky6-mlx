@@ -100,8 +100,22 @@ Frame 12 (0.5 s) of the text-to-video and image-to-video clips above. Left: Torc
 
 ### 5 seconds at 864×480
 
-**MLX only · 864×480 · 121 frames · 24 FPS · 10 steps · audio · the Fashion film preset's long prompt.** A Torch MPS pair
-at this size will come with the full benchmark.
+**864×480 · 121 frames · 24 FPS · 10 steps · audio · seed 42.** These clips were generated before the port moved to diffusers' float32 rule
+and will be regenerated with it.
+
+#### Retrofuturist tram, Torch MPS vs MLX
+
+{{PAIR_TRAM_5S}}
+
+{{PROMPT_TRAM_5S}}
+
+#### Fox in the snow, MLX
+
+{{VIDEO_FOX_5S}}
+
+{{PROMPT_FOX_5S}}
+
+#### Fashion film, MLX
 
 {{BASELINE_VIDEO}}
 

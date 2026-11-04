@@ -146,8 +146,35 @@ Frame 12 (0.5 s) of the text-to-video and image-to-video clips above. Left: Torc
 
 ### 5 seconds at 864×480
 
-**MLX only · 864×480 · 121 frames · 24 FPS · 10 steps · audio · the Fashion film preset's long prompt.** A Torch MPS pair
-at this size will come with the full benchmark.
+**864×480 · 121 frames · 24 FPS · 10 steps · audio · seed 42.** These clips were generated before the port moved to diffusers' float32 rule
+and will be regenerated with it.
+
+#### Retrofuturist tram, Torch MPS vs MLX
+
+<table width="100%">
+<thead><tr><th width="50%">Torch MPS (diffusers)</th><th width="50%">MLX</th></tr></thead>
+<tbody><tr><td width="50%"><video controls playsinline preload="metadata" width="100%" poster="https://huggingface.co/VVladTech/Kandinsky-6.0-Lite-distill-5s-MLX/resolve/main/examples/strange_tram_baseline_seed42_torch_mps-poster.webp" aria-label="Torch MPS (diffusers): strange_tram"><source src="https://huggingface.co/VVladTech/Kandinsky-6.0-Lite-distill-5s-MLX/resolve/main/examples/strange_tram_baseline_seed42_torch_mps.mp4" type="video/mp4"><a href="https://huggingface.co/VVladTech/Kandinsky-6.0-Lite-distill-5s-MLX/resolve/main/examples/strange_tram_baseline_seed42_torch_mps.mp4">Torch MPS (diffusers): strange_tram MP4</a></video></td><td width="50%"><video controls playsinline preload="metadata" width="100%" poster="https://huggingface.co/VVladTech/Kandinsky-6.0-Lite-distill-5s-MLX/resolve/main/examples/strange_tram_baseline_seed42_mlx-poster.webp" aria-label="MLX: strange_tram"><source src="https://huggingface.co/VVladTech/Kandinsky-6.0-Lite-distill-5s-MLX/resolve/main/examples/strange_tram_baseline_seed42_mlx.mp4" type="video/mp4"><a href="https://huggingface.co/VVladTech/Kandinsky-6.0-Lite-distill-5s-MLX/resolve/main/examples/strange_tram_baseline_seed42_mlx.mp4">MLX: strange_tram MP4</a></video></td></tr></tbody>
+</table>
+
+<details>
+<summary>Prompt</summary>
+
+Surreal retrofuturist dark comedy, 1970s science-fiction cinema, tactile practical creature effects, worn brass, painted miniatures, muted teal and amber, subtle film grain. A rain-wet tram stop in an imaginary industrial city. An original pear-shaped, blue-skinned commuter with tiny spectacles and a tan raincoat waits beside a brass ticket machine. He has two arms and two legs. Overcast daylight mixed with warm tungsten light in the ticket machine. Track slowly left by about one metre as the action unfolds; preserve the same subject and scale. Initial state: The commuter holds one paper ticket. The ticket slot is shut. Steam drifts behind the stop. One uninterrupted shot, about 5 seconds. From 0 to 1 seconds: The commuter inserts the ticket halfway into the slot. From 1 to 2.8 seconds: A small mechanical tongue takes the ticket, curls it into a neat tube, and pushes it back out. The creature watches without moving his feet. From 2.8 to 4.2 seconds: The commuter cautiously takes the rolled ticket with the same hand and tilts his head. A tram headlamp slides into the far background. From 4.2 to 5 seconds: Hold his puzzled expression as the slot closes with exaggerated politeness. Maintain tactile material detail and a coherent street. &lt;AUDCAP&gt;Rain, faint tram rails humming. A wet rubber squeak followed by delicate brass clicks. A distant tram approaches and rings once. One final click; quiet rain, no narration.&lt;ENDAUDCAP&gt;
+
+</details>
+
+#### Fox in the snow, MLX
+
+<video controls playsinline preload="metadata" width="100%" poster="https://huggingface.co/VVladTech/Kandinsky-6.0-Lite-distill-5s-MLX/resolve/main/examples/fox_baseline_seed42_mlx-poster.webp" aria-label="MLX: fox, 5 s at 864x480"><source src="https://huggingface.co/VVladTech/Kandinsky-6.0-Lite-distill-5s-MLX/resolve/main/examples/fox_baseline_seed42_mlx.mp4" type="video/mp4"><a href="https://huggingface.co/VVladTech/Kandinsky-6.0-Lite-distill-5s-MLX/resolve/main/examples/fox_baseline_seed42_mlx.mp4">MLX: fox, 5 s at 864x480 MP4</a></video>
+
+<details>
+<summary>Prompt</summary>
+
+A red fox runs through fresh snow at dawn, slow motion. &lt;AUDCAP&gt;Crunching snow, distant crows.&lt;ENDAUDCAP&gt;
+
+</details>
+
+#### Fashion film, MLX
 
 <video controls playsinline preload="metadata" width="100%" poster="https://huggingface.co/VVladTech/Kandinsky-6.0-Lite-distill-5s-MLX/resolve/main/examples/orbit_woman_baseline_seed42_mlx-poster.webp" aria-label="MLX: 5 s at 864x480"><source src="https://huggingface.co/VVladTech/Kandinsky-6.0-Lite-distill-5s-MLX/resolve/main/examples/orbit_woman_baseline_seed42_mlx.mp4" type="video/mp4"><a href="https://huggingface.co/VVladTech/Kandinsky-6.0-Lite-distill-5s-MLX/resolve/main/examples/orbit_woman_baseline_seed42_mlx.mp4">MLX: 5 s at 864x480 MP4</a></video>
 
