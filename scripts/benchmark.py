@@ -80,6 +80,7 @@ ROUNDS = {
     "baseline-cfg": 1,
     "torch-memory": 3,
     "load-policy": 3,
+    "torch-minimum": 3,
 }
 SEEDS = (42, 1, 2, 3, 4, 5, 6, 7, 8, 9)
 
@@ -255,6 +256,26 @@ def matrix() -> dict[str, list[dict]]:
         )
         for ratio in (0.5, 0.35, 0.25)
     ]
+    # Torch MPS's smallest footprint: the lowest watermarks, with media components loaded from the start and after denoising.
+    torch_minimum = [
+        pipeline_cell(
+            "torch-minimum", "smoke", "distill", "watermark-0.3", "diffusers", "mps", mps_high_watermark=0.3, repeat=1
+        ),
+        *(
+            pipeline_cell(
+                "torch-minimum",
+                "smoke",
+                "distill",
+                f"media-after-denoise-watermark-{ratio}",
+                "diffusers",
+                "mps",
+                mps_high_watermark=ratio,
+                defer_media=True,
+                repeat=1,
+            )
+            for ratio in (0.3, 0.25, 0.2)
+        ),
+    ]
     # Same loading policy on both sides: media after denoising (the study notebook's order) and everything at once.
     load_policy = [
         pipeline_cell(
@@ -271,6 +292,7 @@ def matrix() -> dict[str, list[dict]]:
     ]
     return {
         "load-policy": load_policy,
+        "torch-minimum": torch_minimum,
         "torch-memory": torch_memory,
         "text": text,
         "smoke": smoke,

@@ -2,6 +2,7 @@
 
 import importlib.util
 import json
+import os
 from pathlib import Path
 
 import pytest
@@ -101,6 +102,17 @@ def test_load_policy_cells_give_the_same_frames(tiny_pipelines, tmp_path):
     assert means == pytest.approx([means[0]] * len(means), rel=1e-4)
 
 
+def test_footprint_categories_are_read(tmp_path):
+    probe_spec = importlib.util.spec_from_file_location("memory_probe", ROOT / "scripts" / "memory_probe.py")
+    probe = importlib.util.module_from_spec(probe_spec)
+    probe_spec.loader.exec_module(probe)
+    block = bytearray(200 * 2**20)
+    block[::4096] = b"\x01" * len(block[::4096])
+    categories = probe.dirty_categories(os.getpid())
+    assert sum(categories.values()) >= 0.19
+    probe.relieve_allocator()
+
+
 def test_measured_retries_only_what_it_should():
     def record(cell, round_, status, date):
         return {"cell": {"id": cell}, "round": round_, "status": status, "date": date}
@@ -136,5 +148,5 @@ def test_memory_probe_on_the_tiny_pipeline(tiny_pipelines, tmp_path):
     done = subprocess.run(command, capture_output=True, text=True, check=False)
     assert done.returncode == 0, done.stderr[-2000:]
     records = [json.loads(line) for line in out.read_text().splitlines()]
-    assert [r["framework"] for r in records] == ["mlx", "torch"]
+    assert [r["framework"] for r in records] == ["mlx", "mlx-as-stored", "torch"]
     assert all(step["footprint_gib"] > 0 for r in records for step in r["steps"])
