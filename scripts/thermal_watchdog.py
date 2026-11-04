@@ -20,6 +20,7 @@ import time
 
 # Scripts first, so that nothing starts the next job; the workers last.
 WATCHED = [
+    r"benchmarks/results/m3max-48gb/resume\.sh",
     r"benchmarks/results/m3max-48gb/after_all\.sh",
     r"benchmarks/results/m3max-48gb/run_all\.sh",
     r"caffeinate -dims uv run .*scripts/benchmark\.py",
@@ -109,7 +110,7 @@ def main() -> int:
                 done = subprocess.run(["/usr/bin/pmset", "sleepnow"], capture_output=True, text=True, check=False)
                 log(f"pmset sleepnow: exit {done.returncode} {done.stdout.strip()} {done.stderr.strip()}")
             return 0
-        idle = 0 if any(matching(p) for p in WATCHED[:2]) else idle + 1
+        idle = 0 if any(matching(p) for p in WATCHED[:3]) else idle + 1
         if idle >= 3:
             log("benchmark and queue finished, exiting")
             return 0

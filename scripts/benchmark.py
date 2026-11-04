@@ -82,6 +82,7 @@ ROUNDS = {
     "load-policy": 3,
     "torch-minimum": 3,
     "rule-diffusers": 5,
+    "budgets-baseline-diffusers": 1,
 }
 SEEDS = (42, 1, 2, 3, 4, 5, 6, 7, 8, 9)
 
@@ -314,6 +315,21 @@ def matrix() -> dict[str, list[dict]]:
         }
         for cell in groups["tradeoffs"] + groups["profiles"]
         if re.search(r"/(default|cache-\d|cache-0|smoke-\d)", cell["id"])
+    ]
+
+    # The primary MLX cells and the Baseline memory budgets on the same rule, for the final tables. Torch MPS's cells do not
+    # depend on the rule, so they stay the pairs of the primary comparison, by round and seed.
+    def on_diffusers_rule(cell: dict, group: str) -> dict:
+        name = cell["id"].rsplit("/", 1)[1]
+        return cell | {"id": f"{group}/{cell['model']}/{name}", "group": group, "fp32_rule": "diffusers"}
+
+    groups["primary-diffusers"] = [
+        on_diffusers_rule(cell, "primary-diffusers")
+        for cell in groups["smoke"]
+        if cell.get("primary") and cell["impl"] == "mlx"
+    ]
+    groups["budgets-baseline-diffusers"] = [
+        on_diffusers_rule(cell, "budgets-baseline-diffusers") for cell in groups["profiles-baseline"]
     ]
     return groups
 
