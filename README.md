@@ -2,7 +2,17 @@
 
 MLX port of [Kandinsky 6](https://github.com/kandinskylab/kandinsky-6) text/image-to-video+audio models for Apple Silicon.
 
-**Status:** planning. Nothing is implemented yet; the work is split into stage specs in [`specs/`](specs/README.md).
+**Status:** working on Lite. Text-to-video and image-to-video with audio run on Lite-distill-5s and Lite-5s, checked against `diffusers==0.42.1`. Converted Lite-distill weights: [Hugging Face](https://huggingface.co/VVladTech/Kandinsky-6.0-Lite-distill-5s-MLX).
+
+- Done: specs 00–13, with results in [`reports/`](reports/). Spec 10 is `PARTIAL`: tiled decoding was compared on the first 8 latent frames, because the whole clip's reference did not fit this Mac.
+- In progress: spec 14, performance and memory ([`BENCHMARK.md`](BENCHMARK.md)).
+- Not run: Lite-pretrain-5s and the Pro checkpoints on real weights. They are supported by config only.
+- Next: Core ML / ANE experiments and packaging. See [`specs/`](specs/README.md).
+
+```bash
+uv run --extra text python scripts/generate.py --weights weights/lite-distill \
+    --prompt "A red fox runs through fresh snow ... <AUDCAP>Crunching snow.<ENDAUDCAP>" --preset smoke --out fox.mp4
+```
 
 ## Scope
 
