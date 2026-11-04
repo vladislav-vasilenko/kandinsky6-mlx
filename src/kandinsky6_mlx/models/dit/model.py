@@ -124,7 +124,9 @@ class Kandinsky6Transformer3DModel(nn.Module):
         return cls(**{key: value for key, value in config.items() if key in accepted})
 
     @classmethod
-    def from_converted(cls, path: str | Path, dtype: mx.Dtype = mx.bfloat16) -> "Kandinsky6Transformer3DModel":
+    def from_converted(
+        cls, path: str | Path, dtype: mx.Dtype = mx.bfloat16, fp32_rule: str = "substring"
+    ) -> "Kandinsky6Transformer3DModel":
         """Load a converted transformer directory (`config.json` + `model.safetensors`).
 
         Parameters are cast to `dtype`, except time embeddings and every modulation, which run in float32 as with
@@ -134,17 +136,17 @@ class Kandinsky6Transformer3DModel(nn.Module):
         path = Path(path)
         model = cls.from_config(json.loads((path / CONFIG_NAME).read_text()))
         model.load_weights(str(path / WEIGHTS_NAME), strict=True)
-        model.apply_dtype_policy(dtype)
+        model.apply_dtype_policy(dtype, fp32_rule)
         mx.eval(model.parameters())
         return model
 
-    def apply_dtype_policy(self, dtype: mx.Dtype) -> None:
+    def apply_dtype_policy(self, dtype: mx.Dtype, fp32_rule: str = "substring") -> None:
         """Cast floating parameters to `dtype`, keeping `keeps_fp32` ones in float32."""
 
         def cast(name: str, value: mx.array) -> mx.array:
             if not mx.issubdtype(value.dtype, mx.floating):
                 return value
-            return value.astype(mx.float32 if keeps_fp32("transformer", name) else dtype)
+            return value.astype(mx.float32 if keeps_fp32("transformer", name, fp32_rule) else dtype)
 
         self.update(tree_map_with_path(cast, self.parameters()))
 

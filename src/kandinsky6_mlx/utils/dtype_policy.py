@@ -17,9 +17,19 @@ FLOAT_DTYPES = ("F32", "BF16", "F16", "F64")
 MODES = ("checkpoint", "float32")
 
 
-def keeps_fp32(component: str, name: str) -> bool:
-    """Whether parameter `name` of `component` runs in float32 regardless of the model dtype."""
-    return any(part in name for part in KEEP_FP32_SUBSTRINGS.get(component, ()))
+def keeps_fp32(component: str, name: str, rule: str = "substring") -> bool:
+    """Whether parameter `name` of `component` runs in float32 regardless of the requested dtype.
+
+    `rule="substring"` holds every time embedding and modulation in float32, the port's default. `rule="diffusers"` is what
+    `from_pretrained(torch_dtype=...)` does in diffusers 0.42.1, which compares each dot-separated part of the name exactly
+    (`models/model_loading_utils.py`), so only `out_layer.modulation` and `audio_out_layer.modulation` match.
+    """
+    parts = KEEP_FP32_SUBSTRINGS.get(component, ())
+    if rule == "diffusers":
+        return any(part in name.split(".") for part in parts)
+    if rule == "substring":
+        return any(part in name for part in parts)
+    raise ValueError(f"unknown float32 rule {rule!r}; expected 'substring' or 'diffusers'")
 
 
 @dataclass(frozen=True)

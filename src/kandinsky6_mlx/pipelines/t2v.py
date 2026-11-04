@@ -131,7 +131,7 @@ class Kandinsky6Pipeline:
 
     @classmethod
     def from_converted(
-        cls, path: str | Path, dtype: mx.Dtype = mx.bfloat16, audio: bool = True
+        cls, path: str | Path, dtype: mx.Dtype = mx.bfloat16, audio: bool = True, fp32_rule: str = "substring"
     ) -> "Kandinsky6Pipeline":
         """Load a converted checkpoint directory (`transformer/`, `vae/`, `audio_vae/`, `vocoder/`, `scheduler/`).
 
@@ -143,7 +143,7 @@ class Kandinsky6Pipeline:
         def config(component: str) -> dict:
             return json.loads((path / component / "config.json").read_text())
 
-        transformer = Kandinsky6Transformer3DModel.from_converted(path / "transformer", dtype)
+        transformer = Kandinsky6Transformer3DModel.from_converted(path / "transformer", dtype, fp32_rule)
         vae = AutoencoderKLHunyuanVideo.from_config(config("vae"))
         vae.load_weights(AutoencoderKLHunyuanVideo.decoder_weights(mx.load(str(path / "vae" / "model.safetensors"))))
         audio_vae = vocoder = None
