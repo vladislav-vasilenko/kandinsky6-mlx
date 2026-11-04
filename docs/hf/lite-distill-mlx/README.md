@@ -23,10 +23,24 @@ Video with synchronized audio on Apple Silicon: weights of
 This is an independent community port, not an official release. All credit for the model goes to
 [Kandinsky Lab](https://kandinskylab.ai/models/video/); see the [technical report](https://arxiv.org/abs/2610.05608).
 
-**Apple M3 Max, 48 GB, compared with the standard weights in diffusers on Torch MPS: with 50 guided steps (Lite-5s) MLX takes
-about 10–12% less time, a tested difference. With the 10 steps of this distilled model there is no demonstrated difference at
-432×256 (about 27 s for a 1 s clip with sound, without loading). A 5 s clip at 864×480 took 935 s against 1024 s (3 runs, not
-tested).** See [Speed and memory](#speed-and-memory).
+## Is it worth using?
+
+**The port is correct and useful, but the gain is moderate.** Compared with the standard weights in diffusers on Torch MPS, on an
+Apple M3 Max with 48 GB:
+
+| Question | Result | Evidence |
+| --- | --- | --- |
+| Same output? | In float32, yes: frames at 96 dB or more against diffusers. In bf16, it drifts as much as Torch bf16 does | [Verification](#verification) |
+| Faster with 50 steps (Lite-5s)? | **Yes, about 10–12%,** at 432×256 | tested, 9 pairs |
+| Faster with 10 steps (this model)? | **No demonstrated difference** at 432×256: MLX denoises faster and decodes slower | tested, 9 pairs |
+| Faster at 864×480? | 935 s against 1024 s, this model | 3 runs each, not tested |
+| Faster prompt encoding? | 0.45 s against 1.5 s, warm | 5 runs each |
+| Works without tuning? | MLX yes. Torch MPS's default passed 43 GiB here and was stopped; it needs a lower `PYTORCH_MPS_HIGH_WATERMARK_RATIO` | 1 run |
+| Less memory? | Not at 13–15 GiB, where tuned Torch MPS is about 10% faster. Lower down, MLX ran at 8.9 GiB, and Torch MPS has not completed a run below 13 GiB | [Memory](#memory) |
+
+**Worth it if** you run many steps on a Mac, want it to work without tuning, or have to stay below about 13 GiB. **Not proven yet:** a
+Mac with less memory has not been tested, and such a Mac's chip will also be slower. If you already run a tuned Torch MPS setup with
+this distilled model and have the memory, you will gain little.
 
 Works: text-to-video and image-to-video with audio, prompt to MP4 in one command, 432×256 and 864×480.
 All components are compared with diffusers on real weights: see [Verification](#verification).
