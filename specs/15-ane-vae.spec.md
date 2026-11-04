@@ -14,7 +14,18 @@ Find out whether the video VAE decoder can run on Core ML and the Neural Engine 
 
 Guards: frames PSNR >= 40 dB vs the float32 reference; decode time not worse than the MLX default (median from the spec 14 `tradeoffs` cells).
 
-Reference points from spec 14: about 36 GiB and 12.7 s by default, about 6.5 GiB and 25 s with MLX's cache limit 0 (replace them with the final benchmark's medians). To be worth keeping, the port must use less memory than the second, or match its memory at the first's speed.
+Reference points from spec 14, Lite-distill at 432×256 (replace them with the final benchmark's medians):
+
+| Variant | Memory in the video stage, GiB | Video decoding, s |
+| --- | ---: | ---: |
+| MLX, no cache limit | 35.9 | 12.5 |
+| MLX, cache limit 1 GiB | 7.3 | 19.5 |
+| MLX, cache limit 0 | 6.5 | 24.8 |
+| Torch MPS, watermark 0.35 | 14.9 | 11.4 |
+
+To be worth keeping, the port must beat the best of these, MLX and Torch MPS alike: for example about 7 GiB at about 12 s, which none of them gives today. Matching the speed alone is not enough.
+
+Before starting, check what spec 14b found about why MLX's video decoding slows from about 12.5 s to about 17 s once the cache is limited. If that can be fixed in MLX, most of the benefit may come without Core ML, and the targets above move.
 
 ## Read first
 
