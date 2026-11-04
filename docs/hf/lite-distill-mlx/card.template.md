@@ -47,6 +47,9 @@ All components are compared with diffusers on real weights: see [Verification](#
 
 ## Video examples: Torch MPS vs MLX
 
+Times under each pair are one cold run of that clip, loading included. Loading is not like for like (MLX defers part of it), so for comparing speed use the
+[speed benchmark](https://huggingface.co/VVladTech/Kandinsky-6.0-Lite-distill-5s-MLX/blob/main/SPEED.md), which has repeated runs.
+
 **Standard weights in diffusers on Torch MPS vs this repository in MLX · same prompts, text embeddings, noise and seed ·
 432×256 · 25 frames · 24 FPS · 10 PiFlow steps · bf16 DiT · audio.**
 
@@ -101,7 +104,7 @@ Frame 12 (0.5 s) of the text-to-video and image-to-video clips above. Left: Torc
 ### 5 seconds at 864×480
 
 **864×480 · 121 frames · 24 FPS · 10 steps · audio · seed 42.** These clips were generated before the port moved to diffusers' float32 rule
-and will be regenerated with it.
+and will be regenerated with it. Other work was running on the Mac during these runs, so their times are longer than the clean benchmark's 935 s (MLX) and 1024 s (Torch MPS).
 
 #### Retrofuturist tram, Torch MPS vs MLX
 
@@ -150,24 +153,8 @@ includes MLX's occasional slow video decodes (below). Each ratio is tested with 
 tests: p = 0.031 for the four MLX results, and p above 0.05 for the others. A claim needs p < 0.05, an interval excluding 1, and at
 least a 5% difference.
 
-### Where the time goes
-
-Median seconds per stage, warm, text-to-video.
-
-| Model | Implementation | Denoise | Seconds per step | Video decode | Audio | Runs |
-| --- | --- | ---: | ---: | ---: | ---: | ---: |
-| Lite-distill | MLX | 13.4 | 1.34 | 13.6 | 0.4 | 10 |
-| Lite-distill | Torch MPS | 15.9 | 1.57 | 10.5 | 0.2 | 9 |
-| Lite-5s | MLX | 133.3 | 2.67 | 12.8 | 0.4 | 10 |
-| Lite-5s | Torch MPS | 156.1 | 3.12 | 12.4 | 0.2 | 9 |
-
-- **Denoising is where MLX gains:** a Torch MPS step takes 17–20% longer. With 50 steps this decides the total; with 10 steps
-  Torch MPS's faster and steadier video decoding cancels it.
-- **MLX's video decoding is uneven at 432×256:** usually about 12.7 s, sometimes 20–35 s. The cause is not established yet.
-- **Loading:** about 1.3 s in MLX against 10–12 s in Torch MPS, but not like for like: MLX defers its decoders' weights to
-  decoding. It is left out of the totals above.
-- **Caveats:** this is one Mac. Swap grew in many rounds on both sides, and too few rounds were free of it (2–6) to test them
-  on their own. An outside event filled the disk during the run; the 14 rounds it stopped are being repeated.
+**How long each clip took, stage by stage, and why 5 s at 864×480 takes so much longer: [speed benchmark](https://huggingface.co/VVladTech/Kandinsky-6.0-Lite-distill-5s-MLX/blob/main/SPEED.md).**
+At that size a clip takes about 16–17 minutes on both sides here, against about half a minute at 432×256. Each pair above shows its own times.
 
 ### Memory
 
@@ -222,16 +209,6 @@ cold). The encoders are freed before the DiT loads.
 
 Torch pads the prompt to 1153 tokens as the diffusers pipeline does; MLX runs the real tokens only, with the same result
 for them.
-
-### 864×480, 121 frames, 10 steps
-
-Cold, 3 processes each, without loading. All three runs agree, but 3 cannot reach the test's threshold, so this is not a tested
-claim. MLX's default cache is used; see the table above for limits.
-
-| Implementation | Denoise, s | Seconds per step | Video decode, s | Audio, s | Total, s | Memory, GiB |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| MLX | 718 | 72.0 | 215 | 1.7 | 935 | 36.5 |
-| Torch MPS | 798 | 80.0 | 225 | 1.3 | 1024 | 38.5 |
 
 ## Quick start
 

@@ -22,18 +22,6 @@ def video(stem: str, label: str) -> str:
     )
 
 
-def pair(name: str, input_image: str | None = None, preset: str = "smoke") -> str:
-    columns = []
-    if input_image:
-        columns.append(("Input image", f'<img src="{BASE}/{input_image}" alt="Input image" width="100%">'))
-    for label, suffix in (("Torch MPS (diffusers)", "torch_mps"), ("MLX", "mlx")):
-        columns.append((label, video(f"{name}_{preset}_seed42_{suffix}", f"{label}: {name}")))
-    width = 100 // len(columns)
-    head = "".join(f'<th width="{width}%">{label}</th>' for label, _ in columns)
-    body = "".join(f'<td width="{width}%">{cell}</td>' for _, cell in columns)
-    return f'<table width="100%">\n<thead><tr>{head}</tr></thead>\n<tbody><tr>{body}</tr></tbody>\n</table>'
-
-
 def prompt_block(key: str) -> str:
     return f"<details>\n<summary>Prompt</summary>\n\n{html.escape(prompts[key])}\n\n</details>"
 
@@ -58,6 +46,69 @@ def medians(names: list[str], label: str) -> dict:
         "no_load": statistics.median(total(r, False) for r in runs),
         "memory": statistics.median(r["footprint_peak_gib"] for r in runs),
     }
+
+
+def clip_seconds(record: dict) -> dict:
+    return record["runs"][0]["seconds"]
+
+
+def clip_times(name: str, preset: str) -> str:
+    """One line under a pair: how long each side took for this clip."""
+    parts = []
+    for label, title in (("torch_mps", "Torch MPS"), ("mlx", "MLX")):
+        seconds = clip_seconds(records[f"{name}-{preset}-{label}"])
+        parts.append(
+            f"{title} **{sum(seconds.values()):.0f} s** (load {seconds['load']:.0f}, denoise {seconds['denoise']:.0f}, "
+            f"video {seconds['video_decode']:.0f}, audio {seconds['audio_decode']:.1f})"
+        )
+    return "Generation time, one cold run: " + " · ".join(parts)
+
+
+CLIP_ROWS = (
+    ("Fashion film", "orbit_woman", "smoke"),
+    ("Fox in the snow", "fox", "smoke"),
+    ("Retrofuturist tram", "strange_tram", "smoke"),
+    ("Biomechanical flower", "mechanical_bloom", "smoke"),
+    ("Scandinavian room", "room_assembly", "smoke"),
+    ("Image to video: woman", "i2v_woman", "smoke"),
+    ("Image to video: tram", "i2v_tram", "smoke"),
+    ("Fox in the snow", "fox", "baseline"),
+    ("Retrofuturist tram", "strange_tram", "baseline"),
+)
+
+
+def clip_table() -> str:
+    rows = [
+        "| Clip | Size | Implementation | Load | Image | Denoise | Video | Audio | Total | Peak memory, GiB |",
+        "| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+    ]
+    sizes = {"smoke": "432×256, 1 s", "baseline": "864×480, 5 s"}
+    for title, name, preset in CLIP_ROWS:
+        for label, implementation in (("torch_mps", "Torch MPS"), ("mlx", "MLX")):
+            record = records[f"{name}-{preset}-{label}"]
+            seconds = clip_seconds(record)
+            image = seconds.get("image_encode")
+            digits = 1 if preset == "smoke" else 0
+            rows.append(
+                f"| {title} | {sizes[preset]} | {implementation} | {seconds['load']:.1f} | "
+                f"{'–' if image is None else f'{image:.1f}'} | {seconds['denoise']:.{digits}f} | "
+                f"{seconds['video_decode']:.{digits}f} | {seconds['audio_decode']:.1f} | "
+                f"**{sum(seconds.values()):.{digits}f}** | {record['footprint_peak_gib']:.1f} |"
+            )
+    return "\n".join(rows)
+
+
+def pair(name: str, input_image: str | None = None, preset: str = "smoke") -> str:
+    columns = []
+    if input_image:
+        columns.append(("Input image", f'<img src="{BASE}/{input_image}" alt="Input image" width="100%">'))
+    for label, suffix in (("Torch MPS (diffusers)", "torch_mps"), ("MLX", "mlx")):
+        columns.append((label, video(f"{name}_{preset}_seed42_{suffix}", f"{label}: {name}")))
+    width = 100 // len(columns)
+    head = "".join(f'<th width="{width}%">{label}</th>' for label, _ in columns)
+    body = "".join(f'<td width="{width}%">{cell}</td>' for _, cell in columns)
+    table = f'<table width="100%">\n<thead><tr>{head}</tr></thead>\n<tbody><tr>{body}</tr></tbody>\n</table>'
+    return f"{table}\n\n{clip_times(name, preset)}"
 
 
 T2V = ["orbit_woman", "fox", "strange_tram", "mechanical_bloom", "room_assembly"]
@@ -140,4 +191,6 @@ for key, value in replacements.items():
 if "{{" in card:
     raise SystemExit("unfilled placeholder in the card")
 (HERE / "README.md").write_text(card)
+speed = (HERE / "SPEED.template.md").read_text().replace("{{CLIP_TIMES}}", clip_table())
+(HERE / "SPEED.md").write_text(speed)
 print("README.md", len(card), "bytes")
