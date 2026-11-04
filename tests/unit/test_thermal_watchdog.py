@@ -34,3 +34,20 @@ def test_stop_processes_ends_only_what_matches():
     finally:
         target.kill()
         other.kill()
+
+
+def test_matching_finds_an_ancestor(tmp_path):
+    """A queue script that starts the watchdog is its ancestor, and pgrep leaves those out without -a."""
+    child = tmp_path / "child.py"
+    child.write_text(
+        "import importlib.util, sys\n"
+        f"spec = importlib.util.spec_from_file_location('w', {str(ROOT / 'scripts' / 'thermal_watchdog.py')!r})\n"
+        "w = importlib.util.module_from_spec(spec)\n"
+        "spec.loader.exec_module(w)\n"
+        "print(w.matching('ancestor_marker_98763'))\n"
+    )
+    script = tmp_path / "ancestor_marker_98763.sh"
+    script.write_text(f'#!/bin/bash\n/usr/bin/python3 "{child}"\nsleep 0\n')
+    script.chmod(0o755)
+    done = subprocess.run([str(script)], capture_output=True, text=True, check=True, timeout=30)
+    assert done.stdout.strip() not in ("", "[]"), done.stdout + done.stderr

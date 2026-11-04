@@ -50,7 +50,8 @@ def stop_reason(state: int, serious_since: float | None, now: float) -> str | No
 
 
 def matching(pattern: str) -> list[int]:
-    out = subprocess.run(["/usr/bin/pgrep", "-f", pattern], capture_output=True, text=True, check=False).stdout
+    # -a: by default pgrep leaves out its ancestors, which include the queue script when that script started this watchdog.
+    out = subprocess.run(["/usr/bin/pgrep", "-a", "-f", pattern], capture_output=True, text=True, check=False).stdout
     return [pid for pid in map(int, out.split()) if pid != os.getpid()]
 
 
