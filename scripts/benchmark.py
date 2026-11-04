@@ -83,6 +83,7 @@ ROUNDS = {
     "torch-minimum": 3,
     "rule-diffusers": 5,
     "budgets-baseline-diffusers": 1,
+    "baseline-diffusers": 3,
 }
 SEEDS = (42, 1, 2, 3, 4, 5, 6, 7, 8, 9)
 
@@ -327,6 +328,9 @@ def matrix() -> dict[str, list[dict]]:
         on_diffusers_rule(cell, "primary-diffusers")
         for cell in groups["smoke"]
         if cell.get("primary") and cell["impl"] == "mlx"
+    ]
+    groups["baseline-diffusers"] = [
+        on_diffusers_rule(cell, "baseline-diffusers") for cell in groups["baseline"] if cell["impl"] == "mlx"
     ]
     groups["budgets-baseline-diffusers"] = [
         on_diffusers_rule(cell, "budgets-baseline-diffusers") for cell in groups["profiles-baseline"]
