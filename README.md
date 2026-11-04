@@ -53,4 +53,4 @@ specs/                 stage specs, one executor run each
 
 ## License
 
-Code: MIT (to be confirmed). Kandinsky 6 weights: MIT, see the original model cards. Qwen2.5-VL and CLIP keep their own licenses.
+Code: [MIT](LICENSE), the same license as Kandinsky 6. Kandinsky 6 weights: MIT, see the original model cards. Qwen2.5-VL and CLIP keep their own licenses.
