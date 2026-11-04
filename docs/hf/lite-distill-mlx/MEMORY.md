@@ -12,14 +12,14 @@ not included.
 1. **Both default peaks are mostly cache.** Torch MPS at `PYTORCH_MPS_HIGH_WATERMARK_RATIO=1.0` peaks at 38.9 GiB; at 0.35 the same
    run peaks at 14.9 GiB in the same time. So its 38.9 GiB says nothing about what it needs. MLX's cache does buy speed in video
    decoding, so limiting it costs time.
-2. **Around 13–15 GiB, Torch MPS is about 10% faster at this size:** 28 s against 31 s. MLX's faster denoising is outweighed by its
+2. **Around 13–15 GiB, Torch MPS is about 10–13% faster at this size:** 28 s against 31.5 s. MLX's faster denoising is outweighed by its
    slower decoding once the cache is limited.
-3. **Below that, only MLX has been measured.** It ran at 9.8 and 8.9 GiB, at the cost of time. Torch MPS's lowest reliable run was
+3. **Below that, only MLX has been measured.** It ran at 11.2, 8.6 and 7.8 GiB, at the cost of time. Torch MPS's lowest reliable run was
    13.4 GiB, and it ran out of memory at every limit of 9.36 GiB and below. Limits between 9.36 and 11.2 GiB (watermark 0.26–0.29)
    have not been tried, so its exact floor is open.
 4. **The earlier gap in loading and denoising came from the loading order,** not from the frameworks.
-5. **The port now follows diffusers' float32 rule,** which lowers MLX's denoising peak by 1 GiB. The tables on this page were measured
-   with the earlier rule; see below.
+5. **The port now follows diffusers' float32 rule,** which lowers MLX's denoising peak by 1 GiB and its lowest setting from 8.9 to 7.8 GiB.
+   The cache-limit rows below use it; the other tables are marked or were measured with the earlier rule.
 
 These are small samples (n = 3 to 10) on one Mac and one size, with no significance tests. Treat small differences as ties.
 
@@ -35,15 +35,17 @@ These are small samples (n = 3 to 10) on one Mac and one size, with no significa
 | Torch MPS | watermark 0.3, media after denoising | 13.4 | 28.4 + 2 to load media | 12.0 | 3 (2 timed) |
 | Torch MPS | watermark 0.25, with either loading order | out of memory | – | – | 6 |
 | Torch MPS | watermark 0.2, media after denoising | out of memory | – | – | 3 |
-| MLX | no cache limit (default) | 35.9 | 26.2 | 12.5 | 5 |
-| MLX | cache 16 GiB | 22.7 | 30.4 | 16.8 | 5 |
-| MLX | cache 8 GiB | 15.8 | 30.7 | 17.0 | 5 |
-| MLX | cache 4 GiB | 13.0 | 31.2 | 17.5 | 5 |
-| MLX | cache 1 GiB | 9.8 | 33.1 | 19.5 | 5 |
-| MLX | cache 0 | 8.9 | 38.8 | 24.8 | 5 |
+| MLX | no cache limit (default), earlier float32 rule | 35.9 | 26.2 | 12.5 | 5 |
+| MLX | cache 16 GiB | 23.5 | 31.1 | 17.5 | 5 |
+| MLX | cache 8 GiB | 15.4 | 31.5 | 17.8 | 5 |
+| MLX | cache 4 GiB | 11.2 | 32.1 | 18.4 | 5 |
+| MLX | cache 1 GiB | 8.6 | 33.8 | 20.1 | 5 |
+| MLX | cache 0 | 7.8 | 39.6 | 25.6 | 5 |
 
 Limits are 9.36 GiB at watermark 0.25 and 11.23 GiB at 0.3. Video decoding asked for more than that: for example 8.38 GiB allocated
 plus a 1.06 GiB request at 0.25. The default watermark run was stopped by the benchmark's memory guard, to protect the Mac from swap.
+On the current rule the default MLX setting has 4 usable runs at 35.9 GiB, with swap growth and a median of 33.7 s cold and 26.7 s warm, so the earlier rule's clean 26.2 s stays in the table for now.
+With the current rule, cache-limited totals came out 0.5–0.9 s above the earlier rule's: denoising did not change, and video decoding took about 0.7 s longer. These are separate series, so the cause is not established.
 One timed run of watermark 0.3 with media after denoising is left out: a leftover process of ours was still using the GPU, and its
 steps took 10 s instead of 1.6 s. Its memory reading is kept, as it is in line with the other two.
 
@@ -182,8 +184,7 @@ From macOS's `footprint` tool, with everything loaded and after releasing the Di
 
 ## Limits
 
-- The tables above were measured with the earlier float32 rule. The cache-limit and memory-budget cells are being measured again with
-  diffusers' rule, and the lowest MLX figures should fall.
+- The Torch rows do not depend on the float32 rule. The MLX cache-limit rows use the current rule. The other MLX numbers here use the earlier one.
 - One Mac, one size. Nothing here was measured at 864×480 for Torch's watermarks, or on a Mac with less memory.
 - Lower-watermark and load-order cells have 3 runs or fewer. Swap grew by up to 2.4 GB in the Torch cell with media components after
   denoising, and by up to 1.8 GB in the default cells of both implementations.

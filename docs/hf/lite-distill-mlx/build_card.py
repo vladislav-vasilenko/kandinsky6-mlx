@@ -72,6 +72,7 @@ CLIP_ROWS = (
     ("Scandinavian room", "room_assembly", "smoke"),
     ("Image to video: woman", "i2v_woman", "smoke"),
     ("Image to video: tram", "i2v_tram", "smoke"),
+    ("Fashion film", "orbit_woman", "baseline"),
     ("Fox in the snow", "fox", "baseline"),
     ("Retrofuturist tram", "strange_tram", "baseline"),
 )
@@ -176,7 +177,8 @@ replacements = {
     "{{PROMPT_TRAM_5S}}": prompt_block("strange_tram_baseline"),
     "{{PAIR_FOX_5S}}": pair("fox", preset="baseline"),
     "{{PROMPT_FOX_5S}}": prompt_block("fox_baseline"),
-    "{{BASELINE_VIDEO}}": video("orbit_woman_baseline_seed42_mlx", "MLX: 5 s at 864x480"),
+    "{{PAIR_WOMAN_5S}}": pair("orbit_woman", preset="baseline"),
+    "{{PROMPT_WOMAN_5S}}": prompt_block("orbit_woman_baseline"),
     "{{FRAME_SHEET}}": f"{BASE}/torch_mps_vs_mlx_frame12.webp",
     "{{MEMORY_STAGES}}": memory_rows(),
     "{{PERF_T2V}}": perf_rows(T2V, "Text-to-video, 5 prompts"),

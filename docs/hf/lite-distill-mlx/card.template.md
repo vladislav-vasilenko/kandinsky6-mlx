@@ -36,7 +36,7 @@ Apple M3 Max with 48 GB:
 | Faster at 864×480? | 935 s against 1024 s, this model | 3 runs each, not tested |
 | Faster prompt encoding? | 0.45 s against 1.5 s, warm | 5 runs each |
 | Works without tuning? | MLX yes. Torch MPS's default passed 43 GiB here and was stopped; it needs a lower `PYTORCH_MPS_HIGH_WATERMARK_RATIO` | 1 run |
-| Less memory? | Not at 13–15 GiB, where tuned Torch MPS is about 10% faster. Lower down, MLX ran at 8.9 GiB, and Torch MPS has not completed a run below 13 GiB | [Memory](#memory) |
+| Less memory? | Not at 13–15 GiB, where tuned Torch MPS is about 10% faster. Lower down, MLX ran at 7.8 GiB, and Torch MPS has not completed a run below 13 GiB | [Memory](#memory) |
 
 **Worth it if** you run many steps on a Mac, want it to work without tuning, or have to stay below about 13 GiB. **Not proven yet:** a
 Mac with less memory has not been tested, and such a Mac's chip will also be slower. If you already run a tuned Torch MPS setup with
@@ -103,8 +103,7 @@ Frame 12 (0.5 s) of the text-to-video and image-to-video clips above. Left: Torc
 
 ### 5 seconds at 864×480
 
-**864×480 · 121 frames · 24 FPS · 10 steps · audio · seed 42.** These clips were generated before the port moved to diffusers' float32 rule
-and will be regenerated with it. Other work was running on the Mac during these runs, so their times are longer than the clean benchmark's 935 s (MLX) and 1024 s (Torch MPS).
+**864×480 · 121 frames · 24 FPS · 10 steps · audio · seed 42.** The tram and fox clips were generated before the port moved to diffusers' float32 rule and will be regenerated with it. Other work was running on the Mac during those runs, so their times are longer than the clean benchmark's 935 s (MLX) and 1024 s (Torch MPS).
 
 #### Retrofuturist tram, Torch MPS vs MLX
 
@@ -118,9 +117,11 @@ and will be regenerated with it. Other work was running on the Mac during these 
 
 {{PROMPT_FOX_5S}}
 
-#### Fashion film, MLX
+#### Fashion film, Torch MPS vs MLX, current float32 rule
 
-{{BASELINE_VIDEO}}
+{{PAIR_WOMAN_5S}}
+
+{{PROMPT_WOMAN_5S}}
 
 ## Speed and memory
 
@@ -167,20 +168,21 @@ Peak physical footprint at 432×256; total time without loading.
 | Torch MPS | watermark 0.35 | 14.9 | 27.7 | 3 |
 | Torch MPS | watermark 0.3, media after denoising | 13.4 | 28.4 + 2 to load media | 3 (2 timed) |
 | Torch MPS | watermark 0.25 | out of memory | – | 6 |
-| MLX | default | 35.9 | 26.2 | 5 |
-| MLX | cache limit 8 GiB | 15.8 | 30.7 | 5 |
-| MLX | cache limit 1 GiB | 9.8 | 33.1 | 5 |
-| MLX | cache limit 0 | 8.9 | 38.8 | 5 |
+| MLX | default, earlier float32 rule | 35.9 | 26.2 | 5 |
+| MLX | cache limit 8 GiB | 15.4 | 31.5 | 5 |
+| MLX | cache limit 4 GiB | 11.2 | 32.1 | 5 |
+| MLX | cache limit 1 GiB | 8.6 | 33.8 | 5 |
+| MLX | cache limit 0 | 7.8 | 39.6 | 5 |
 
 - **Default peaks are mostly cache, on both sides.** For Torch MPS, lowering the watermark costs almost no time; set
   `PYTORCH_MPS_HIGH_WATERMARK_RATIO` lower than our 1.0 if you run it.
-- **Around 13–15 GiB Torch MPS is about 10% faster at this size.** Below that only MLX has been measured, at 9.8 and 8.9 GiB. Torch MPS
+- **Around 13–15 GiB Torch MPS is about 10–13% faster at this size.** Below that only MLX has been measured, at 11.2, 8.6 and 7.8 GiB. Torch MPS
   ran out of memory at every limit of 9.36 GiB and below; limits between 9.36 and 11.2 GiB have not been tried.
 - **The gap in loading and denoising came from the loading order,** not the frameworks: with the same order the difference is
   1–2 GiB, and in Torch's favour when media components load after denoising.
 - **The port now follows diffusers' float32 rule,** instead of keeping all modulation layers in float32. Denoising's peak falls by 1 GiB and its
-  time is unchanged, with no clear loss in quality over 6 seeds and no new download: [comparison](https://huggingface.co/VVladTech/Kandinsky-6.0-Lite-distill-5s-MLX/blob/main/MEMORY.md#the-float32-rule-why-the-dit-took-1-gib-more-in-mlx).
-  The numbers on this card were measured with the earlier rule, and the ones that depend on memory are being measured again.
+  time is unchanged, with no clear loss in quality over 6 seeds and no new download. The lowest setting went from 8.9 to 7.8 GiB: [comparison](https://huggingface.co/VVladTech/Kandinsky-6.0-Lite-distill-5s-MLX/blob/main/MEMORY.md#the-float32-rule-why-the-dit-took-1-gib-more-in-mlx).
+  The speed tables were measured with the earlier rule and are being measured again.
 - Part of Torch's footprint may come from this benchmark's own loader: see the same page.
 - **bf16 can change details and sounds, on Torch MPS too.** If fidelity matters, especially for audio, `--dtype float32` matches the float32 reference, for 3–13% more time at 432×256 and about 13.7 GiB instead of 7–9 GiB in denoising: [speed page](https://huggingface.co/VVladTech/Kandinsky-6.0-Lite-distill-5s-MLX/blob/main/SPEED.md#float32-when-fidelity-matters).
 - In MLX, limit the cache with `--cache-limit-gib`.
@@ -192,10 +194,12 @@ smaller Mac has been tested.** Prompt encoding is not included: see below.
 
 | Memory of the target Mac | Cache limit, GiB | Memory limit, GiB | 432×256, s (5 runs) | Memory, GiB | 864×480, s (1 run) | Memory, GiB |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| 48 GB | 16 | 32 | 30.3 | 23.1 | 1023 | 24.9 |
-| 32 GB | 8 | 22 | 30.6 | 15.8 | 1051 | 16.5 |
-| 24 GB | 4 | 16 | 31.1 | 11.7 | 1083 | 12.8 |
-| 16 GB | 1 | 10 | 32.9 | 8.7 | 1111 | 11.0 |
+| 48 GB | 16 | 32 | 31.2 | 22.6 | 1023 | 24.9 |
+| 32 GB | 8 | 22 | 31.5 | 15.7 | 1051 | 16.5 |
+| 24 GB | 4 | 16 | 32.3 | 11.7 | 1083 | 12.8 |
+| 16 GB | 1 | 10 | 33.5 | 7.8 | 1111 | 11.0 |
+
+The 432×256 columns use the current float32 rule. The 864×480 columns still use the earlier rule, are one run each, and are being measured again.
 
 ### Prompt encoding
 

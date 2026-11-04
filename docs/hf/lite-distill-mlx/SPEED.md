@@ -79,6 +79,8 @@ One cold run per clip with seed 42, in seconds, with loading **included in the t
 | Image to video: woman | 432×256, 1 s | MLX | 1.3 | 0.3 | 15.3 | 12.7 | 0.5 | **30.2** | 35.8 |
 | Image to video: tram | 432×256, 1 s | Torch MPS | 9.4 | 0.3 | 18.9 | 10.8 | 0.3 | **39.6** | 37.8 |
 | Image to video: tram | 432×256, 1 s | MLX | 1.3 | 0.3 | 15.4 | 12.9 | 0.5 | **30.4** | 35.8 |
+| Fashion film | 864×480, 5 s | Torch MPS | 10.7 | – | 807 | 224 | 0.9 | **1043** | 39.3 |
+| Fashion film | 864×480, 5 s | MLX | 0.3 | – | 744 | 221 | 1.6 | **967** | 36.0 |
 | Fox in the snow | 864×480, 5 s | Torch MPS | 10.6 | – | 819 | 227 | 0.9 | **1058** | 39.1 |
 | Fox in the snow | 864×480, 5 s | MLX | 1.3 | – | 736 | 269 | 1.7 | **1008** | 35.8 |
 | Retrofuturist tram | 864×480, 5 s | Torch MPS | 10.1 | – | 808 | 224 | 0.8 | **1043** | 39.3 |
