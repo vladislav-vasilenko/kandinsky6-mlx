@@ -29,6 +29,7 @@ CLIPS = {
     "skydive_pov": ("skydive_pov", None),
     "aerial_silk": ("aerial_silk", None),
     "contortionist_handstand": ("contortionist_handstand", None),
+    "gymnast_tumbling": ("gymnast_tumbling", None),
     "i2v_woman": ("orbit_woman", "fixtures/real_inputs/i2v_input.png"),
     "i2v_tram": ("strange_tram", "fixtures/real_inputs/i2v_input_tram.png"),
 }
