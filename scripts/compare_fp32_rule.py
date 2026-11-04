@@ -4,6 +4,14 @@ The port holds every time embedding and modulation in float32; diffusers, throug
 tensors. Each run is a fresh process with the same recorded inputs, compared with the float32 reference and Torch bf16's drift.
 
     uv run --extra text --group reference python scripts/compare_fp32_rule.py --out benchmarks/results/m3max-48gb/fp32_rule.jsonl
+
+Acceptance of the diffusers rule, fixed before any result was seen (2026-11-04), on all 6 runs:
+1. video and audio rel_l2 <= 2x Torch bf16's drift (AGENTS.md);
+2. frames PSNR on each seed >= Torch bf16's - 1 dB (as in tests/e2e/test_pipeline_real.py);
+3. median paired PSNR loss against the port's rule <= 2 dB, the median absolute MLX-Torch difference in reports 09 and 13;
+4. cosine not below the minimums in the tests of these models;
+5. the owner compares frames side by side on one or two seeds.
+Audio SNR is reported only: there is no Torch figure or noise estimate for it. Six pairs detect a clear loss, not its absence.
 """
 
 import argparse
