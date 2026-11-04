@@ -178,6 +178,81 @@
       },
       "criterion": "AGENTS.md bf16 criterion for every block and the final outputs: rel_l2 <= 2 x torch bf16 rel_l2 and cosine >= 0.999",
       "pass": true
+    },
+    {
+      "name": "float32 rule comparison on real weights, bf16, same inputs, MLX: fp32_rule 'substring' (earlier) vs 'diffusers' (now the default). Criteria fixed before the results, in scripts/compare_fp32_rule.py",
+      "metrics": {
+        "frames_psnr_db_substring_diffusers_torch_bf16": {
+          "lite-distill 42": [
+            27.37,
+            42.65,
+            27.71
+          ],
+          "lite-distill 1": [
+            45.8,
+            40.07,
+            36.89
+          ],
+          "lite-distill 2": [
+            32.97,
+            37.11,
+            31.82
+          ],
+          "lite-distill 3": [
+            30.44,
+            35.35,
+            27.44
+          ],
+          "lite-5s 42": [
+            28.17,
+            24.0,
+            23.87
+          ],
+          "lite-5s 1": [
+            27.55,
+            30.07,
+            27.28
+          ]
+        },
+        "median_paired_psnr_change_db": 3.33,
+        "audio_snr_db_substring_diffusers": {
+          "lite-distill 42": [
+            16.29,
+            7.58
+          ],
+          "lite-distill 1": [
+            17.76,
+            19.39
+          ],
+          "lite-distill 2": [
+            17.09,
+            21.24
+          ],
+          "lite-distill 3": [
+            14.67,
+            14.14
+          ],
+          "lite-5s 42": [
+            2.9,
+            -0.77
+          ],
+          "lite-5s 1": [
+            2.51,
+            4.64
+          ]
+        },
+        "max_final_rel_l2_over_torch_bf16_diffusers": 1.37,
+        "denoise_peak_memory_gib": {
+          "substring": 8.12,
+          "diffusers": 7.1
+        },
+        "denoise_seconds": {
+          "lite-distill": "13.3-13.4 vs 13.3-13.7",
+          "lite-5s": "134-136 vs 133-134"
+        }
+      },
+      "criterion": "final-step rel_l2 <= 2x torch bf16; frames PSNR >= torch bf16 - 1 dB per seed; median PSNR loss <= 2 dB; cosine not below the tests' minimums; owner's side-by-side check. Per-step rel_l2 and the owner's check are queued. The spread (-5.7 to +15.3 dB) is mostly rounding chaos: this shows no clear loss, not an improvement.",
+      "pass": true
     }
   ],
   "skipped": [],
@@ -203,8 +278,8 @@
       "why": "the Kaggle runs stalled on bf16 CPU work; the Mac run needed seconds. The basis therefore compares MPS bf16 with CPU float32; it is of the same size as the CPU bf16 drift seen on the tiny model (7.6e-3)."
     },
     {
-      "what": "With dtype bf16 the port keeps 276 DiT tensors in float32; diffusers keeps only 4 (recorded 2026-11-04, found in spec 14)",
-      "why": "keeps_fp32 matches by substring, following AGENTS.md and this spec ('time_embeddings and every *modulation* module'), while diffusers compares each dot-separated part of the name exactly (`models/model_loading_utils.py:238, :448`), so `visual_modulation`, `va_modulation`, `av_modulation`, `text_modulation` and `*_time_embeddings` do not match. This is not a conversion error: the converted file keeps the checkpoint's dtypes. The port's modulation is computed in float32 where the Torch bf16 run computes it in bf16; the float32 runs are unaffected. It costs 1.02 GiB. Measured parameters: Torch bf16 5.914 GiB + float32 0.010 GiB; MLX bf16 4.894 GiB + float32 2.052 GiB; MLX with stored dtypes 5.943 GiB in total. Kept unchanged so far, because the benchmark of spec 14 measures this configuration."
+      "what": "Until 2026-11-04 the port kept 276 DiT tensors in float32 with dtype bf16, where diffusers keeps 4; every bf16 number in this report was measured that way. The default now follows diffusers",
+      "why": "keeps_fp32 matches by substring, following AGENTS.md and this spec ('time_embeddings and every *modulation* module'), while diffusers compares each dot-separated part of the name exactly (`models/model_loading_utils.py:238, :448`), so `visual_modulation`, `va_modulation`, `av_modulation`, `text_modulation` and `*_time_embeddings` do not match. This is not a conversion error: the converted file keeps the checkpoint's dtypes. The port's modulation is computed in float32 where the Torch bf16 run computes it in bf16; the float32 runs are unaffected. It costs 1.02 GiB. Measured parameters: Torch bf16 5.914 GiB + float32 0.010 GiB; MLX bf16 4.894 GiB + float32 2.052 GiB; MLX with stored dtypes 5.943 GiB in total. The owner chose diffusers' rule after the comparison recorded under validation. The earlier rule stays available as fp32_rule='substring', so that the benchmark series of spec 14 stay comparable."
     }
   ],
   "follow_ups": [
@@ -212,7 +287,7 @@
     "ComfyUI-Shared on this Mac holds the original Lite-distill diffusers transformer, Qwen2.5-VL-7B and CLIP-L in ComfyUI single-file form; possibly reusable in spec 11 instead of downloading.",
     "Per-block mx.eval to bound memory and timing of a full forward are spec 14 topics.",
     "The Kaggle text kernel stalled after starting encode_text.py on 2x T4 with no output for 24 minutes; investigate only if a torch Qwen reference is needed (spec 11 stage B).",
-    "Spec 14b: measure the DiT with diffusers' exact float32 rule (memory, step time, drift against float32 and against Torch bf16). If quality is not worse, adopt it and correct the Precision section of AGENTS.md, with the owner's agreement. Telling diffusers about the mismatch between their comment and their matching is an outward action and needs the owner's approval."
+    "Spec 14: remeasure the MLX cells that depend on memory with fp32_rule='diffusers' (group rule-diffusers, queued) and rerun the real-weight bf16 tests. Telling diffusers about the mismatch between their comment and their matching is an outward action and needs the owner's approval."
   ],
   "architecture_notes": [
     {
@@ -241,9 +316,9 @@
       "optimization": "If bf16 quality matters (spec 14), keep block 14 (or its modulation/norm path) in float32 and measure; any quantization study should look at block 14 first."
     },
     {
-      "topic": "Tensors the port holds in float32 because of modulation",
+      "topic": "Tensors the port held in float32 because of modulation, before following diffusers' rule",
       "note": "All of them are DiT tensors; VAE, audio VAE and vocoder are F32 on both sides. Sizes are as stored in the checkpoint.\n\n| Block of the original | Module | Tensors | In the file | Torch bf16 | Port | Added by the port |\n| --- | --- | ---: | ---: | --- | --- | ---: |\n| `visual_transformer_blocks` (32), `video_dec_block` | `visual_modulation` | 64 | 505 MiB, BF16 | bf16 | float32 | +505 MiB |\n| `visual_transformer_blocks` (32), `audio_dec_block` | `visual_modulation` | 64 | 252 MiB, BF16 | bf16 | float32 | +252 MiB |\n| `visual_transformer_blocks` (32) | `va_modulation` | 64 | 140 MiB, BF16 | bf16 | float32 | +140 MiB |\n| `visual_transformer_blocks` (32) | `av_modulation` | 64 | 112 MiB, BF16 | bf16 | float32 | +112 MiB |\n| `video_text_transformer_blocks` (2) | `text_modulation` | 4 | 21 MiB, BF16 | bf16 | float32 | +21 MiB |\n| `audio_text_transformer_blocks` (2) | `text_modulation` | 4 | 10 MiB, BF16 | bf16 | float32 | +10 MiB |\n| `video_time_embeddings` | whole module | 4 | 4.5 MiB, F32 | bf16 | float32 | 0 |\n| `audio_time_embeddings` | whole module | 4 | 2.8 MiB, F32 | bf16 | float32 | 0 |\n| `out_layer` | `modulation` | 2 | 3.5 MiB, BF16 | float32 | float32 | same as Torch |\n| `audio_out_layer` | `modulation` | 2 | 1.8 MiB, BF16 | float32 | float32 | same as Torch |\n\nModulation is heavy because it is a linear layer with 512 inputs and a large output: 16128 x 512 weights per block in `video_dec_block`, across 32 blocks. These layers compute the `scale`, `shift` and `gate` coefficients of each block; `video_dec_block` here is part of the DiT, not of the VAE decoder.\n\nOnly `out_layer.modulation` and `audio_out_layer.modulation` match diffusers' rule, because one part of their name is exactly `modulation`. `*_time_embeddings` go the other way: F32 in the file, lowered to bf16 by Torch because the name does not match, so here the port differs in computation but not in memory.\n\nIn the Torch bf16 run the coefficients are computed in bf16 and applied in float32 through the explicit `.float()` of `apply_scale_shift` and `apply_gate_sum`; the port computes them entirely in float32.",
-      "optimization": "Keeping the stored dtypes takes the DiT from 6.95 to 5.94 GiB of MLX allocations (footprint 7.37 to 6.02 GiB), and may change step time slightly. Which variant is closer to the float32 reference has not been measured. Parity forbids nothing here as long as the choice is documented, because neither matches the other exactly today."
+      "optimization": "Following diffusers' rule takes the DiT's denoising peak from 8.12 to 7.10 GiB with unchanged denoising time. No reconversion is needed: the rule applies at load, and the file keeps the checkpoint's dtypes."
     }
   ]
 }

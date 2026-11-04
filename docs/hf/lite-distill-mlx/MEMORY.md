@@ -18,7 +18,8 @@ not included.
    13.4 GiB, and it ran out of memory at every limit of 9.36 GiB and below. Limits between 9.36 and 11.2 GiB (watermark 0.26–0.29)
    have not been tried, so its exact floor is open.
 4. **The earlier gap in loading and denoising came from the loading order,** not from the frameworks.
-5. **MLX's DiT takes 1 GiB more than Torch's because the port keeps more tensors in float32 than diffusers does.** See below.
+5. **The port now follows diffusers' float32 rule,** which lowers MLX's denoising peak by 1 GiB. The tables on this page were measured
+   with the earlier rule; see below.
 
 These are small samples (n = 3 to 10) on one Mac and one size, with no significance tests. Treat small differences as ties.
 
@@ -85,22 +86,22 @@ With everything loaded, the gap of 2.36 GiB adds up as follows:
 | MPS driver memory above Torch's allocations | +0.82 |
 | The rest of the footprint: Torch 2.05, MLX 0.35 | +1.70 |
 
-## Why the DiT takes 1 GiB more in MLX
+## The float32 rule: why the DiT took 1 GiB more in MLX
 
-diffusers keeps `_keep_in_fp32_modules = ["time_embeddings", "modulation"]` in float32, but it compares each dot-separated part of a
+diffusers lists `_keep_in_fp32_modules = ["time_embeddings", "modulation"]`, but it compares each dot-separated part of a
 parameter's name exactly (`models/model_loading_utils.py:238, :448`). So `visual_modulation`, `va_modulation` and the like do not match,
-and only 4 tensors stay in float32. The port matches by substring and keeps 276. This is not a conversion error: the converted file
+and only 4 tensors stay in float32. The port used to match by substring and keep 276. This is not a conversion error: the converted file
 has the checkpoint's dtypes. Measured parameters:
 
 | Variant | bf16, GiB | float32, GiB |
 | --- | ---: | ---: |
 | Torch MPS, bf16 | 5.914 | 0.010 |
-| MLX, bf16 | 4.894 | 2.052 |
+| MLX, bf16, earlier rule | 4.894 | 2.052 |
 | MLX, dtypes as stored | 5.943 in total | |
 
 All of these are DiT tensors; the VAEs and the vocoder are F32 on both sides. Sizes are as stored in the checkpoint.
 
-| Block of the original | Module | Tensors | In the file | Torch bf16 | MLX | Added by MLX |
+| Block of the original | Module | Tensors | In the file | Torch bf16 | MLX, earlier rule | Added by it |
 | --- | --- | ---: | ---: | --- | --- | ---: |
 | `visual_transformer_blocks` (32), `video_dec_block` | `visual_modulation` | 64 | 505 MiB, BF16 | bf16 | float32 | +505 MiB |
 | `visual_transformer_blocks` (32), `audio_dec_block` | `visual_modulation` | 64 | 252 MiB, BF16 | bf16 | float32 | +252 MiB |
@@ -114,9 +115,30 @@ All of these are DiT tensors; the VAEs and the vocoder are F32 on both sides. Si
 | `audio_out_layer` | `modulation` | 2 | 1.8 MiB, BF16 | float32 | float32 | same as Torch |
 
 These layers compute each block's `scale`, `shift` and `gate` coefficients, and they are heavy because of their large outputs: 16128 × 512
-weights per block in `video_dec_block`, which is part of the DiT, not of the VAE. In Torch bf16 the coefficients are computed in bf16
-and applied in float32; MLX computes them entirely in float32. Which is closer to the float32 reference has not been measured, and
-neither matches the other exactly. Report: [05-dit-model.json](https://github.com/vladislav-vasilenko/kandinsky6-mlx/blob/main/reports/05-dit-model.json).
+weights per block in `video_dec_block`, which is part of the DiT, not of the VAE. Both sides apply the coefficients in float32.
+Report: [05-dit-model.json](https://github.com/vladislav-vasilenko/kandinsky6-mlx/blob/main/reports/05-dit-model.json).
+
+### Comparing the two rules
+
+The same recorded inputs in MLX bf16, against the float32 diffusers reference. Frames PSNR and audio SNR in dB, higher is closer; a
+fresh process per run. **The weights did not change and need no new download:** the rule applies when they load.
+
+| Model, seed | Frames: earlier rule | Frames: diffusers' rule | Frames: Torch bf16 | Audio: earlier rule | Audio: diffusers' rule |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Lite-distill, 42 | 27.37 | 42.65 | 27.71 | 16.29 | 7.58 |
+| Lite-distill, 1 | 45.80 | 40.07 | 36.89 | 17.76 | 19.39 |
+| Lite-distill, 2 | 32.97 | 37.11 | 31.82 | 17.09 | 21.24 |
+| Lite-distill, 3 | 30.44 | 35.35 | 27.44 | 14.67 | 14.14 |
+| Lite-5s, 42 | 28.17 | 24.00 | 23.87 | 2.90 | −0.77 |
+| Lite-5s, 1 | 27.55 | 30.07 | 27.28 | 2.51 | 4.64 |
+
+- **Memory:** denoising peak 8.12 → 7.10 GiB, by MLX's own counter.
+- **Speed:** denoising time unchanged within these few runs.
+- **Quality:** frames are closer on 4 seeds of 6 and further on 2, with a median change of +3.3 dB. The spread, from −5.7 to +15.3 dB, is mostly
+  how bf16 rounding grows over the steps, so this shows **no clear loss, not an improvement**. Six pairs cannot rule out a small loss.
+  Audio moves both ways too, including a drop on two seeds that has yet to be checked by ear.
+- **Agreed before the results:** rel_l2 within 2× Torch bf16's drift, frames within 1 dB of Torch bf16 on each seed, a median loss of 2 dB at
+  most, and cosine above the tests' minimums. All were met at the final step. Checks of every step and by eye and ear are still running.
 
 ## What the rest of the footprint is
 
@@ -145,6 +167,8 @@ From macOS's `footprint` tool, with everything loaded and after releasing the Di
 
 ## Limits
 
+- The tables above were measured with the earlier float32 rule. The cache-limit and memory-budget cells are being measured again with
+  diffusers' rule, and the lowest MLX figures should fall.
 - One Mac, one size. Nothing here was measured at 864×480 for Torch's watermarks, or on a Mac with less memory.
 - Lower-watermark and load-order cells have 3 runs or fewer. Swap grew by up to 2.4 GB in the Torch cell with media components after
   denoising, and by up to 1.8 GB in the default cells of both implementations.

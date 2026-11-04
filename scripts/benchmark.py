@@ -81,6 +81,7 @@ ROUNDS = {
     "torch-memory": 3,
     "load-policy": 3,
     "torch-minimum": 3,
+    "rule-diffusers": 5,
 }
 SEEDS = (42, 1, 2, 3, 4, 5, 6, 7, 8, 9)
 
@@ -118,6 +119,7 @@ def pipeline_cell(group: str, size: str, model: str, name: str, impl: str, devic
         "steps": spec["steps"],
         "guidance": spec["guidance"],
         "text": TEXT[size],
+        "fp32_rule": "substring",  # the rule these series started with; clips and the rule-diffusers group use the default
         "negative": NEGATIVE if spec["guidance"] > 1 else None,
         "image": None,
         "dtype": "bfloat16",
@@ -290,7 +292,7 @@ def matrix() -> dict[str, list[dict]]:
         ),
         pipeline_cell("load-policy", "smoke", "distill", "mlx-bf16-eager-media", "mlx", eager_media=True, repeat=1),
     ]
-    return {
+    groups = {
         "load-policy": load_policy,
         "torch-minimum": torch_minimum,
         "torch-memory": torch_memory,
@@ -302,6 +304,18 @@ def matrix() -> dict[str, list[dict]]:
         "profiles-baseline": profiles_baseline,
         "baseline-cfg": overnight,
     }
+    # The memory-dependent MLX cells again with diffusers' float32 rule, which became the default during the run.
+    groups["rule-diffusers"] = [
+        cell
+        | {
+            "id": f"rule-diffusers/{cell['model']}/{cell['id'].rsplit('/', 1)[1]}",
+            "group": "rule-diffusers",
+            "fp32_rule": "diffusers",
+        }
+        for cell in groups["tradeoffs"] + groups["profiles"]
+        if re.search(r"/(default|cache-\d|cache-0|smoke-\d)", cell["id"])
+    ]
+    return groups
 
 
 # ------------------------------------------------------------------------------------------------- machine facts
@@ -455,7 +469,9 @@ def run_mlx_pipeline(cell: dict, stages: Stages) -> list[dict]:
         if pipeline is None or pipeline.transformer is None:
             stages("load")
             mx.reset_peak_memory()
-            pipeline = Kandinsky6Pipeline.from_converted(path(cell["weights"]), dtype, audio=cell["audio"])
+            pipeline = Kandinsky6Pipeline.from_converted(
+                path(cell["weights"]), dtype, fp32_rule=cell.get("fp32_rule", "diffusers"), audio=cell["audio"]
+            )
             mx.eval(pipeline.transformer.parameters())
             if cell.get("eager_media"):
                 mx.eval(pipeline.vae.parameters())

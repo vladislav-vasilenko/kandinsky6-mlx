@@ -131,11 +131,11 @@ class Kandinsky6Pipeline:
 
     @classmethod
     def from_converted(
-        cls, path: str | Path, dtype: mx.Dtype = mx.bfloat16, audio: bool = True, fp32_rule: str = "substring"
+        cls, path: str | Path, dtype: mx.Dtype = mx.bfloat16, audio: bool = True, fp32_rule: str = "diffusers"
     ) -> "Kandinsky6Pipeline":
         """Load a converted checkpoint directory (`transformer/`, `vae/`, `audio_vae/`, `vocoder/`, `scheduler/`).
 
-        The DiT runs in `dtype` (time embeddings and modulation in float32); the VAEs and the vocoder in float32, as
+        The DiT runs in `dtype` (a few tensors in float32, see `fp32_rule`); the VAEs and the vocoder in float32, as
         their released weights are F32.
         """
         path = Path(path)

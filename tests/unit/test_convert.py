@@ -162,8 +162,11 @@ def test_dtype_policy_on_bf16_dit(tmp_path):
     assert {name: info["dtype"] for name, info in header.items()} == {
         name: info["dtype"] for name, info in stored.items()
     }
-    assert keeps_fp32("transformer", "visual_transformer_blocks.0.video_dec_block.visual_modulation.out_layer.weight")
-    assert keeps_fp32("transformer", "video_time_embeddings.linear_1.weight")
+    assert keeps_fp32("transformer", "out_layer.modulation.out_layer.weight")
+    assert not keeps_fp32(
+        "transformer", "visual_transformer_blocks.0.video_dec_block.visual_modulation.out_layer.weight"
+    )
+    assert not keeps_fp32("transformer", "video_time_embeddings.linear_1.weight")
     assert not keeps_fp32("transformer", "visual_transformer_blocks.0.video_dec_block.self_attention.to_query.weight")
     assert not keeps_fp32("vae", "decoder.mid_block.attentions.0.to_q.weight")
 

@@ -24,7 +24,7 @@ Each file in `specs/` is executed by one run. The run reads the spec, does the w
 ## Precision
 
 - Checkpoint DiT weights are BF16 with some F32 tensors; VAE, audio VAE, vocoder and CLIP are F32.
-- Diffusers keeps `time_embeddings` and every `*modulation*` module of the DiT in float32 (`_keep_in_fp32_modules`), and computes `apply_scale_shift`, `apply_gate_sum` and RoPE in float32. The MLX port follows the same policy.
+- Diffusers lists `_keep_in_fp32_modules = ["time_embeddings", "modulation"]` for the DiT, but compares each dot-separated part of a parameter's name exactly, so only `out_layer.modulation` and `audio_out_layer.modulation` (4 tensors) stay in float32. `visual_modulation`, `va_modulation`, `av_modulation`, `text_modulation` and `*_time_embeddings` become bf16. It computes `apply_scale_shift`, `apply_gate_sum` and RoPE in float32. The MLX port follows the same policy (`fp32_rule="diffusers"`).
 - Parity is checked first in float32 against float32, then in bf16 against the float32 reference.
 
 ## Tolerances

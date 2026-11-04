@@ -12,7 +12,7 @@ Find out whether DiT blocks can run on the Neural Engine at all, and whether tha
 
 ## What makes it hard
 
-- **Precision.** diffusers keeps `time_embeddings` and `modulation` in float32 and computes `apply_scale_shift`, `apply_gate_sum`, RoPE and norm inputs in float32 inside every block (`transformer_kandinsky6.py`), and 423 tensors are stored as F32. ANE computes in 16-bit float. Reports 09 and 13 show that many steps amplify even bf16 rounding.
+- **Precision.** diffusers computes `apply_scale_shift`, `apply_gate_sum`, RoPE and norm inputs in float32 inside every block (`transformer_kandinsky6.py`). ANE computes in 16-bit float. Reports 09 and 13 show that many steps amplify even bf16 rounding.
 - **Mixed devices.** Keeping those operations off ANE means crossing devices many times per block.
 - **Size.** About 6 GiB of weights, up to 50 220 video tokens at Baseline, a separate compiled model per token count.
 - **This machine.** ANE may lose to a 40-core GPU here and still help on a base chip; a verdict needs a real low-end Mac for that second case.

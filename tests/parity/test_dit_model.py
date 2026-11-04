@@ -102,14 +102,14 @@ def test_from_converted_float32_matches_reference(tmp_path):
         assert compare(got, ref)["rel_max"] <= 1e-4
 
 
-def test_from_converted_bf16_keeps_time_embeddings_and_modulation_in_float32(tmp_path):
+def test_from_converted_bf16_keeps_what_diffusers_matches_in_float32(tmp_path):
     _write_converted(tmp_path, bf16_modulation=True)
     model = Kandinsky6Transformer3DModel.from_converted(tmp_path, dtype=mx.bfloat16)
     shapes = parameter_shapes(model)
     dtypes = {name: value.dtype for name, value in tree_flatten(model.parameters())}
     assert set(dtypes) == set(shapes)
     kept = [name for name in dtypes if keeps_fp32("transformer", name)]
-    assert any("time_embeddings" in name for name in kept) and any("modulation" in name for name in kept)
+    assert kept and all("modulation" in name.split(".") for name in kept)
     for name, dtype in dtypes.items():
         assert dtype == (mx.float32 if keeps_fp32("transformer", name) else mx.bfloat16), name
 

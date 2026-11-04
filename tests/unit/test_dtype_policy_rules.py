@@ -18,7 +18,7 @@ from kandinsky6_mlx.utils.dtype_policy import keeps_fp32
     ],
 )
 def test_rules(name, substring, diffusers):
-    assert keeps_fp32("transformer", name) is substring
+    assert keeps_fp32("transformer", name) is diffusers
     assert keeps_fp32("transformer", name, "substring") is substring
     assert keeps_fp32("transformer", name, "diffusers") is diffusers
 

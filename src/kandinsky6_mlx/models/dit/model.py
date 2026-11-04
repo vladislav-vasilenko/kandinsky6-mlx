@@ -125,12 +125,12 @@ class Kandinsky6Transformer3DModel(nn.Module):
 
     @classmethod
     def from_converted(
-        cls, path: str | Path, dtype: mx.Dtype = mx.bfloat16, fp32_rule: str = "substring"
+        cls, path: str | Path, dtype: mx.Dtype = mx.bfloat16, fp32_rule: str = "diffusers"
     ) -> "Kandinsky6Transformer3DModel":
         """Load a converted transformer directory (`config.json` + `model.safetensors`).
 
-        Parameters are cast to `dtype`, except time embeddings and every modulation, which run in float32 as with
-        diffusers' `_keep_in_fp32_modules` (the Lite checkpoint stores 268 of them as BF16). Arrays are memory-mapped
+        Parameters are cast to `dtype`, except those `fp32_rule` keeps in float32: by default the 4 tensors that diffusers'
+        `_keep_in_fp32_modules` matches. Arrays are memory-mapped
         and only read when evaluated.
         """
         path = Path(path)
@@ -140,8 +140,8 @@ class Kandinsky6Transformer3DModel(nn.Module):
         mx.eval(model.parameters())
         return model
 
-    def apply_dtype_policy(self, dtype: mx.Dtype, fp32_rule: str = "substring") -> None:
-        """Cast floating parameters to `dtype`, keeping `keeps_fp32` ones in float32."""
+    def apply_dtype_policy(self, dtype: mx.Dtype, fp32_rule: str = "diffusers") -> None:
+        """Cast floating parameters to `dtype`, keeping those `fp32_rule` selects in float32."""
 
         def cast(name: str, value: mx.array) -> mx.array:
             if not mx.issubdtype(value.dtype, mx.floating):

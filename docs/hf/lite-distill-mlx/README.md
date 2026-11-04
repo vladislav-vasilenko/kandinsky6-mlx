@@ -223,8 +223,10 @@ Peak physical footprint at 432×256; total time without loading.
   ran out of memory at every limit of 9.36 GiB and below; limits between 9.36 and 11.2 GiB have not been tried.
 - **The gap in loading and denoising came from the loading order,** not the frameworks: with the same order the difference is
   1–2 GiB, and in Torch's favour when media components load after denoising.
-- **MLX's DiT takes 1 GiB more than Torch's,** because this port keeps all modulation layers in float32, while diffusers' name matching
-  keeps only 4 tensors there. Part of Torch's footprint may in turn come from this benchmark's own loader. Details on the same page.
+- **The port now follows diffusers' float32 rule,** instead of keeping all modulation layers in float32. Denoising's peak falls by 1 GiB and its
+  time is unchanged, with no clear loss in quality over 6 seeds and no new download: [comparison](https://huggingface.co/VVladTech/Kandinsky-6.0-Lite-distill-5s-MLX/blob/main/MEMORY.md#the-float32-rule-why-the-dit-took-1-gib-more-in-mlx).
+  The numbers on this card were measured with the earlier rule, and the ones that depend on memory are being measured again.
+- Part of Torch's footprint may come from this benchmark's own loader: see the same page.
 - In MLX, limit the cache with `--cache-limit-gib`.
 
 ### Settings for less memory
@@ -323,7 +325,7 @@ Every component is compared with the PyTorch reference (`diffusers==0.42.1`) on 
 | Whole pipeline, float32 DiT | 10 steps vs diffusers from the same noise, 4 seeds | latents rel_l2 ≤ 7.2e-5, frames ≥ 96.6 dB, audio ≥ 84.2 dB |
 | Whole pipeline, bf16 DiT | vs the float32 reference, relative to Torch bf16 | rel_l2 within 1.49× of Torch bf16's drift; frames 27–46 dB, Torch 27–37 dB |
 | Image to video | 4 cases, float32 and bf16 | float32: rel_l2 ≤ 1.1e-5, frames ≥ 110 dB; bf16: step cosine ≥ 0.9996, frames 42–50 dB |
-| DiT, bf16 | every block and final outputs, with modulation in float32 where Torch bf16 uses bf16 | 0.56–1.12× Torch bf16's error, cosine ≥ 0.99997 per block |
+| DiT, bf16 | every block and final outputs, measured with the earlier float32 rule | 0.56–1.12× Torch bf16's error, cosine ≥ 0.99997 per block |
 | Video VAE decoder, float32 | 25 frames | 121.7 dB |
 | Tiled VAE decoding | first 29 of 121 frames at 864×480 | 130.4 dB. The whole clip's reference needs 40 GB and has not been recorded |
 | VAE encoder and image preprocessing | fixed images | preprocessing bit-identical to diffusers; encoder rel_l2 ≤ 1e-3 |

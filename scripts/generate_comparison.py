@@ -84,6 +84,7 @@ def main(argv: list[str] | None = None) -> int:
                 seed=args.seed,
                 repeat=0,
                 save_mp4=str(mp4),
+                fp32_rule="diffusers",
             )
             record = benchmark.run_cell(cell, args.results / "logs" / f"{name}_{args.preset}_{label}.log") | {
                 "round": 0

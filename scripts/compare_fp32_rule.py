@@ -34,7 +34,7 @@ def fixtures(model: str, seed: int) -> tuple[Path, Path, Path, Path]:
     return tuple(root / f"{stem}_{name}" for name in ("fp32", "bf16", "frames", "audio"))
 
 
-def worker(model: str, seed: int, rule: str, weights_root: Path) -> dict:
+def worker(model: str, seed: int, rule: str, weights_root: Path, save_dir: Path | None = None) -> dict:
     import importlib.util
 
     import mlx.core as mx
@@ -47,9 +47,24 @@ def worker(model: str, seed: int, rule: str, weights_root: Path) -> dict:
     result = pipeline_real.stage_b_metrics(
         weights_root / model, reference, drift, mx.bfloat16, frames, audio, fp32_rule=rule
     )
-    result.pop("_outputs")
+    output, _, _ = result.pop("_outputs")
+    if save_dir is not None:
+        from kandinsky6_mlx.pipelines.export import write_mp4
+
+        save_dir.mkdir(parents=True, exist_ok=True)
+        write_mp4(
+            save_dir / f"{model}_seed{seed}_{rule}.mp4",
+            output.frames[0],
+            output.frame_rate,
+            output.audio[0],
+            output.sample_rate,
+        )
     last = result["steps"][-1]
     cosines = [step[name]["cosine"] for step in result["steps"] for name in ("video", "audio")]
+    ratios = {
+        name: max(step[name]["rel_l2"] / step[name]["torch_bf16_rel_l2"] for step in result["steps"])
+        for name in ("video", "audio")
+    }
     return {
         "model": model,
         "seed": seed,
@@ -60,6 +75,7 @@ def worker(model: str, seed: int, rule: str, weights_root: Path) -> dict:
         "final_rel_l2": {name: last[name]["rel_l2"] for name in ("video", "audio")},
         "final_torch_bf16_rel_l2": {name: last[name].get("torch_bf16_rel_l2") for name in ("video", "audio")},
         "min_cosine": min(cosines),
+        "max_step_rel_l2_over_torch_bf16": ratios,
         "seconds": result["seconds"],
         "peak_memory_gib": result["peak_memory_gib"],
     }
@@ -70,18 +86,24 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--worker", nargs=3, metavar=("MODEL", "SEED", "RULE"), help=argparse.SUPPRESS)
     parser.add_argument("--weights-root", type=Path, default=ROOT / "weights")
     parser.add_argument("--out", type=Path)
+    parser.add_argument("--rules", nargs="+", default=list(RULES), choices=RULES)
+    parser.add_argument("--only", nargs="+", help="runs as model:seed, e.g. lite-distill:42")
+    parser.add_argument("--save-dir", type=Path, help="write each run's MP4 here")
     args = parser.parse_args(argv)
     if args.worker:
         model, seed, rule = args.worker
-        print("RESULT " + json.dumps(worker(model, int(seed), rule, args.weights_root)), flush=True)
+        print("RESULT " + json.dumps(worker(model, int(seed), rule, args.weights_root, args.save_dir)), flush=True)
         return 0
     args.out.parent.mkdir(parents=True, exist_ok=True)
     failed = 0
-    for index, (model, seed) in enumerate(RUNS):
+    runs = [run for run in RUNS if args.only is None or f"{run[0]}:{run[1]}" in args.only]
+    for index, (model, seed) in enumerate(runs):
         # Alternate which rule goes first, so that neither always runs on a colder machine.
-        for rule in RULES if index % 2 == 0 else reversed(RULES):
+        for rule in args.rules if index % 2 == 0 else reversed(args.rules):
             command = [sys.executable, __file__, "--worker", model, str(seed), rule]
             command += ["--weights-root", str(args.weights_root)]
+            if args.save_dir is not None:
+                command += ["--save-dir", str(args.save_dir)]
             done = subprocess.run(command, capture_output=True, text=True, check=False)
             lines = [line for line in done.stdout.splitlines() if line.startswith("RESULT ")]
             record = (

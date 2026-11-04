@@ -79,7 +79,7 @@ def stage_b_metrics(
     dtype: mx.Dtype = mx.bfloat16,
     frames_fixture: Path | None = None,
     audio_fixture: Path | None = None,
-    fp32_rule: str = "substring",
+    fp32_rule: str = "diffusers",
 ) -> dict:
     ref, meta = load_fixture(reference, backend="numpy")
     ref_frames, ref_audio = reference_media(ref, frames_fixture, audio_fixture)
