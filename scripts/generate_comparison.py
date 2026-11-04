@@ -38,6 +38,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--preset", default="smoke", choices=sorted(benchmark.SIZES))
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--only", nargs="*", help="clip names")
+    parser.add_argument("--impl", choices=("mlx", "diffusers"), help="one implementation only (default: both)")
     args = parser.parse_args(argv)
 
     prompts = json.loads((args.out / "prompts.json").read_text())
@@ -61,6 +62,8 @@ def main(argv: list[str] | None = None) -> int:
     for name in names:
         prompt_name, image = prompt_key(name), CLIPS[name][1]
         for impl, label, device in (("mlx", "mlx", "gpu"), ("diffusers", "torch_mps", "mps")):
+            if args.impl not in (None, impl):
+                continue
             mp4 = args.out / f"{name}_{args.preset}_seed{args.seed}_{label}.mp4"
             cell = benchmark.pipeline_cell(
                 "examples",
